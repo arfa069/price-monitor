@@ -1,6 +1,11 @@
 """FastAPI application entry point."""
 import asyncio
+import sys
 from contextlib import asynccontextmanager
+
+# Windows requires ProactorEventLoop for subprocess support (Playwright spawns browser drivers)
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 import redis.asyncio as redis
 from sqlalchemy import text
@@ -78,4 +83,5 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=settings.debug)
+    # Do NOT use reload=True on Windows — it breaks Playwright subprocess creation
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000)

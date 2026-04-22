@@ -51,9 +51,9 @@ async def list_products(
     return result.scalars().all()
 
 
-@router.get("/{product_id}", response_model=ProductDetail)
+@router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
-    """Get product details with recent price history and alerts."""
+    """Get product details."""
     result = await db.execute(
         select(Product).where(Product.id == product_id, Product.user_id == 1)
     )

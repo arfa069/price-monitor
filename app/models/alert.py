@@ -16,7 +16,7 @@ class Alert(Base, TimestampMixin):
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     alert_type = Column(String(20), nullable=False, default="price_drop")
     threshold_percent = Column(Numeric(5, 2), nullable=True)  # e.g., 5.00 for 5%
-    last_notified_at = Column(DateTime, nullable=True)
+    last_notified_at = Column(DateTime(timezone=True), nullable=True)
     last_notified_price = Column(Numeric(12, 2), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
 

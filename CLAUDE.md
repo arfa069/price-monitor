@@ -63,10 +63,6 @@ CDP_ENABLED=true
 CDP_URL=http://127.0.0.1:9222
 ```
 
-### Docker 服务
-- `api` — uvicorn 运行 FastAPI
-- `db`（postgres）、`redis` — 基础设施
-
 ## 关键约束
 - user_id 硬编码为 1（单用户系统）
 - 所有时间戳字段使用 UTC 时区（`datetime.now(timezone.utc)`）

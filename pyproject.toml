@@ -49,7 +49,7 @@ addopts = "-v --tb=short"
 
 [tool.coverage.run]
 source = ["app"]
-omit = ["app/tasks/*"]
+omit = ["app/services/*"]
 
 [tool.coverage.report]
 exclude_lines = [

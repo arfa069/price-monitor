@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/arfac/.claude/**)",
+      "Bash(dir ~/.claude/)",
+      "Bash(git -C ~/.claude/ecc rev-parse --git-dir)",
+      "Bash(claude plugin:*)",
+      "Bash(claude plugins:*)",
+      "Read(//c/Users/arfac/everything-claude-code/**)",
+      "Bash(dir C:\\\\Users\\\\arfac\\\\everything-claude-code)",
+      "Bash(git:*)",
+      "Bash(node ~/everything-claude-code/scripts/install-apply.js --help)",
+      "Bash(node:*)"
+    ]
+  }
+}

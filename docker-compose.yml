@@ -1,0 +1,87 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: pricemonitor
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pricemonitor
+      REDIS_URL: redis://redis:6379/0
+      FEISHU_WEBHOOK_URL: ${FEISHU_WEBHOOK_URL:-}
+      CRAWL_FREQUENCY_HOURS: ${CRAWL_FREQUENCY_HOURS:-1}
+      DATA_RETENTION_DAYS: ${DATA_RETENTION_DAYS:-365}
+      DEBUG: "false"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pricemonitor
+      REDIS_URL: redis://redis:6379/0
+      FEISHU_WEBHOOK_URL: ${FEISHU_WEBHOOK_URL:-}
+      CRAWL_FREQUENCY_HOURS: ${CRAWL_FREQUENCY_HOURS:-1}
+      DATA_RETENTION_DAYS: ${DATA_RETENTION_DAYS:-365}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./app:/app/app:ro
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/pricemonitor
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: celery -A app.celery_app beat --loglevel=info
+    volumes:
+      - ./app:/app/app:ro
+
+volumes:
+  postgres_data:

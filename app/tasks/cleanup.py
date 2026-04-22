@@ -1,5 +1,5 @@
 """Data retention cleanup task."""
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from celery import shared_task
 from sqlalchemy import delete, select
@@ -21,7 +21,7 @@ def cleanup_old_data() -> dict:
 
     async def _cleanup():
         retention_days = settings.data_retention_days
-        cutoff = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
 
         async with AsyncSessionLocal() as db:
             # Count before deleting (rowcount unreliable with asyncpg/async DELETE)

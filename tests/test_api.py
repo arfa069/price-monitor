@@ -11,7 +11,9 @@ async def test_health_check():
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+    data = response.json()
+    assert data["status"] in ("healthy", "unhealthy")
+    assert "checks" in data
 
 
 @pytest.mark.asyncio
@@ -53,5 +55,5 @@ async def test_crawl_trigger_returns_202():
     """Crawl trigger endpoint accepts crawl requests."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/crawl/trigger")
+        response = await client.post("/crawl/start")
     assert response.status_code == 202

@@ -10,7 +10,11 @@
       "Bash(dir C:\\\\Users\\\\arfac\\\\everything-claude-code)",
       "Bash(git:*)",
       "Bash(node ~/everything-claude-code/scripts/install-apply.js --help)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(psql:*)",
+      "Bash(set DATABASE_URL=postgresql+asyncpg://postgres:Adminf8869!@localhost:5432/pricemonitor)",
+      "Bash(alembic upgrade:*)",
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://postgres:Adminf8869!@localhost:5432/pricemonitor\" python:*)"
     ]
   }
 }

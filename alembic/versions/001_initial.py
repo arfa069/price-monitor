@@ -61,7 +61,7 @@ def upgrade() -> None:
         "alerts",
         sa.Column("id", sa.Integer(), primary_key=True, autoincrement=True),
         sa.Column("product_id", sa.Integer(), sa.ForeignKey("products.id", ondelete="CASCADE"), nullable=False),
-        sa.Column("type", sa.String(20), nullable=False, server_default="price_drop"),
+        sa.Column("alert_type", sa.String(20), nullable=False, server_default="price_drop"),
         sa.Column("threshold_percent", sa.Numeric(5, 2), nullable=True),
         sa.Column("active", sa.Boolean(), nullable=False, server_default="true"),
         sa.Column("last_notified_at", sa.DateTime(), nullable=True),

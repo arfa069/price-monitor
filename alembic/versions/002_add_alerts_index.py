@@ -18,9 +18,6 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # Rename alerts.type -> alerts.alert_type to match model column name
-    op.alter_column("alerts", "type", new_column_name="alert_type")
-
     # Add composite index on (product_id, active) for efficient alert queries
     op.create_index(
         "ix_alerts_product_active",
@@ -39,4 +36,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("ix_alerts_active")
     op.drop_index("ix_alerts_product_active")
-    op.alter_column("alerts", "alert_type", new_column_name="type")

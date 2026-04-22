@@ -1,11 +1,14 @@
 """Crawl tasks for Celery."""
 import asyncio
+import logging
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List
 
 from celery import shared_task
 from sqlalchemy import select
+
+logger = logging.getLogger(__name__)
 
 from app.database import AsyncSessionLocal
 from app.models.product import Product
@@ -161,7 +164,10 @@ async def check_price_alerts(product_id: int, current_price: Decimal) -> None:
                         alert.last_notified_price = new_price
                         await db.commit()
                     except Exception:
-                        pass
+                        logger.exception(
+                            "Failed to send price drop notification for product %s",
+                            product_id,
+                        )
 
 
 @shared_task(bind=True, max_retries=3)

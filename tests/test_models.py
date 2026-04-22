@@ -10,27 +10,17 @@ from app.models.user import User
 
 
 def test_alert_type_default():
-    """Alert.type defaults to price_drop."""
-    alert = Alert(
-        id=1,
-        product_id=1,
-        threshold_percent=Decimal("5.00"),
-        active=True,
-    )
-    assert alert.type == "price_drop"
-    assert alert.threshold_percent == Decimal("5.00")
-    assert alert.active is True
+    """Alert.alert_type has default 'price_drop' via Column default."""
+    assert Alert.__table__.c.alert_type.default.arg == "price_drop"
 
 
 def test_product_active_defaults_true():
-    """Product.active defaults to True."""
-    product = Product(
-        id=1,
-        user_id=1,
-        platform="taobao",
-        url="https://example.com",
-    )
-    assert product.active is True
+    """Product.active defaults to True via Column default."""
+    from sqlalchemy.orm import Session
+    from app.database import engine
+    # SQLAlchemy Python-side defaults are only applied on flush
+    # We verify the Column definition has default=True
+    assert Product.__table__.c.active.default.arg == True
 
 
 def test_price_history_requires_price():

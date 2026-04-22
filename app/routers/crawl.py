@@ -2,6 +2,7 @@
 from typing import List
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from app.database import get_db
@@ -17,7 +18,7 @@ async def start_crawl():
     """Manually trigger a crawl for all active products."""
     # Use send_task to dispatch Celery task from async context
     task = celery_app.send_task("app.tasks.crawl.crawl_all_products")
-    return {"message": "Crawl started", "task_id": task.id}
+    return JSONResponse(content={"message": "Crawl started", "task_id": task.id}, status_code=202)
 
 
 @router.get("/logs", response_model=List[CrawlLogResponse])

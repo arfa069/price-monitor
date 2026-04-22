@@ -74,5 +74,4 @@ jobs:
           python -m py_compile app/main.py
           python -m py_compile app/tasks/cleanup.py
           python -m py_compile app/tasks/crawl.py
-          python -m py_compile app/tasks/send_alert.py
           echo "All files compiled successfully"

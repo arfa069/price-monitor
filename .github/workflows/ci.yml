@@ -70,8 +70,6 @@ jobs:
           python -m py_compile app/models/product.py
           python -m py_compile app/models/price_history.py
           python -m py_compile app/models/base.py
-          python -m py_compile app/celery_app.py
+          python -m py_compile app/services/crawl.py
           python -m py_compile app/main.py
-          python -m py_compile app/tasks/cleanup.py
-          python -m py_compile app/tasks/crawl.py
           echo "All files compiled successfully"

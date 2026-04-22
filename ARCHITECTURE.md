@@ -9,7 +9,7 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 - **Language**: Python 3.11+
 - **Web Framework**: FastAPI
 - **Database**: PostgreSQL (async via SQLAlchemy)
-- **Cache/Message Queue**: Redis + Celery
+- **Cache**: Redis
 - **Crawler**: Playwright (handles dynamic JS-rendered pages)
 - **Notification**: Feishu Webhook
 
@@ -130,15 +130,6 @@ A single-user e-commerce price monitoring system that tracks product prices acro
   }
 }
 ```
-
-## Deployment
-
-Docker Compose services:
-- `api`: FastAPI application
-- `worker`: Celery worker
-- `beat`: Celery beat scheduler
-- `redis`: Redis broker
-- `postgres`: PostgreSQL database
 
 ## Data Retention
 

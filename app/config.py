@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     crawl_proxy_url: str = ""  # e.g. "http://user:pass@host:port" or "socks5://host:port"
     crawl_proxy_enabled: bool = False
 
+    # Platform cookies (optional, for bypassing login walls)
+    jd_cookie: str = ""  # Cookie string for JD login session
+
+    # CDP (Chrome DevTools Protocol) browser connection
+    # When enabled, connects to an existing browser via CDP instead of launching a new one.
+    # This allows using a real browser session (with cookies/login already set).
+    # Usage: start Edge/Chrome with --remote-debugging-port=9222, login to JD, then enable this.
+    cdp_enabled: bool = False
+    cdp_url: str = "http://127.0.0.1:9222"  # CDP endpoint for existing browser
+
     # App settings
     app_name: str = "Price Monitor"
     debug: bool = False

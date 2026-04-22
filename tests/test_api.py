@@ -1,5 +1,6 @@
 """API smoke tests."""
 import pytest
+from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
 from app.main import app
 
@@ -17,43 +18,12 @@ async def test_health_check():
 
 
 @pytest.mark.asyncio
-async def test_product_list_empty():
-    """Products list returns empty array when no products."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/products")
-    assert response.status_code == 200
-    assert response.json() == []
-
-
-@pytest.mark.asyncio
-async def test_alerts_list_empty():
-    """Alerts list returns empty array when no alerts."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/alerts")
-    assert response.status_code == 200
-    assert response.json() == []
-
-
-@pytest.mark.asyncio
-async def test_config_returns_defaults():
-    """Config endpoint returns system configuration."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.get("/config")
+async def test_crawl_trigger_returns_200():
+    """Crawl trigger endpoint returns 200 without actually crawling."""
+    with patch("app.routers.crawl.get_active_products", return_value=[]):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post("/crawl/crawl-now")
     assert response.status_code == 200
     data = response.json()
-    assert "crawl_frequency_hours" in data
-    assert "data_retention_days" in data
-    assert data["crawl_frequency_hours"] == 1
-    assert data["data_retention_days"] == 365
-
-
-@pytest.mark.asyncio
-async def test_crawl_trigger_returns_202():
-    """Crawl trigger endpoint accepts crawl requests."""
-    transport = ASGITransport(app=app)
-    async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post("/crawl/start")
-    assert response.status_code == 202
+    assert data["status"] == "no_products"

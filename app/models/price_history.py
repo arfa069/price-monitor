@@ -15,7 +15,7 @@ class PriceHistory(Base):
     product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE"), nullable=False)
     price = Column(Numeric(12, 2), nullable=False)
     currency = Column(String(3), nullable=False, default="CNY")
-    scraped_at = Column(DateTime, nullable=False)
+    scraped_at = Column(DateTime(timezone=True), nullable=False)
     source_site = Column(String(50), nullable=True)
     page_hash = Column(String, nullable=True)
 

@@ -8,7 +8,6 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 - Automated crawling with Playwright (handles dynamic pages)
 - Price drop alerts via Feishu Webhook
 - RESTful API for product and alert management
-- Celery worker for scheduled crawling
 
 ## Quick Start
 
@@ -16,10 +15,6 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 # Install dependencies
 pip install -e .
 
-# Run with Docker Compose
-docker-compose up -d
-
-# Or run locally
 # 1. Configure .env
 cp .env.example .env
 # 2. Edit .env with your database, Redis, and Feishu webhook URL
@@ -79,7 +74,6 @@ coverage report
 
 - **FastAPI**: Web framework
 - **PostgreSQL**: Database (async via SQLAlchemy)
-- **Redis + Celery**: Task queue and scheduler
 - **Playwright**: Web crawler for dynamic pages
 - **Feishu Webhook**: Notification service
 

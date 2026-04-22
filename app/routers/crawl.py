@@ -1,11 +1,13 @@
 """Crawl API router."""
 from typing import List
+import asyncio
+import random
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, delete
-from app.database import get_db
+from app.database import get_db, AsyncSessionLocal
 from app.models.crawl_log import CrawlLog
 from app.models.price_history import PriceHistory
 from app.models.product import Product
@@ -69,12 +71,9 @@ async def _crawl_one(product_id: int) -> dict:
 
                 # Update product title if not set
                 new_title = result_data.get("title")
-                if new_title:
-                    result2 = await db.execute(select(Product).where(Product.id == product_id))
-                    prod = result2.scalar_one_or_none()
-                    if prod and not prod.title:
-                        prod.title = new_title
-                        await db.commit()
+                if new_title and not product.title:
+                    product.title = new_title
+                    await db.commit()
 
                 return {"status": "success", "product_id": product_id, "price": float(price)}
             else:
@@ -87,17 +86,9 @@ async def _crawl_one(product_id: int) -> dict:
                 return {"status": "error", "product_id": product_id}
 
         except Exception as e:
-            await save_crawl_log(product_id, product.platform, "ERROR", error_message=str(e))
-            raise
-
-
-@router.post("/start")
-async def start_crawl():
-    """Manually trigger a crawl for all active products."""
-    return JSONResponse(
-        content={"message": "Use POST /crawl/crawl-now to trigger crawl"},
-        status_code=200,
-    )
+            platform_name = product.platform if product else "unknown"
+            await save_crawl_log(product_id, platform_name, "ERROR", error_message=str(e))
+            return {"status": "error", "product_id": product_id, "error": str(e)}
 
 
 @router.get("/logs", response_model=List[CrawlLogResponse])
@@ -127,6 +118,7 @@ async def crawl_now():
     """Crawl all active products immediately.
 
     Runs directly in FastAPI's async context.
+    One product's failure does not affect others.
     """
     products = await get_active_products()
     if not products:
@@ -136,6 +128,8 @@ async def crawl_now():
     for product in products:
         result = await _crawl_one(product.id)
         results.append(result)
+        # Random interval [7, 12] seconds between crawls to avoid rate limiting
+        await asyncio.sleep(random.uniform(7, 12))
 
     success_count = sum(1 for r in results if r.get("status") == "success")
     error_count = sum(1 for r in results if r.get("status") == "error")

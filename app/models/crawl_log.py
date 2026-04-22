@@ -17,7 +17,7 @@ class CrawlLog(Base):
     status = Column(String(20), nullable=True)  # SUCCESS, ERROR
     price = Column(Numeric(12, 2), nullable=True)
     currency = Column(String(3), nullable=True)
-    timestamp = Column(DateTime, nullable=False)
+    timestamp = Column(DateTime(timezone=True), nullable=False)
     error_message = Column(Text, nullable=True)
 
     # Relationships

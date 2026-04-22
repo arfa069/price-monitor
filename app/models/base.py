@@ -13,5 +13,5 @@ def _utc_now():
 
 class TimestampMixin:
     """Mixin for created_at and updated_at timestamps."""
-    created_at = Column(DateTime, nullable=False, default=_utc_now)
-    updated_at = Column(DateTime, nullable=False, default=_utc_now, onupdate=_utc_now)
+    created_at = Column(DateTime(timezone=True), nullable=False, default=_utc_now)
+    updated_at = Column(DateTime(timezone=True), nullable=False, default=_utc_now, onupdate=_utc_now)

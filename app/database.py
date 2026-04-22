@@ -5,7 +5,7 @@ from app.config import settings
 engine = create_async_engine(
     settings.database_url,
     echo=settings.debug,
-    pool_pre_ping=True,
+    pool_pre_ping=False,  # Disabled: causes cross-loop Future issues on Windows
 )
 
 AsyncSessionLocal = async_sessionmaker(

@@ -16,6 +16,7 @@ class ProductCreate(BaseModel):
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product."""
+    platform: Optional[str] = Field(default=None, pattern="^(taobao|jd|amazon)$")
     title: Optional[str] = None
     active: Optional[bool] = None
     url: Optional[str] = None
@@ -39,3 +40,40 @@ class ProductDetail(ProductResponse):
     """Schema for product detail with relationships."""
     price_history: Optional[List[PriceHistorySummary]] = None
     alerts: Optional[List[AlertResponse]] = None
+
+
+class ProductListResponse(BaseModel):
+    """Paginated product list response."""
+    items: List[ProductResponse]
+    total: int
+
+
+class ProductBatchCreateItem(BaseModel):
+    """Single item for batch create."""
+    url: str = Field(..., description="Product URL")
+    platform: str = Field(..., pattern="^(taobao|jd|amazon)$", description="Platform")
+    title: Optional[str] = None
+
+
+class ProductBatchCreate(BaseModel):
+    """Batch create products."""
+    items: List[ProductBatchCreateItem] = Field(..., max_length=100)
+
+
+class BatchOperationResult(BaseModel):
+    """Result of a single batch operation item."""
+    id: Optional[int] = None
+    url: Optional[str] = None
+    success: bool
+    error: Optional[str] = None
+
+
+class ProductBatchUpdate(BaseModel):
+    """Batch update products."""
+    ids: List[int] = Field(..., max_length=100)
+    active: Optional[bool] = None
+
+
+class ProductBatchDelete(BaseModel):
+    """Batch delete products."""
+    ids: List[int] = Field(..., max_length=100)

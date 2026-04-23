@@ -22,10 +22,16 @@ class UserConfigResponse(BaseModel):
     """Schema for user configuration response."""
     id: int
     username: str
-    feishu_webhook_url: str
-    crawl_frequency_hours: int
-    data_retention_days: int
-    created_at: datetime
-    updated_at: datetime
+    feishu_webhook_url: Optional[str] = ""
+    crawl_frequency_hours: int = 1
+    data_retention_days: int = 365
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+class UserConfigDefaults(BaseModel):
+    """Default configuration values."""
+    crawl_frequency_hours: int = 1
+    data_retention_days: int = 365

@@ -1,13 +1,18 @@
 """Products API router."""
-from typing import List
+import re
+from typing import List, Optional
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 from app.database import get_db
 from app.models.product import Product
 from app.models.price_history import PriceHistory
-from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, ProductDetail
+from app.schemas.product import (
+    ProductCreate, ProductUpdate, ProductResponse, ProductDetail,
+    ProductListResponse, ProductBatchCreateItem, ProductBatchCreate,
+    BatchOperationResult, ProductBatchUpdate, ProductBatchDelete,
+)
 from app.schemas.price_history import PriceHistoryResponse
 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -32,23 +37,40 @@ async def create_product(
     return product
 
 
-@router.get("", response_model=List[ProductResponse])
+@router.get("", response_model=ProductListResponse)
 async def list_products(
     platform: str | None = None,
     active: bool | None = None,
+    keyword: str | None = Query(default=None, max_length=200),
+    page: int = Query(default=1, ge=1),
+    size: int = Query(default=15, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
-    """List all tracked products."""
-    query = select(Product).where(Product.user_id == 1)
+    """List tracked products with pagination."""
+    base_query = select(Product).where(Product.user_id == 1)
 
     if platform is not None:
-        query = query.where(Product.platform == platform)
+        base_query = base_query.where(Product.platform == platform)
     if active is not None:
-        query = query.where(Product.active == active)
+        base_query = base_query.where(Product.active == active)
+    if keyword is not None:
+        kw = f"%{keyword}%"
+        base_query = base_query.where(
+            (Product.title.ilike(kw)) | (Product.url.ilike(kw))
+        )
 
-    query = query.order_by(desc(Product.created_at))
-    result = await db.execute(query)
-    return result.scalars().all()
+    # Total count
+    count_query = select(func.count()).select_from(base_query.subquery())
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
+
+    # Paginated items
+    offset = (page - 1) * size
+    items_query = base_query.order_by(desc(Product.created_at)).offset(offset).limit(size)
+    items_result = await db.execute(items_query)
+    items = items_result.scalars().all()
+
+    return ProductListResponse(items=items, total=total)
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
@@ -103,6 +125,145 @@ async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
     await db.delete(product)
     await db.commit()
     return {"message": "Product deleted"}
+
+
+# --- Batch operations ---
+
+
+def _detect_platform(url: str) -> str | None:
+    """Auto-detect platform from URL."""
+    url_lower = url.lower()
+    if "jd.com" in url_lower or "item.jd" in url_lower:
+        return "jd"
+    if "taobao.com" in url_lower or "tmall.com" in url_lower:
+        return "taobao"
+    if "amazon." in url_lower:
+        return "amazon"
+    return None
+
+
+def _url_pattern_validate(url: str) -> bool:
+    """Basic URL validation."""
+    return bool(re.match(r'^https?://[^\s/$.?#].[^\s]*$', url))
+
+
+@router.post("/batch-create", response_model=List[BatchOperationResult])
+async def batch_create_products(
+    batch: ProductBatchCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Batch create products from URLs."""
+    results: list[BatchOperationResult] = []
+
+    # Deduplicate input
+    seen_urls: set[str] = set()
+    deduped_items: list[ProductBatchCreateItem] = []
+    for item in batch.items:
+        url = item.url.strip()
+        if url in seen_urls:
+            results.append(BatchOperationResult(url=url, success=False, error="重复的 URL"))
+            continue
+        seen_urls.add(url)
+        deduped_items.append(item)
+
+    # Check existing URLs in DB
+    existing_urls_result = await db.execute(
+        select(Product.url).where(Product.url.in_(list(seen_urls)))
+    )
+    existing_urls = set(existing_urls_result.scalars().all())
+
+    for item in deduped_items:
+        url = item.url.strip()
+        # Skip if already in DB
+        if url in existing_urls:
+            results.append(BatchOperationResult(url=url, success=False, error="该 URL 已存在"))
+            continue
+        # Detect/validate platform
+        if not _url_pattern_validate(url):
+            results.append(BatchOperationResult(url=url, success=False, error="URL 格式不正确"))
+            continue
+        detected = _detect_platform(url)
+        platform = item.platform if item.platform else detected
+        if not platform:
+            results.append(BatchOperationResult(url=url, success=False, error="无法识别平台"))
+            continue
+        try:
+            product = Product(
+                user_id=1,
+                platform=platform,
+                url=url,
+                title=item.title,
+                active=True,
+            )
+            db.add(product)
+            await db.flush()
+            results.append(BatchOperationResult(
+                id=product.id, url=url, success=True
+            ))
+        except Exception as e:
+            results.append(BatchOperationResult(url=url, success=False, error=str(e)))
+
+    await db.commit()
+    return results
+
+
+@router.post("/batch-delete", response_model=List[BatchOperationResult])
+async def batch_delete_products(
+    payload: ProductBatchDelete,
+    db: AsyncSession = Depends(get_db),
+):
+    """Batch delete products by IDs."""
+    results: list[BatchOperationResult] = []
+
+    result = await db.execute(
+        select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
+    )
+    products_to_delete = result.scalars().all()
+    found_ids = {p.id for p in products_to_delete}
+
+    for pid in payload.ids:
+        if pid not in found_ids:
+            results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
+            continue
+        product = next(p for p in products_to_delete if p.id == pid)
+        try:
+            await db.delete(product)
+            results.append(BatchOperationResult(id=pid, success=True))
+        except Exception as e:
+            results.append(BatchOperationResult(id=pid, success=False, error=str(e)))
+
+    await db.commit()
+    return results
+
+
+@router.post("/batch-update", response_model=List[BatchOperationResult])
+async def batch_update_products(
+    payload: ProductBatchUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    """Batch update products (active status)."""
+    results: list[BatchOperationResult] = []
+
+    result = await db.execute(
+        select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
+    )
+    products = result.scalars().all()
+    found_ids = {p.id for p in products}
+
+    for pid in payload.ids:
+        if pid not in found_ids:
+            results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
+            continue
+        product = next(p for p in products if p.id == pid)
+        try:
+            if payload.active is not None:
+                product.active = payload.active
+            results.append(BatchOperationResult(id=pid, success=True))
+        except Exception as e:
+            results.append(BatchOperationResult(id=pid, success=False, error=str(e)))
+
+    await db.commit()
+    return results
 
 
 @router.get("/{product_id}/history", response_model=List[PriceHistoryResponse])

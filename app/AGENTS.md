@@ -1,29 +1,40 @@
 # app/ — 主应用
 
-核心应用代码：模型、API 路由、平台爬虫、服务。
+核心应用代码目录：API、平台适配器、抓取服务、通知服务、模型与 schema。
 
 ## 子目录
 
 | 子目录 | 用途 |
 |--------|------|
 | `models/` | SQLAlchemy 模型（user, product, price_history, alert, crawl_log） |
-| `platforms/` | 淘宝、京东、亚马逊爬虫（Playwright，防爬措施） |
-| `routers/` | API 端点（config, products, alerts, crawl） |
-| `schemas/` | Pydantic 请求/响应 schema |
-| `services/` | 通知服务（飞书 Webhook）、抓取服务（爬取/告警逻辑） |
+| `platforms/` | 平台适配器（淘宝、京东、亚马逊） |
+| `routers/` | FastAPI 路由（config, products, alerts, crawl） |
+| `schemas/` | Pydantic 请求/响应模型 |
+| `services/` | 抓取编排与通知服务 |
+| `api/` | 预留 API 模块 |
+| `crawlers/` | 预留抓取相关模块 |
 
 ## 关键文件
 
 | 文件 | 用途 |
 |------|------|
-| `main.py` | FastAPI 应用工厂 + 生命周期 |
-| `config.py` | Pydantic BaseSettings（数据库 URL、Redis、飞书、平台凭证） |
-| `database.py` | 异步引擎、会话工厂、`get_db()` 依赖注入 |
+| `main.py` | FastAPI 应用创建与生命周期管理 |
+| `config.py` | 配置加载（DATABASE_URL、REDIS_URL、FEISHU、CDP、代理等） |
+| `database.py` | 异步数据库引擎、会话工厂、`get_db()` |
+| `routers/crawl.py` | 手动触发抓取、查询抓取日志、触发清理 |
+| `services/crawl.py` | 抓取执行、价格落库、告警判断 |
+| `services/notification.py` | 飞书 webhook 发送与重试 |
+| `platforms/base.py` | `BasePlatformAdapter` 抽象与浏览器初始化 |
 
-## 模式
+## 实现模式
 
-- **数据库**：`async with AsyncSessionLocal() as db:` + `await db.commit()`
-- **平台爬虫**：`BasePlatformAdapter` ABC，`crawl()` 返回 `{success, price, currency, title}`
-- **抓取逻辑**：`app/routers/crawl.py` 的 `_crawl_one()` 直接运行于 FastAPI async 上下文，无 Celery
-- **路由**：FastAPI `APIRouter`
-- **Schema**：所有请求/响应使用 `schemas/` 中的 Pydantic 模型
+- 数据库：统一使用异步 SQLAlchemy 会话与事务。
+- 抓取：在 FastAPI 异步上下文内顺序处理活动商品，不走 Celery。
+- 平台扩展：新增平台时实现适配器并接入统一抓取编排。
+- 浏览器：支持 Launch 与 CDP 两种模式；CDP 用于复用登录态与降低反爬影响。
+
+## 开发注意
+
+- Windows 下运行 `uvicorn app.main:app`，不要加 `--reload`（Playwright 子进程不稳定）。
+- 页面等待策略优先 `domcontentloaded`，再等待价格选择器，避免 `networkidle` 卡住。
+- 价格与告警逻辑改动需同步更新对应路由和测试。

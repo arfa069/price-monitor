@@ -47,6 +47,19 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 
 Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or external worker. The `POST /crawl/crawl-now` endpoint processes each active product sequentially with a 7–12s random interval between crawls to avoid rate limiting.
 
+### Cron Scheduling
+
+APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two mutually exclusive modes:
+
+- **Interval mode**: `crawl_frequency_hours` drives periodic crawling (APScheduler IntervalTrigger)
+- **Cron mode**: `crawl_cron` (5-segment cron expression) + `crawl_timezone` drives scheduled crawling (CronTrigger.from_crontab)
+
+The scheduler reads config from DB on startup and hot-reloads when `PATCH /config` is called with new cron settings.
+
+**Concurrency protection**: A global `asyncio.Semaphore(1)` (shared between cron jobs and manual crawls) prevents overlapping executions. Both `crawl_all_products(source="cron")` and `crawl_all_products(source="manual")` use the same lock.
+
+**Cron failure handling**: On failure, writes a `CrawlLog` entry with status `CRON_ERROR` and sends a Feishu notification if configured. On skip (no active products), writes `SKIPPED`. On success, writes `CRON_SUCCESS`.
+
 ### Browser Modes
 
 1. **Launch mode** (default): Launches a headless Chromium instance per crawl.
@@ -73,8 +86,10 @@ Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or exte
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
 | feishu_webhook_url | TEXT | Feishu webhook URL |
-| crawl_frequency_hours | SMALLINT | Crawl interval (default: 1) |
+| crawl_frequency_hours | SMALLINT | Crawl interval in hours (default: 1) |
 | data_retention_days | SMALLINT | History retention (default: 365) |
+| crawl_cron | VARCHAR | Cron expression for scheduled crawling (nullable) |
+| crawl_timezone | VARCHAR | Timezone for cron (default: Asia/Shanghai) |
 | created_at | TIMESTAMPTZ | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Last update timestamp |
 
@@ -111,27 +126,34 @@ Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or exte
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
-| product_id | BIGINT | FK to products |
-| status | VARCHAR(20) | SUCCESS/ERROR |
-| price | NUMERIC(12,2) | Scraped price |
+| product_id | BIGINT | FK to products (NULL for system-level logs) |
+| platform | VARCHAR(20) | Platform (nullable) |
+| status | VARCHAR(20) | SUCCESS/ERROR/SKIPPED/CRON_SUCCESS/CRON_ERROR |
+| price | NUMERIC(12,2) | Scraped price (nullable) |
 | timestamp | TIMESTAMPTZ | Crawl timestamp |
-| error_message | TEXT | Error details if failed |
+| error_message | TEXT | Error details or summary if failed/skipped |
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| POST | /config | Configure system settings |
-| GET | /health | Health check (database + Redis) |
+| GET | /health | Health check (database + Redis + scheduler) |
+| GET | /config | Get current configuration |
+| POST | /config | Create or update full configuration |
+| PATCH | /config | Partial update (cron hot-reload) |
 | POST | /products | Add a product to track |
-| GET | /products | List all products |
+| GET | /products | List products (paginated) |
 | GET | /products/{id} | Get product details |
 | GET | /products/{id}/history | Get price history |
+| POST | /products/batch-create | Batch import products |
+| POST | /products/batch-delete | Batch delete products |
+| POST | /products/batch-update | Batch enable/disable products |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
 | POST | /crawl/crawl-now | Crawl all active products |
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old data |
+| GET | /scheduler/status | Scheduler job state |
 
 ## Notification System
 
@@ -166,6 +188,16 @@ Each adapter implements `extract_price()` and `extract_title()`. The base class 
 - Cleanup triggered via `POST /crawl/cleanup` endpoint
 - Accepts a `retention_days` query parameter (capped by config setting)
 
+## Products Pagination
+
+`GET /products` returns paginated results with full metadata:
+
+- **Query params**: `page` (default 1), `size` (default 15, max 100), `platform`, `active`, `keyword`
+- **Keyword search**: debounced 400ms, searches title and URL columns
+- **Response shape**: `{ items, total, page, page_size, total_pages, has_next, has_prev }`
+- **Stable sort**: `ORDER BY created_at DESC, id DESC` — prevents pagination drift on new inserts
+- **Auto-rollback**: When batch delete empties the last page, frontend automatically steps back to the previous page
+
 ## Configuration
 
 All settings via environment variables in `.env` (loaded via Pydantic Settings):
@@ -180,6 +212,6 @@ All settings via environment variables in `.env` (loaded via Pydantic Settings):
 | CDP_URL | CDP endpoint for existing browser | `http://127.0.0.1:9222` |
 | CRAWL_PROXY_ENABLED | Enable proxy for crawling | `false` |
 | CRAWL_PROXY_URL | Proxy URL | |
-| CRAWL_FREQUENCY_HOURS | Hours between crawls | `1` |
+| CRAWL_FREQUENCY_HOURS | Hours between crawls (interval mode) | `1` |
 | DATA_RETENTION_DAYS | Days to retain price history | `365` |
 | JD_COOKIE | JD cookie string for login session | |

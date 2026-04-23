@@ -61,9 +61,15 @@ async def list_products(
     if active is not None:
         base_query = base_query.where(Product.active == active)
     if keyword is not None:
-        kw = f"%{keyword}%"
+        # Escape LIKE metacharacters to prevent pattern injection
+        escaped = (
+            keyword.replace("\\", "\\\\")
+                   .replace("%", "\\%")
+                   .replace("_", "\\_")
+        )
+        kw = f"%{escaped}%"
         base_query = base_query.where(
-            (Product.title.ilike(kw)) | (Product.url.ilike(kw))
+            (Product.title.ilike(kw, escape="\\")) | (Product.url.ilike(kw, escape="\\"))
         )
 
     # Total count
@@ -73,11 +79,23 @@ async def list_products(
 
     # Paginated items
     offset = (page - 1) * size
-    items_query = base_query.order_by(desc(Product.created_at)).offset(offset).limit(size)
+    items_query = base_query.order_by(desc(Product.created_at), desc(Product.id)).offset(offset).limit(size)
     items_result = await db.execute(items_query)
     items = items_result.scalars().all()
 
-    return ProductListResponse(items=items, total=total)
+    total_pages = (total + size - 1) // size if total > 0 else 0
+    has_prev = page > 1
+    has_next = page < total_pages
+
+    return ProductListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=size,
+        total_pages=total_pages,
+        has_next=has_next,
+        has_prev=has_prev,
+    )
 
 
 @router.get("/{product_id}", response_model=ProductResponse)

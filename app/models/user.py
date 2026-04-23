@@ -12,3 +12,5 @@ class User(Base, TimestampMixin):
     feishu_webhook_url = Column(Text, nullable=True)
     crawl_frequency_hours = Column(SmallInteger, nullable=False, default=1)
     data_retention_days = Column(SmallInteger, nullable=False, default=365)
+    crawl_cron = Column(String, nullable=True)  # 5-segment crontab, mutually exclusive with frequency_hours
+    crawl_timezone = Column(String, nullable=True, default="Asia/Shanghai")

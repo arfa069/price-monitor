@@ -1,7 +1,5 @@
 """Crawl API router."""
 from typing import List
-import asyncio
-import random
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
@@ -12,7 +10,6 @@ from app.models.crawl_log import CrawlLog
 from app.models.price_history import PriceHistory
 from app.models.product import Product
 from app.schemas.crawl_log import CrawlLogResponse
-from app.services.crawl import get_active_products
 
 router = APIRouter(prefix="/crawl", tags=["crawl"])
 
@@ -117,28 +114,23 @@ async def get_crawl_logs(
 async def crawl_now():
     """Crawl all active products immediately.
 
-    Runs directly in FastAPI's async context.
+    Uses the shared scheduler service for concurrency protection.
     One product's failure does not affect others.
     """
-    products = await get_active_products()
-    if not products:
-        return JSONResponse(content={"status": "no_products", "count": 0})
+    from app.services.scheduler_service import crawl_all_products
 
-    results = []
-    for product in products:
-        result = await _crawl_one(product.id)
-        results.append(result)
-        # Random interval [7, 12] seconds between crawls to avoid rate limiting
-        await asyncio.sleep(random.uniform(7, 12))
+    result = await crawl_all_products(source="manual")
+    if result["status"] == "skipped":
+        return JSONResponse(content={"status": "skipped", "reason": result["reason"]})
+    if result["status"] == "error":
+        return JSONResponse(content={"status": "error", "reason": result["reason"]}, status_code=500)
 
-    success_count = sum(1 for r in results if r.get("status") == "success")
-    error_count = sum(1 for r in results if r.get("status") == "error")
     return JSONResponse(content={
-        "status": "completed",
-        "total": len(products),
-        "success": success_count,
-        "errors": error_count,
-        "details": results,
+        "status": result["status"],
+        "total": result.get("total", 0),
+        "success": result.get("success", 0),
+        "errors": result.get("errors", 0),
+        "details": result.get("details", []),
     })
 
 

@@ -21,7 +21,7 @@ async def get_active_products() -> List[Product]:
     """Fetch all active products from database."""
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(Product).where(Product.user_id == 1, Product.active == True)
+            select(Product).where(Product.user_id == 1, Product.active)
         )
         return list(result.scalars().all())
 
@@ -83,7 +83,7 @@ async def check_price_alerts(product_id: int, current_price: Decimal) -> None:
     async with AsyncSessionLocal() as db:
         # Get all active alerts for this product
         result = await db.execute(
-            select(Alert).where(Alert.product_id == product_id, Alert.active == True)
+            select(Alert).where(Alert.product_id == product_id, Alert.active)
         )
         alerts = result.scalars().all()
 

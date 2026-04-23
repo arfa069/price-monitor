@@ -12,6 +12,11 @@ export interface Product {
 export interface ProductListResponse {
   items: Product[]
   total: number
+  page: number
+  page_size: number
+  total_pages: number
+  has_next: boolean
+  has_prev: boolean
 }
 
 export interface ProductCreateRequest {
@@ -59,6 +64,8 @@ export interface UserConfig {
   feishu_webhook_url: string
   crawl_frequency_hours: number
   data_retention_days: number
+  crawl_cron: string | null
+  crawl_timezone: string | null
   created_at: string | null
   updated_at: string | null
 }

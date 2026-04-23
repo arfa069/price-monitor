@@ -55,17 +55,23 @@ JD_COOKIE=...
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /health | Health check (database + Redis) |
-| POST | /config | Configure system settings |
+| GET | /health | Health check (database + Redis + scheduler) |
+| GET | /config | Get current configuration |
+| POST | /config | Create or update full configuration |
+| PATCH | /config | Partial update configuration (cron/tz/hours) |
 | POST | /products | Add a product to track |
-| GET | /products | List all products |
+| GET | /products | List products (paginated: page, size, total, etc.) |
 | GET | /products/{id} | Get product details |
 | GET | /products/{id}/history | Get price history |
+| POST | /products/batch-create | Batch import products |
+| POST | /products/batch-delete | Batch delete products |
+| POST | /products/batch-update | Batch enable/disable products |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
 | POST | /crawl/crawl-now | Crawl all active products |
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old price history and crawl logs |
+| GET | /scheduler/status | Scheduler status (started/not_started) |
 
 ## Development
 
@@ -90,6 +96,43 @@ coverage report
 - **Feishu Webhook**: Notification service
 
 Crawl tasks run **directly in FastAPI's async context** — no Celery or background worker needed. Each crawl uses a 90s timeout with platform-specific price selectors.
+
+### Cron Scheduling (APScheduler)
+
+The system supports two scheduling modes:
+- **Interval mode**: Crawl every N hours (default: 1 hour)
+- **Cron mode**: Crawl on a cron schedule (e.g., `0 9 * * *` = daily at 9:00)
+
+Scheduler runs as an AsyncIOScheduler managed by FastAPI's lifespan. Configured via:
+```
+# Interval mode (POST /config)
+crawl_frequency_hours: 2
+
+# Cron mode (PATCH /config)
+crawl_cron: "0 9 * * *"
+crawl_timezone: "Asia/Shanghai"
+```
+
+The two modes are mutually exclusive. Switching modes updates the scheduler job immediately (hot-reload).
+
+Concurrent crawl protection: both cron and manual crawls share a global `asyncio.Semaphore(1)` — only one crawl runs at a time. On cron failure, a CrawlLog entry is written and a Feishu notification is sent if configured.
+
+### Products Pagination
+
+`GET /products` supports pagination with full metadata:
+```json
+{
+  "items": [...],
+  "total": 100,
+  "page": 1,
+  "page_size": 15,
+  "total_pages": 7,
+  "has_next": true,
+  "has_prev": false
+}
+```
+
+Query parameters: `page` (default 1), `size` (default 15, max 100), `platform`, `active`, `keyword` (debounced search by title/URL).
 
 See `ARCHITECTURE.md` for detailed architecture.
 

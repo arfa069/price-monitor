@@ -46,6 +46,11 @@ class ProductListResponse(BaseModel):
     """Paginated product list response."""
     items: list[ProductResponse]
     total: int
+    page: int
+    page_size: int
+    total_pages: int
+    has_next: bool
+    has_prev: bool
 
 
 class ProductBatchCreateItem(BaseModel):

@@ -40,7 +40,7 @@ export default function ProductsPage() {
     return () => clearTimeout(timer)
   }, [keyword])
 
-  const { data, isLoading } = useProducts({
+  const { data, isLoading, refetch } = useProducts({
     page,
     size,
     platform,
@@ -53,6 +53,13 @@ export default function ProductsPage() {
   const batchCreate = useBatchCreate()
   const batchDelete = useBatchDelete()
   const batchUpdate = useBatchUpdate()
+
+  // Auto-rollback page when current page becomes empty after batch delete
+  useEffect(() => {
+    if (data && data.items.length === 0 && data.total > 0 && page > 1) {
+      setPage(page => page - 1)
+    }
+  }, [data?.items?.length, data?.total])
 
   const columns: ColumnsType<Product> = useMemo(() => [
     { title: 'ID', dataIndex: 'id', width: 60, sorter: true },

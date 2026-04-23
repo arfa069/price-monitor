@@ -1,6 +1,5 @@
 """Model unit tests."""
-import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from app.models.alert import Alert
 from app.models.product import Product
@@ -16,11 +15,9 @@ def test_alert_type_default():
 
 def test_product_active_defaults_true():
     """Product.active defaults to True via Column default."""
-    from sqlalchemy.orm import Session
-    from app.database import engine
     # SQLAlchemy Python-side defaults are only applied on flush
     # We verify the Column definition has default=True
-    assert Product.__table__.c.active.default.arg == True
+    assert Product.__table__.c.active.default.arg is True
 
 
 def test_price_history_requires_price():

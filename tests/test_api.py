@@ -149,6 +149,127 @@ async def test_patch_config_valid_cron_rebuilds_scheduler_job():
         app.dependency_overrides.clear()
 
 
+# --- URL Validation Tests ---
+
+
+@pytest.mark.asyncio
+async def test_create_product_rejects_invalid_url_no_scheme():
+    """POST /products rejects URLs without http/https scheme."""
+    from app.database import get_db
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    async def _override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Test "not-a-url" - no scheme
+            response = await client.post(
+                "/products",
+                json={"platform": "jd", "url": "not-a-url"},
+            )
+            assert response.status_code == 422
+            assert "URL must start with" in response.json()["detail"][0]["msg"]
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_create_product_rejects_ftp_scheme():
+    """POST /products rejects ftp:// URLs."""
+    from app.database import get_db
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    async def _override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/products",
+                json={"platform": "jd", "url": "ftp://example.com/item"},
+            )
+            assert response.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_update_product_rejects_empty_url():
+    """PATCH /products rejects empty string URL."""
+    from app.database import get_db
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=mock_result)
+
+    async def _override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.patch(
+                "/products/1",
+                json={"url": ""},
+            )
+            assert response.status_code == 422
+    finally:
+        app.dependency_overrides.clear()
+
+
+@pytest.mark.asyncio
+async def test_create_product_strips_whitespace():
+    """POST /products strips whitespace from URL before saving."""
+    from datetime import UTC, datetime
+    from app.models.product import Product
+    from app.database import get_db
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = None
+
+    mock_session = AsyncMock()
+    mock_session.execute = AsyncMock(return_value=mock_result)
+    mock_session.add = MagicMock()
+    mock_session.flush = AsyncMock()
+    mock_session.refresh = AsyncMock(side_effect=lambda p: setattr(p, "id", 1) or setattr(p, "created_at", datetime.now(UTC)) or setattr(p, "updated_at", datetime.now(UTC)))
+
+    async def _override_get_db():
+        yield mock_session
+
+    app.dependency_overrides[get_db] = _override_get_db
+    try:
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.post(
+                "/products",
+                json={"platform": "jd", "url": "  https://item.jd.com/123  "},
+            )
+            assert response.status_code == 200
+            # Verify the URL was stripped
+            call_args = mock_session.add.call_args[0][0]
+            assert call_args.url == "https://item.jd.com/123"
+    finally:
+        app.dependency_overrides.clear()
+
+
 # --- Products Pagination Tests ---
 
 

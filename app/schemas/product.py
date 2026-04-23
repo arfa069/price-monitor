@@ -17,6 +17,7 @@ class ProductCreate(BaseModel):
     @field_validator("url")
     @classmethod
     def validate_url(cls, v: str) -> str:
+        v = v.strip()
         if not v.startswith("http://") and not v.startswith("https://"):
             raise ValueError("URL must start with http:// or https://")
         return v
@@ -33,7 +34,8 @@ class ProductUpdate(BaseModel):
     def validate_url(cls, v: str | None) -> str | None:
         if v is None:
             return None
-        if not v.strip():
+        v = v.strip()
+        if not v:
             raise ValueError("URL cannot be empty")
         if not v.startswith("http://") and not v.startswith("https://"):
             raise ValueError("URL must start with http:// or https://")

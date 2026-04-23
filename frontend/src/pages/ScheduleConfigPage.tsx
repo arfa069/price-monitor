@@ -10,7 +10,7 @@ const TZ_DRAFT_KEY = 'crawl_timezone_draft'
 type ScheduleMode = 'hours' | 'cron'
 
 export default function ScheduleConfigPage() {
-  const { data: config, isLoading, refetch } = useConfig()
+  const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
   const [form] = Form.useForm()
   const [scheduleMode, setScheduleMode] = useState<ScheduleMode>('hours')
@@ -138,6 +138,17 @@ export default function ScheduleConfigPage() {
               </Button>
             </Space>
           }
+        />
+      )}
+
+      {/* API error state */}
+      {isError && !isLoading && (
+        <Alert
+          type="error"
+          message="加载失败"
+          description="无法获取配置信息，请检查网络或重试。"
+          action={<Button size="small" onClick={() => refetch()}>重试</Button>}
+          style={{ marginBottom: 24 }}
         />
       )}
 

@@ -218,21 +218,29 @@ async def batch_delete_products(
     result = await db.execute(
         select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
     )
-    products_to_delete = result.scalars().all()
-    found_ids = {p.id for p in products_to_delete}
+    product_map = {p.id: p for p in result.scalars().all()}
+    found_ids = set(product_map.keys())
 
     for pid in payload.ids:
         if pid not in found_ids:
             results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
             continue
-        product = next(p for p in products_to_delete if p.id == pid)
         try:
-            await db.delete(product)
+            await db.delete(product_map[pid])
             results.append(BatchOperationResult(id=pid, success=True))
         except Exception as e:
             results.append(BatchOperationResult(id=pid, success=False, error=str(e)))
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception as e:
+        # All results after first error: mark remaining uncommitted as failed
+        for result_item in results:
+            if result_item.success and result_item.id not in found_ids:
+                result_item.success = False
+                result_item.error = "批量操作失败"
+        raise
+
     return results
 
 
@@ -247,22 +255,30 @@ async def batch_update_products(
     result = await db.execute(
         select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
     )
-    products = result.scalars().all()
-    found_ids = {p.id for p in products}
+    product_map = {p.id: p for p in result.scalars().all()}
+    found_ids = set(product_map.keys())
 
     for pid in payload.ids:
         if pid not in found_ids:
             results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
             continue
-        product = next(p for p in products if p.id == pid)
         try:
             if payload.active is not None:
-                product.active = payload.active
+                product_map[pid].active = payload.active
             results.append(BatchOperationResult(id=pid, success=True))
         except Exception as e:
             results.append(BatchOperationResult(id=pid, success=False, error=str(e)))
 
-    await db.commit()
+    try:
+        await db.commit()
+    except Exception as e:
+        # Mark all as failed if commit fails (nothing persisted)
+        for result_item in results:
+            if result_item.success:
+                result_item.success = False
+                result_item.error = str(e)
+        return results
+
     return results
 
 

@@ -9,9 +9,11 @@ export const useProducts = (params: {
   page?: number
   size?: number
 }) => {
+  const { platform, active, keyword, page, size } = params
   return useQuery({
-    queryKey: ['products', params],
+    queryKey: ['products', platform ?? '', active ?? '', keyword ?? '', page ?? 1, size ?? 15],
     queryFn: () => productsApi.list(params).then((res) => res.data),
+    staleTime: 10_000,
   })
 }
 

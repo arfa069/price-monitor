@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Table, Button, Space, Input, Select, Tag, Popconfirm,
   Modal, Form, message, notification, Card, Row, Col,
@@ -25,13 +25,28 @@ const PLATFORM_COLORS: Record<string, string> = {
 export default function ProductsPage() {
   const [page, setPage] = useState(1)
   const [size] = useState(15)
-  const [filters, setFilters] = useState<Record<string, any>>({})
+  const [platform, setPlatform] = useState<string | undefined>()
+  const [active, setActive] = useState<boolean | undefined>()
+  const [keyword, setKeyword] = useState('')
+  const [debouncedKeyword, setDebouncedKeyword] = useState('')
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([])
   const [createFormOpen, setCreateFormOpen] = useState(false)
   const [editModal, setEditModal] = useState<{ open: boolean; record?: Product }>({ open: false })
   const [batchImportOpen, setBatchImportOpen] = useState(false)
 
-  const { data, isLoading, refetch } = useProducts({ page, size, ...filters })
+  // Debounce keyword: delay 400ms after last keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedKeyword(keyword), 400)
+    return () => clearTimeout(timer)
+  }, [keyword])
+
+  const { data, isLoading } = useProducts({
+    page,
+    size,
+    platform,
+    active,
+    keyword: debouncedKeyword || undefined,
+  })
   const createMutation = useCreateProduct()
   const updateMutation = useUpdateProduct()
   const deleteMutation = useDeleteProduct()
@@ -181,7 +196,7 @@ export default function ProductsPage() {
                   prefix={<SearchOutlined />}
                   allowClear
                   style={{ width: 200 }}
-                  onChange={(e) => setFilters((f) => ({ ...f, keyword: e.target.value || undefined }))}
+                  onChange={(e) => setKeyword(e.target.value)}
                 />
                 <Select
                   placeholder="平台"
@@ -192,7 +207,7 @@ export default function ProductsPage() {
                     { label: '京东', value: 'jd' },
                     { label: '亚马逊', value: 'amazon' },
                   ]}
-                  onChange={(v) => setFilters((f) => ({ ...f, platform: v }))}
+                  onChange={(v) => setPlatform(v)}
                 />
                 <Select
                   placeholder="状态"
@@ -202,7 +217,7 @@ export default function ProductsPage() {
                     { label: '启用', value: true },
                     { label: '停用', value: false },
                   ]}
-                  onChange={(v) => setFilters((f) => ({ ...f, active: v }))}
+                  onChange={(v) => setActive(v)}
                 />
               </Space>
             </Col>

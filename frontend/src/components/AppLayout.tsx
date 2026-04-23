@@ -4,8 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShoppingCartOutlined,
   ClockCircleOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
 } from '@ant-design/icons'
 
 const { Sider, Content } = Layout

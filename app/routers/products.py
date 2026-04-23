@@ -1,19 +1,26 @@
 """Products API router."""
 import re
-from typing import List, Optional
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, func
+
 from app.database import get_db
-from app.models.product import Product
 from app.models.price_history import PriceHistory
-from app.schemas.product import (
-    ProductCreate, ProductUpdate, ProductResponse, ProductDetail,
-    ProductListResponse, ProductBatchCreateItem, ProductBatchCreate,
-    BatchOperationResult, ProductBatchUpdate, ProductBatchDelete,
-)
+from app.models.product import Product
 from app.schemas.price_history import PriceHistoryResponse
+from app.schemas.product import (
+    BatchOperationResult,
+    ProductBatchCreate,
+    ProductBatchCreateItem,
+    ProductBatchDelete,
+    ProductBatchUpdate,
+    ProductCreate,
+    ProductListResponse,
+    ProductResponse,
+    ProductUpdate,
+)
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -147,7 +154,7 @@ def _url_pattern_validate(url: str) -> bool:
     return bool(re.match(r'^https?://[^\s/$.?#].[^\s]*$', url))
 
 
-@router.post("/batch-create", response_model=List[BatchOperationResult])
+@router.post("/batch-create", response_model=list[BatchOperationResult])
 async def batch_create_products(
     batch: ProductBatchCreate,
     db: AsyncSession = Depends(get_db),
@@ -207,7 +214,7 @@ async def batch_create_products(
     return results
 
 
-@router.post("/batch-delete", response_model=List[BatchOperationResult])
+@router.post("/batch-delete", response_model=list[BatchOperationResult])
 async def batch_delete_products(
     payload: ProductBatchDelete,
     db: AsyncSession = Depends(get_db),
@@ -233,7 +240,7 @@ async def batch_delete_products(
 
     try:
         await db.commit()
-    except Exception as e:
+    except Exception:
         # All results after first error: mark remaining uncommitted as failed
         for result_item in results:
             if result_item.success and result_item.id not in found_ids:
@@ -244,7 +251,7 @@ async def batch_delete_products(
     return results
 
 
-@router.post("/batch-update", response_model=List[BatchOperationResult])
+@router.post("/batch-update", response_model=list[BatchOperationResult])
 async def batch_update_products(
     payload: ProductBatchUpdate,
     db: AsyncSession = Depends(get_db),
@@ -282,7 +289,7 @@ async def batch_update_products(
     return results
 
 
-@router.get("/{product_id}/history", response_model=List[PriceHistoryResponse])
+@router.get("/{product_id}/history", response_model=list[PriceHistoryResponse])
 async def get_product_history(
     product_id: int,
     days: int = Query(default=30, ge=1, le=365),
@@ -300,7 +307,7 @@ async def get_product_history(
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Get price history
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
     result = await db.execute(
         select(PriceHistory)
         .where(

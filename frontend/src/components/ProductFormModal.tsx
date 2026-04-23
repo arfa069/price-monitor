@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Modal, Form, Input, Select, Switch } from 'antd'
 import type { Product } from '@/types'
 
@@ -20,7 +20,6 @@ const detectPlatform = (url: string): string | null => {
 
 export default function ProductFormModal({ open, record, onCancel, onSubmit, confirmLoading }: Props) {
   const [form] = Form.useForm()
-  const [autoPlatform, setAutoPlatform] = useState<string | null>(null)
 
   useEffect(() => {
     if (record) {
@@ -33,13 +32,11 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
     } else {
       form.resetFields()
     }
-    setAutoPlatform(null)
   }, [record, open, form])
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!record) {
       const detected = detectPlatform(e.target.value)
-      setAutoPlatform(detected)
       if (detected) form.setFieldValue('platform', detected)
     }
   }

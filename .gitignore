@@ -40,3 +40,4 @@ plan/
 alembic/AGENTS.md
 app/AGENTS.md
 tests/AGENTS.md
+.gstack/

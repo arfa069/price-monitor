@@ -7,10 +7,10 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 ## Tech Stack
 
 - **Language**: Python 3.11+
-- **Web Framework**: FastAPI
+- **Web Framework**: FastAPI (async via asyncio)
 - **Database**: PostgreSQL (async via SQLAlchemy)
 - **Cache**: Redis
-- **Crawler**: Playwright (handles dynamic JS-rendered pages)
+- **Crawler**: Playwright (handles dynamic JS-rendered pages, supports CDP mode)
 - **Notification**: Feishu Webhook
 
 ## Architecture
@@ -19,28 +19,52 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 ┌─────────────────────────────────────────────────────────────────┐
 │                      FastAPI Service Layer                         │
 │  POST /config │ POST/GET /products │ GET /history │ POST /alerts│
+│  POST /crawl/crawl-now │ GET /crawl/logs │ POST /crawl/cleanup   │
 └─────────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         ▼                     ▼                     ▼
 ┌───────────────┐   ┌─────────────────┐   ┌─────────────────────┐
-│  PostgreSQL   │   │      Redis      │   │   Celery Worker     │
-│  (data store)  │   │  (broker+cache) │   │   (crawl tasks)      │
+│  PostgreSQL   │   │      Redis      │   │  Playwright Crawler  │
+│  (data store)  │   │  (cache layer)  │   │  (in-process async)  │
 └───────────────┘   └─────────────────┘   └─────────────────────┘
-                                                 │
-                              ┌──────────────────┼──────────────────┐
-                              ▼                  ▼                  ▼
-                        ┌──────────┐      ┌──────────┐       ┌──────────┐
-                        │  Taobao  │      │   JD    │       │  Amazon  │
-                        │ Adapter  │      │ Adapter │       │ Adapter  │
-                        └──────────┘      └──────────┘       └──────────┘
-                                                 │
-                                                 ▼
-                                          ┌─────────────┐
-                                          │   Feishu    │
-                                          │  Webhook    │
-                                          └─────────────┘
+                          │                         │
+                          │            ┌─────────────┼─────────────┐
+                          │            ▼             ▼             ▼
+                          │     ┌──────────┐  ┌──────────┐  ┌──────────┐
+                          │     │  Taobao  │  │   JD    │  │  Amazon  │
+                          │     │ Adapter  │  │ Adapter │  │ Adapter  │
+                          │     └──────────┘  └──────────┘  └──────────┘
+                          │                         │
+                          ▼                         ▼
+                  ┌─────────────┐           ┌─────────────┐
+                  │   Feishu    │           │    CDP /     │
+                  │  Webhook    │           │  Launch Mode │
+                  └─────────────┘           └─────────────┘
 ```
+
+## Crawling Strategy
+
+Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or external worker. The `POST /crawl/crawl-now` endpoint processes each active product sequentially with a 7–12s random interval between crawls to avoid rate limiting.
+
+### Browser Modes
+
+1. **Launch mode** (default): Launches a headless Chromium instance per crawl.
+2. **CDP mode**: Connects to an existing browser via Chrome DevTools Protocol (`--remote-debugging-port=9222`). Reuses cookies/login sessions to bypass anti-bot detection.
+
+### Page Load Strategy
+
+- Uses `domcontentloaded` instead of `networkidle` (avoids stalling on ad trackers/WebSocket pings)
+- Explicitly waits for price selectors to appear
+- Stays 4–6 seconds on each page for full rendering (WebFont loading, especially JD's anti-scraping custom fonts)
+- Overall operation timeout: 90s
+
+### Anti-Bot Measures
+
+- CDP mode reuses real browser sessions (with login cookies)
+- Randomized delays between page interactions
+- Disabled automation-controlled blink feature
+- Proxy support for rotating IPs
 
 ## Data Model
 
@@ -98,41 +122,64 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 | Method | Path | Description |
 |--------|------|-------------|
 | POST | /config | Configure system settings |
-| GET | /health | Health check |
+| GET | /health | Health check (database + Redis) |
 | POST | /products | Add a product to track |
 | GET | /products | List all products |
 | GET | /products/{id} | Get product details |
 | GET | /products/{id}/history | Get price history |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
-| POST | /crawl/start | Manual crawl trigger |
+| POST | /crawl/crawl-now | Crawl all active products |
 | GET | /crawl/logs | Get recent crawl logs |
-
-## Crawling Strategy
-
-1. **Platform Adapters**: Each platform (Taobao, JD, Amazon) has a dedicated adapter
-2. **Playwright**: Used for dynamic page rendering (JS-rendered content)
-3. **Rate Limiting**: Max 1 request per 1-2 seconds per product
-4. **Anti-Bot**: Randomized user agents, viewport, and delays
-5. **Retry Logic**: Exponential backoff for transient failures
+| POST | /crawl/cleanup | Delete old data |
 
 ## Notification System
 
 - **Feishu Webhook**: JSON payload with text message
-- **Idempotency**: Store last_notified_price to prevent duplicate alerts
-- **Retry**: 3 attempts with exponential backoff (1m, 5m, 15m)
+- **Idempotency**: Store last_notified_price to prevent duplicate alerts (only notifies if new price is lower than the last notified price)
+- **Retry**: 3 attempts with exponential backoff
+- **Alert Logic**: Compares the latest two price history records. If the drop percentage >= threshold_percent, sends notification.
 - **Payload Format**:
 ```json
 {
   "msg_type": "text",
   "content": {
-    "text": "Price Drop Alert: [Product] on [Platform] dropped from ¥{old} to ¥{new}. Link: {url}"
+    "text": "Price Drop Alert: {title_or_url}\nPlatform: {platform}\nOld Price: {old} {currency}\nNew Price: {new} {currency}\nDrop: {percent}%\nLink: {url}"
   }
 }
 ```
 
+## Platform Adapter Pattern
+
+```
+app/platforms/base.py     — BasePlatformAdapter (ABC): _init_browser, crawl, extract_price/title
+app/platforms/taobao.py   — TaobaoAdapter
+app/platforms/jd.py       — JDAdapter
+app/platforms/amazon.py   — AmazonAdapter
+```
+
+Each adapter implements `extract_price()` and `extract_title()`. The base class manages browser lifecycle (launch or CDP connection), page navigation with timeout handling, and error recovery.
+
 ## Data Retention
 
-- Price history retained for 1 year (configurable)
-- Automatic prune job runs daily
-- Crawl logs retained for 30 days
+- Price history and crawl logs retained based on `data_retention_days` (default: 365 days)
+- Cleanup triggered via `POST /crawl/cleanup` endpoint
+- Accepts a `retention_days` query parameter (capped by config setting)
+
+## Configuration
+
+All settings via environment variables in `.env` (loaded via Pydantic Settings):
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| DATABASE_URL | PostgreSQL async connection URL | `postgresql+asyncpg://...` |
+| REDIS_URL | Redis connection URL | `redis://localhost:6379/0` |
+| REDIS_PASSWORD | Redis password (alternative to URL) | |
+| FEISHU_WEBHOOK_URL | Feishu webhook URL for notifications | |
+| CDP_ENABLED | Enable CDP mode (connect to existing browser) | `false` |
+| CDP_URL | CDP endpoint for existing browser | `http://127.0.0.1:9222` |
+| CRAWL_PROXY_ENABLED | Enable proxy for crawling | `false` |
+| CRAWL_PROXY_URL | Proxy URL | |
+| CRAWL_FREQUENCY_HOURS | Hours between crawls | `1` |
+| DATA_RETENTION_DAYS | Days to retain price history | `365` |
+| JD_COOKIE | JD cookie string for login session | |

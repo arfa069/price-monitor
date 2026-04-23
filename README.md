@@ -5,8 +5,9 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 ## Features
 
 - Track product prices across multiple platforms
-- Automated crawling with Playwright (handles dynamic pages)
+- Automated crawling with Playwright (handles dynamic JS-rendered pages)
 - Price drop alerts via Feishu Webhook
+- CDP mode: reuse an existing browser session to bypass login walls and anti-bot detection
 - RESTful API for product and alert management
 
 ## Quick Start
@@ -15,16 +16,18 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 # Install dependencies
 pip install -e .
 
-# 1. Configure .env
-cp .env.example .env
-# 2. Edit .env with your database, Redis, and Feishu webhook URL
+# 1. Create and edit .env
+# Required: DATABASE_URL, REDIS_URL, FEISHU_WEBHOOK_URL
+# See the Configuration section below for the full .env content.
 
-# 3. Run migrations
+# 2. Run migrations
 alembic upgrade head
 
-# 4. Start the server
-uvicorn app.main:app --reload
+# 3. Start the server
+uvicorn app.main:app
 ```
+
+> **Windows note**: Do **not** add `--reload` — it breaks Playwright's subprocess handling. Use `uvicorn app.main:app` or `python -m app.main` instead.
 
 ## Configuration
 
@@ -35,17 +38,24 @@ DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/pricemonitor
 REDIS_URL=redis://localhost:6379/0
 FEISHU_WEBHOOK_URL=https://open.feishu.cn/open-apis/bot/v2/hook/xxx
 
+# CDP mode — connect to an already-running browser (e.g. Edge/Chrome started with --remote-debugging-port=9222)
+# This lets you reuse login sessions to bypass anti-bot detection
+CDP_ENABLED=true
+CDP_URL=http://127.0.0.1:9222
+
+# Proxy (optional, for rotating IPs)
+CRAWL_PROXY_ENABLED=false
+CRAWL_PROXY_URL=http://user:pass@host:port
+
 # Platform credentials (optional)
-TAOBAO_COOKIE=...
-JD_UID=...
-AMAZON_EMAIL=...
+JD_COOKIE=...
 ```
 
 ## API Endpoints
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /health | Health check |
+| GET | /health | Health check (database + Redis) |
 | POST | /config | Configure system settings |
 | POST | /products | Add a product to track |
 | GET | /products | List all products |
@@ -53,8 +63,9 @@ AMAZON_EMAIL=...
 | GET | /products/{id}/history | Get price history |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
-| POST | /crawl/start | Manual crawl trigger |
+| POST | /crawl/crawl-now | Crawl all active products |
 | GET | /crawl/logs | Get recent crawl logs |
+| POST | /crawl/cleanup | Delete old price history and crawl logs |
 
 ## Development
 
@@ -72,10 +83,13 @@ coverage report
 
 ## Architecture
 
-- **FastAPI**: Web framework
+- **FastAPI**: Web framework (async via asyncio)
 - **PostgreSQL**: Database (async via SQLAlchemy)
-- **Playwright**: Web crawler for dynamic pages
+- **Playwright**: Web crawler for dynamic pages (launch or CDP mode)
+- **Redis**: Cache layer
 - **Feishu Webhook**: Notification service
+
+Crawl tasks run **directly in FastAPI's async context** — no Celery or background worker needed. Each crawl uses a 90s timeout with platform-specific price selectors.
 
 See `ARCHITECTURE.md` for detailed architecture.
 

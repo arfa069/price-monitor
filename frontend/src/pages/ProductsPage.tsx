@@ -1,14 +1,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   Table, Button, Space, Input, Select, Tag, Popconfirm,
-  Modal, Form, message, notification, Card, Row, Col,
+  Card, message, notification, Row, Col,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
   SearchOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import type { Product, BatchOperationResult } from '@/types'
+import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
   useBatchCreate, useBatchDelete, useBatchUpdate,
@@ -98,7 +98,7 @@ export default function ProductsPage() {
         </Space>
       ),
     },
-  ], [deleteMutation])
+  ], [])  // deleteMutation stable — no need in deps
 
   const handleDelete = (id: number) => {
     deleteMutation.mutate(id, {
@@ -115,6 +115,7 @@ export default function ProductsPage() {
         showBatchResult('批量删除', results)
         setSelectedRowKeys([])
       },
+      onError: (err: any) => message.error('批量操作失败：' + (err.message || '未知错误')),
     })
   }
 
@@ -126,6 +127,7 @@ export default function ProductsPage() {
         showBatchResult(active ? '批量启用' : '批量停用', results)
         setSelectedRowKeys([])
       },
+      onError: (err: any) => message.error('批量操作失败：' + (err.message || '未知错误')),
     })
   }
 
@@ -144,7 +146,7 @@ export default function ProductsPage() {
     }
   }
 
-  const handleFormSubmit = (values: any) => {
+  const handleFormSubmit = (values: ProductFormValues) => {
     if (editModal.record) {
       updateMutation.mutate({ id: editModal.record.id, data: values }, {
         onSuccess: () => {
@@ -153,17 +155,17 @@ export default function ProductsPage() {
         },
       })
     } else {
-      createMutation.mutate(values, {
+      createMutation.mutate(values as ProductFormValues & { platform: NonNullable<ProductFormValues['platform']> }, {
         onSuccess: () => {
           message.success('添加成功')
           setCreateFormOpen(false)
         },
-        onError: () => message.error('添加失败'),
+        onError: (err: any) => message.error('添加失败：' + (err.message || '未知错误')),
       })
     }
   }
 
-  const handleBatchImport = (items: { url: string; platform: string; title?: string }[]) => {
+  const handleBatchImport = (items: BatchImportRow[]) => {
     batchCreate.mutate(items as any, {
       onSuccess: (res) => {
         const results = res.data

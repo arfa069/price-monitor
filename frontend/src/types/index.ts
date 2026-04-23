@@ -22,10 +22,22 @@ export interface ProductCreateRequest {
 }
 
 export interface ProductUpdateRequest {
-  platform?: 'taobao' | 'jd' | 'amazon'
   title?: string
   active?: boolean
   url?: string
+}
+
+export interface ProductFormValues {
+  platform?: 'taobao' | 'jd' | 'amazon'
+  url: string
+  title?: string
+  active?: boolean
+}
+
+export interface BatchImportRow {
+  url: string
+  platform: string
+  title?: string
 }
 
 export interface BatchCreateItem {

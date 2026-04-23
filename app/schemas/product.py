@@ -1,24 +1,25 @@
 """Product schemas."""
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field, HttpUrl
-from app.schemas.price_history import PriceHistorySummary
+
+from pydantic import BaseModel, Field
+
 from app.schemas.alert import AlertResponse
+from app.schemas.price_history import PriceHistorySummary
 
 
 class ProductCreate(BaseModel):
     """Schema for creating a product to track."""
     platform: str = Field(..., pattern="^(taobao|jd|amazon)$", description="Platform: taobao, jd, or amazon")
     url: str = Field(..., description="Product URL")
-    title: Optional[str] = Field(default=None, description="Product title (auto-fetched if not provided)")
+    title: str | None = Field(default=None, description="Product title (auto-fetched if not provided)")
     active: bool = Field(default=True, description="Whether monitoring is active")
 
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product."""
-    title: Optional[str] = None
-    active: Optional[bool] = None
-    url: Optional[str] = None
+    title: str | None = None
+    active: bool | None = None
+    url: str | None = None
 
 
 class ProductResponse(BaseModel):
@@ -27,7 +28,7 @@ class ProductResponse(BaseModel):
     user_id: int
     platform: str
     url: str
-    title: Optional[str]
+    title: str | None
     active: bool
     created_at: datetime
     updated_at: datetime
@@ -37,5 +38,42 @@ class ProductResponse(BaseModel):
 
 class ProductDetail(ProductResponse):
     """Schema for product detail with relationships."""
-    price_history: Optional[List[PriceHistorySummary]] = None
-    alerts: Optional[List[AlertResponse]] = None
+    price_history: list[PriceHistorySummary] | None = None
+    alerts: list[AlertResponse] | None = None
+
+
+class ProductListResponse(BaseModel):
+    """Paginated product list response."""
+    items: list[ProductResponse]
+    total: int
+
+
+class ProductBatchCreateItem(BaseModel):
+    """Single item for batch create."""
+    url: str = Field(..., description="Product URL")
+    platform: str | None = Field(default=None, pattern="^(taobao|jd|amazon)$", description="Platform (auto-detected if omitted)")
+    title: str | None = None
+
+
+class ProductBatchCreate(BaseModel):
+    """Batch create products."""
+    items: list[ProductBatchCreateItem] = Field(..., max_length=100)
+
+
+class BatchOperationResult(BaseModel):
+    """Result of a single batch operation item."""
+    id: int | None = None
+    url: str | None = None
+    success: bool
+    error: str | None = None
+
+
+class ProductBatchUpdate(BaseModel):
+    """Batch update products."""
+    ids: list[int] = Field(..., max_length=100)
+    active: bool | None = None
+
+
+class ProductBatchDelete(BaseModel):
+    """Batch delete products."""
+    ids: list[int] = Field(..., max_length=100)

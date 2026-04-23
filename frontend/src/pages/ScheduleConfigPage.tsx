@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Form, InputNumber, Button, Card, message, Alert, Input, Radio, Space } from 'antd'
+import { Form, InputNumber, Button, Card, message, Alert, Input, Radio, Space, Skeleton } from 'antd'
 import { SaveOutlined, UndoOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import type { UserConfig } from '@/types'
@@ -149,7 +149,12 @@ export default function ScheduleConfigPage() {
         }}
         onFinish={handleSaveHours}
       >
-        <Card title="爬取频率配置" loading={isLoading && !config}>
+        {isLoading && !config ? (
+          <Card title="爬取频率配置">
+            <Skeleton active paragraph={{ rows: 4 }} />
+          </Card>
+        ) : (
+        <Card title="爬取频率配置">
           {/* Schedule mode selector */}
           <Form.Item label="调度模式" style={{ marginBottom: 16 }}>
             <Radio.Group
@@ -217,10 +222,16 @@ export default function ScheduleConfigPage() {
             </>
           )}
         </Card>
+        )}
       </Form>
 
       {/* Webhook config */}
-      <Card title="数据保留（其他配置）" style={{ marginTop: 24 }} loading={isLoading && !config}>
+      {isLoading && !config ? (
+        <Card title="数据保留（其他配置）" style={{ marginTop: 24 }}>
+          <Skeleton active paragraph={{ rows: 2 }} />
+        </Card>
+      ) : (
+      <Card title="数据保留（其他配置）" style={{ marginTop: 24 }}>
         <Form
           form={form}
           layout="vertical"
@@ -243,6 +254,7 @@ export default function ScheduleConfigPage() {
           </Form.Item>
         </Form>
       </Card>
+      )}
     </div>
   )
 }

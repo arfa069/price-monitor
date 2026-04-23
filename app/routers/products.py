@@ -1,5 +1,4 @@
 """Products API router."""
-import re
 from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -167,11 +166,6 @@ def _detect_platform(url: str) -> str | None:
     return None
 
 
-def _url_pattern_validate(url: str) -> bool:
-    """Basic URL validation."""
-    return bool(re.match(r'^https?://[^\s/$.?#].[^\s]*$', url))
-
-
 @router.post("/batch-create", response_model=list[BatchOperationResult])
 async def batch_create_products(
     batch: ProductBatchCreate,
@@ -203,8 +197,8 @@ async def batch_create_products(
         if url in existing_urls:
             results.append(BatchOperationResult(url=url, success=False, error="该 URL 已存在"))
             continue
-        # Detect/validate platform
-        if not _url_pattern_validate(url):
+        # Basic URL format check (schema-level validation for ProductCreate catches most cases)
+        if not (url.startswith("http://") or url.startswith("https://")):
             results.append(BatchOperationResult(url=url, success=False, error="URL 格式不正确"))
             continue
         detected = _detect_platform(url)

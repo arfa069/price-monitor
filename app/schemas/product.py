@@ -1,7 +1,7 @@
 """Product schemas."""
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.alert import AlertResponse
 from app.schemas.price_history import PriceHistorySummary
@@ -14,12 +14,30 @@ class ProductCreate(BaseModel):
     title: str | None = Field(default=None, description="Product title (auto-fetched if not provided)")
     active: bool = Field(default=True, description="Whether monitoring is active")
 
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        if not v.startswith("http://") and not v.startswith("https://"):
+            raise ValueError("URL must start with http:// or https://")
+        return v
+
 
 class ProductUpdate(BaseModel):
     """Schema for updating a product."""
     title: str | None = None
     active: bool | None = None
-    url: str | None = None
+    url: str | None = Field(default=None, description="Product URL (cannot be cleared)")
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        if not v.strip():
+            raise ValueError("URL cannot be empty")
+        if not v.startswith("http://") and not v.startswith("https://"):
+            raise ValueError("URL must start with http:// or https://")
+        return v
 
 
 class ProductResponse(BaseModel):

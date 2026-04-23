@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   Table, Button, Space, Input, Select, Tag, Popconfirm,
-  Card, message, notification, Row, Col,
+  Card, message, notification, Row, Col, Alert,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
@@ -40,7 +40,7 @@ export default function ProductsPage() {
     return () => clearTimeout(timer)
   }, [keyword])
 
-  const { data, isLoading, refetch } = useProducts({
+  const { data, isLoading, isError, refetch } = useProducts({
     page,
     size,
     platform,
@@ -232,6 +232,17 @@ export default function ProductsPage() {
             </Col>
           </Row>
         </Card>
+
+        {/* Error state */}
+        {isError && (
+          <Alert
+            type="error"
+            message="加载失败"
+            description="无法获取商品列表，请检查网络或重试。"
+            action={<Button size="small" onClick={() => refetch()}>重试</Button>}
+            style={{ marginBottom: 16 }}
+          />
+        )}
 
         {/* Data table */}
         <Table<Product>

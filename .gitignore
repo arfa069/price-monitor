@@ -28,3 +28,16 @@ Thumbs.db
 # Database
 *.db
 *.sqlite3
+
+# Worktrees
+.worktrees/
+
+# Dev artifacts (to be ignored)
+TODOS.md
+plan/
+
+# AGENTS.md files in subdirectories
+alembic/AGENTS.md
+app/AGENTS.md
+tests/AGENTS.md
+.gstack/

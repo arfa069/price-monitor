@@ -28,3 +28,6 @@ Thumbs.db
 # Database
 *.db
 *.sqlite3
+
+# Worktrees
+.worktrees/

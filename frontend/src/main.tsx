@@ -8,9 +8,11 @@ const queryCache = new QueryCache({
   onError: (error) => {
     const err = error as { response?: { status?: number }; code?: string }
     if (err.response?.status != null && err.response.status >= 500) {
-      message.error('服务器错误，请稍后重试')
+      // Handled by axios interceptor (client.ts)
     } else if (err.code === 'ECONNABORTED' || !err.response) {
-      message.error('请求超时或网络错误，请检查网络连接')
+      // Handled by axios interceptor (client.ts)
+    } else if (err.response?.status != null && err.response.status >= 400) {
+      message.error('请求失败：' + (err as any).message)
     }
   },
 })

@@ -9,6 +9,15 @@ const TZ_DRAFT_KEY = 'crawl_timezone_draft'
 
 type ScheduleMode = 'hours' | 'cron'
 
+// Cron validation (mirrors backend regex in app/schemas/user.py)
+const CRON_SEGMENT_RE = /^\*|[0-9]+(?:-[0-9]+)?(?:\/[0-9]+)?$/
+
+const isValidCronFormat = (value: string): boolean => {
+  const parts = value.trim().split(/\s+/)
+  if (parts.length !== 5) return false
+  return parts.every(p => CRON_SEGMENT_RE.test(p))
+}
+
 export default function ScheduleConfigPage() {
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
@@ -64,14 +73,6 @@ export default function ScheduleConfigPage() {
     setCronValid(config?.crawl_cron ? isValidCronFormat(config.crawl_cron) : null)
     setCronTimezone(config?.crawl_timezone || 'Asia/Shanghai')
     setScheduleMode(config?.crawl_cron ? 'cron' : 'hours')
-  }
-
-  // Cron validation (mirrors backend regex in app/schemas/user.py)
-  const isValidCronFormat = (value: string): boolean => {
-    const parts = value.trim().split(/\s+/)
-    if (parts.length !== 5) return false
-    const segmentRe = /^(\*|[0-9]+(-[0-9]+)?)(/[0-9]+)?(,(\*|[0-9]+(-[0-9]+)?)(/[0-9]+)?)*$/
-    return parts.every(p => segmentRe.test(p))
   }
 
   const handleCronChange = (value: string) => {

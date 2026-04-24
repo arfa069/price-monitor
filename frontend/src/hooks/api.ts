@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { productsApi } from '@/api/products'
 import { configApi } from '@/api/config'
+import { crawlApi } from '@/api/crawl'
+import { alertsApi } from '@/api/alerts'
+import type { AlertUpdateRequest } from '@/types'
 
 export const useProducts = (params: {
   platform?: string
@@ -87,5 +90,50 @@ export const useProductHistory = (id: number, days = 30) => {
     queryKey: ['product-history', id, days],
     queryFn: () => productsApi.history(id, days).then((res) => res.data),
     enabled: !!id,
+  })
+}
+
+export const useCrawlNow = () => {
+  return useMutation({
+    mutationFn: () => crawlApi.crawlNow().then((res) => res.data),
+  })
+}
+
+export const useAlerts = (productId?: number) => {
+  return useQuery({
+    queryKey: ['alerts', productId],
+    queryFn: () => alertsApi.list(productId !== undefined ? { product_id: productId } : undefined).then((res) => res.data),
+    enabled: productId !== undefined,
+  })
+}
+
+export const useCreateAlert = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: alertsApi.create,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alerts'] })
+    },
+  })
+}
+
+export const useUpdateAlert = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: AlertUpdateRequest }) =>
+      alertsApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alerts'] })
+    },
+  })
+}
+
+export const useDeleteAlert = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: alertsApi.delete,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['alerts'] })
+    },
   })
 }

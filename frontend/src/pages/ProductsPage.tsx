@@ -6,12 +6,13 @@ import {
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
   SearchOutlined, LineChartOutlined, ExportOutlined,
+  RocketOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
-  useBatchCreate, useBatchDelete, useBatchUpdate,
+  useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAlerts,
 } from '@/hooks/api'
 import BatchImportModal from '@/components/BatchImportModal'
 import ProductFormModal from '@/components/ProductFormModal'
@@ -55,6 +56,18 @@ export default function ProductsPage() {
   const batchCreate = useBatchCreate()
   const batchDelete = useBatchDelete()
   const batchUpdate = useBatchUpdate()
+  const crawlNow = useCrawlNow()
+  const { data: alertsData } = useAlerts(undefined as unknown as undefined)
+  const alertMap = useMemo(() => {
+    const map = new Map<number, { threshold_percent: number; active: boolean }>()
+    alertsData?.forEach((alert) => {
+      map.set(alert.product_id, {
+        threshold_percent: alert.threshold_percent || 0,
+        active: alert.active,
+      })
+    })
+    return map
+  }, [alertsData])
 
   // Auto-rollback page when current page becomes empty after batch delete
   useEffect(() => {
@@ -95,9 +108,23 @@ export default function ProductsPage() {
     },
     { title: '创建时间', dataIndex: 'created_at', width: 180, render: (v: string) => new Date(v).toLocaleString('zh-CN') },
     {
+      title: '告警',
+      key: 'alert',
+      width: 80,
+      render: (_: any, record: Product) => {
+        const alert = alertMap.get(record.id)
+        if (!alert) return <Tag>未设置</Tag>
+        return alert.active ? (
+          <Tag color="orange">{String(alert.threshold_percent)}%</Tag>
+        ) : (
+          <Tag color="default">{String(alert.threshold_percent)}% (停用)</Tag>
+        )
+      },
+    },
+    {
       title: '操作',
       key: 'action',
-      width: 320,
+      width: 380,
       render: (_, record: Product) => (
         <Space size={4}>
           <Button size="small" icon={<ExportOutlined />} onClick={() => window.open(record.url, '_blank')}>查看</Button>
@@ -185,6 +212,23 @@ export default function ProductsPage() {
     })
   }
 
+  const handleCrawlNow = () => {
+    crawlNow.mutate(undefined, {
+      onSuccess: (res) => {
+        if (res.status === 'skipped') {
+          message.warning('没有需要爬取的活跃商品')
+        } else if (res.status === 'error') {
+          message.error('爬取失败：' + (res.reason || '未知错误'))
+        } else {
+          message.success(`爬取完成：${res.success || 0} 成功，${res.errors || 0} 失败`)
+        }
+      },
+      onError: (err: any) => {
+        message.error('爬取请求失败：' + (err.message || '未知错误'))
+      },
+    })
+  }
+
   return (
     <div>
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
@@ -200,6 +244,7 @@ export default function ProductsPage() {
                 </Popconfirm>
                 <Button onClick={() => handleBatchUpdate(true)} disabled={selectedRowKeys.length === 0}>批量启用</Button>
                 <Button onClick={() => handleBatchUpdate(false)} disabled={selectedRowKeys.length === 0}>批量停用</Button>
+                <Button icon={<RocketOutlined />} onClick={handleCrawlNow} loading={crawlNow.isPending}>手动爬取</Button>
               </Space>
             </Col>
             <Col>

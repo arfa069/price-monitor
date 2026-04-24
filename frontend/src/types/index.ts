@@ -99,3 +99,14 @@ export interface AlertUpdateRequest {
   threshold_percent?: number
   active?: boolean
 }
+
+export interface CrawlLog {
+  id: number
+  product_id: number | null
+  platform: string | null
+  status: string | null
+  price: number | null
+  currency: string | null
+  timestamp: string
+  error_message: string | null
+}

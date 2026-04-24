@@ -137,3 +137,11 @@ export const useDeleteAlert = () => {
     },
   })
 }
+
+export const useCrawlLogs = (params?: { product_id?: number; hours?: number; limit?: number }) => {
+  return useQuery({
+    queryKey: ['crawl-logs', params],
+    queryFn: () => crawlApi.getLogs(params).then((res) => res.data),
+    refetchInterval: 60000, // 每分钟自动刷新
+  })
+}

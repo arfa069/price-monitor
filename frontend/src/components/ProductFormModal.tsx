@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Modal, Form, Input, Select, Switch, InputNumber, Button, Divider, Space, Popconfirm } from 'antd'
+import { Modal, Form, Input, Select, Switch, InputNumber, Button, Divider, Space, Popconfirm, message } from 'antd'
 import { AlertOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert } from '@/hooks/api'
 import type { Product } from '@/types'
@@ -119,20 +119,25 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
             checked={alertEnabled}
             onChange={async (checked) => {
               setAlertEnabled(checked)
-              if (currentAlertId) {
-                await updateAlertMutation.mutateAsync({
-                  id: currentAlertId,
-                  data: { active: checked },
-                })
-                refetchAlert()
-              } else if (checked && record?.id) {
-                const res = await createAlertMutation.mutateAsync({
-                  product_id: record.id,
-                  threshold_percent: alertThreshold,
-                  active: true,
-                })
-                setCurrentAlertId(res.id)
-                refetchAlert()
+              try {
+                if (currentAlertId) {
+                  await updateAlertMutation.mutateAsync({
+                    id: currentAlertId,
+                    data: { active: checked },
+                  })
+                  refetchAlert()
+                } else if (checked && record?.id) {
+                  const res = await createAlertMutation.mutateAsync({
+                    product_id: record.id,
+                    threshold_percent: alertThreshold,
+                    active: true,
+                  })
+                  setCurrentAlertId(res.id)
+                  refetchAlert()
+                }
+              } catch {
+                setAlertEnabled(!checked)
+                message.error('操作失败')
               }
             }}
           />
@@ -153,11 +158,16 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
             size="small"
             onClick={async () => {
               if (currentAlertId) {
-                await updateAlertMutation.mutateAsync({
-                  id: currentAlertId,
-                  data: { threshold_percent: alertThreshold },
-                })
-                refetchAlert()
+                try {
+                  await updateAlertMutation.mutateAsync({
+                    id: currentAlertId,
+                    data: { threshold_percent: alertThreshold },
+                  })
+                  refetchAlert()
+                  message.success('阈值已保存')
+                } catch {
+                  message.error('保存失败')
+                }
               }
             }}
           >
@@ -169,10 +179,15 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
           <Popconfirm
             title="确定删除此商品的告警？"
             onConfirm={async () => {
-              await deleteAlertMutation.mutateAsync(currentAlertId)
-              setCurrentAlertId(null)
-              setAlertEnabled(false)
-              refetchAlert()
+              try {
+                await deleteAlertMutation.mutateAsync(currentAlertId)
+                setCurrentAlertId(null)
+                setAlertEnabled(false)
+                refetchAlert()
+                message.success('告警已删除')
+              } catch {
+                message.error('删除失败')
+              }
             }}
           >
             <Button size="small" danger icon={<DeleteOutlined />}>

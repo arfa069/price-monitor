@@ -1,4 +1,5 @@
 import api from './client'
+import type { CrawlLog } from '@/types'
 
 export interface CrawlNowResponse {
   status: 'completed' | 'skipped' | 'error'
@@ -7,17 +8,6 @@ export interface CrawlNowResponse {
   errors?: number
   details?: unknown[]
   reason?: string
-}
-
-export interface CrawlLog {
-  id: number
-  product_id: number | null
-  platform: string
-  status: string
-  price: number | null
-  currency: string | null
-  timestamp: string
-  error_message: string | null
 }
 
 export const crawlApi = {

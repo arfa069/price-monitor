@@ -5,7 +5,7 @@ import {
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
-  SearchOutlined, LineChartOutlined,
+  SearchOutlined, LineChartOutlined, ExportOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
@@ -97,9 +97,10 @@ export default function ProductsPage() {
     {
       title: '操作',
       key: 'action',
-      width: 220,
+      width: 280,
       render: (_, record: Product) => (
         <Space>
+          <Button size="small" icon={<ExportOutlined />} onClick={() => window.open(record.url, '_blank')}>查看</Button>
           <Button size="small" icon={<LineChartOutlined />} onClick={() => setTrendModal({ open: true, product: record })}>趋势</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => setEditModal({ open: true, record })}>编辑</Button>
           <Popconfirm title="确定删除此商品？" onConfirm={() => handleDelete(record.id)}>

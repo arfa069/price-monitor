@@ -5,7 +5,7 @@ import {
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
-  SearchOutlined,
+  SearchOutlined, LineChartOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
@@ -15,6 +15,7 @@ import {
 } from '@/hooks/api'
 import BatchImportModal from '@/components/BatchImportModal'
 import ProductFormModal from '@/components/ProductFormModal'
+import PriceTrendModal from '@/components/PriceTrendModal'
 
 const PLATFORM_COLORS: Record<string, string> = {
   taobao: '#f97316',
@@ -33,6 +34,7 @@ export default function ProductsPage() {
   const [createFormOpen, setCreateFormOpen] = useState(false)
   const [editModal, setEditModal] = useState<{ open: boolean; record?: Product }>({ open: false })
   const [batchImportOpen, setBatchImportOpen] = useState(false)
+  const [trendModal, setTrendModal] = useState<{ open: boolean; product?: Product }>({ open: false })
 
   // Debounce keyword: delay 400ms after last keystroke
   useEffect(() => {
@@ -95,9 +97,10 @@ export default function ProductsPage() {
     {
       title: '操作',
       key: 'action',
-      width: 180,
+      width: 220,
       render: (_, record: Product) => (
         <Space>
+          <Button size="small" icon={<LineChartOutlined />} onClick={() => setTrendModal({ open: true, product: record })}>趋势</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => setEditModal({ open: true, record })}>编辑</Button>
           <Popconfirm title="确定删除此商品？" onConfirm={() => handleDelete(record.id)}>
             <Button size="small" danger icon={<DeleteOutlined />}>删除</Button>
@@ -298,6 +301,13 @@ export default function ProductsPage() {
         onImport={handleBatchImport}
         confirmLoading={batchCreate.isPending}
         existingUrls={data?.items.map((p) => p.url) || []}
+      />
+
+      {/* Price trend modal */}
+      <PriceTrendModal
+        open={trendModal.open}
+        product={trendModal.product}
+        onCancel={() => setTrendModal({ open: false })}
       />
     </div>
   )

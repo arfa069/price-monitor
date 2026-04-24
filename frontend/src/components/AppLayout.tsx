@@ -9,7 +9,13 @@ import {
 
 const { Sider, Content, Header, Footer } = Layout
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({
+  children,
+  onRefresh
+}: {
+  children: React.ReactNode
+  onRefresh?: () => void
+}) {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
@@ -41,7 +47,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           价格监控系统
         </div>
         <div style={{ flex: 1 }} />
-        <Button type="text" icon={<ReloadOutlined />} style={{ color: '#fff' }}>
+        <Button
+          type="text"
+          icon={<ReloadOutlined />}
+          style={{ color: '#fff' }}
+          onClick={onRefresh}
+        >
           刷新
         </Button>
       </Header>

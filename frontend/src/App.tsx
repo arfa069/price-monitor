@@ -1,10 +1,18 @@
+import { useCallback } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
+import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/AppLayout'
 import ProductsPage from '@/pages/ProductsPage'
 import ScheduleConfigPage from '@/pages/ScheduleConfigPage'
 
 export default function App() {
+  const queryClient = useQueryClient()
+
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries()
+  }, [queryClient])
+
   return (
     <ConfigProvider
       theme={{
@@ -17,7 +25,7 @@ export default function App() {
       }}
     >
       <BrowserRouter>
-        <AppLayout>
+        <AppLayout onRefresh={handleRefresh}>
           <Routes>
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/schedule" element={<ScheduleConfigPage />} />

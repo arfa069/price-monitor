@@ -1,5 +1,7 @@
-import { useEffect } from 'react'
-import { Modal, Form, Input, Select, Switch } from 'antd'
+import { useState, useEffect } from 'react'
+import { Modal, Form, Input, Select, Switch, InputNumber, Button, Divider, Space, Popconfirm } from 'antd'
+import { AlertOutlined, DeleteOutlined } from '@ant-design/icons'
+import { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert } from '@/hooks/api'
 import type { Product } from '@/types'
 
 interface Props {
@@ -21,6 +23,15 @@ const detectPlatform = (url: string): string | null => {
 export default function ProductFormModal({ open, record, onCancel, onSubmit, confirmLoading }: Props) {
   const [form] = Form.useForm()
 
+  const [alertEnabled, setAlertEnabled] = useState(false)
+  const [alertThreshold, setAlertThreshold] = useState(5)
+  const [currentAlertId, setCurrentAlertId] = useState<number | null>(null)
+
+  const { data: alertData, refetch: refetchAlert } = useAlerts(record?.id)
+  const createAlertMutation = useCreateAlert()
+  const updateAlertMutation = useUpdateAlert()
+  const deleteAlertMutation = useDeleteAlert()
+
   useEffect(() => {
     if (record) {
       form.setFieldsValue({
@@ -33,6 +44,19 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
       form.resetFields()
     }
   }, [record, open, form])
+
+  useEffect(() => {
+    if (alertData && alertData.length > 0) {
+      const alert = alertData[0]
+      setCurrentAlertId(alert.id)
+      setAlertEnabled(alert.active)
+      setAlertThreshold(Number(alert.threshold_percent) || 5)
+    } else {
+      setCurrentAlertId(null)
+      setAlertEnabled(false)
+      setAlertThreshold(5)
+    }
+  }, [alertData])
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!record) {
@@ -80,6 +104,83 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
           <Switch />
         </Form.Item>
       </Form>
+
+      <Divider orientation="left" plain>
+        <Space>
+          <AlertOutlined />
+          价格告警设置
+        </Space>
+      </Divider>
+
+      <Space direction="vertical" style={{ width: '100%' }}>
+        <Space>
+          <span>启用告警：</span>
+          <Switch
+            checked={alertEnabled}
+            onChange={async (checked) => {
+              setAlertEnabled(checked)
+              if (currentAlertId) {
+                await updateAlertMutation.mutateAsync({
+                  id: currentAlertId,
+                  data: { active: checked },
+                })
+                refetchAlert()
+              } else if (checked && record?.id) {
+                const res = await createAlertMutation.mutateAsync({
+                  product_id: record.id,
+                  threshold_percent: alertThreshold,
+                  active: true,
+                })
+                setCurrentAlertId(res.id)
+                refetchAlert()
+              }
+            }}
+          />
+        </Space>
+
+        <Space>
+          <span>降价阈值：</span>
+          <InputNumber
+            min={1}
+            max={100}
+            value={alertThreshold}
+            onChange={(val) => setAlertThreshold(val || 5)}
+            disabled={!currentAlertId}
+            addonAfter="%"
+            style={{ width: 120 }}
+          />
+          <Button
+            size="small"
+            onClick={async () => {
+              if (currentAlertId) {
+                await updateAlertMutation.mutateAsync({
+                  id: currentAlertId,
+                  data: { threshold_percent: alertThreshold },
+                })
+                refetchAlert()
+              }
+            }}
+          >
+            保存阈值
+          </Button>
+        </Space>
+
+        {currentAlertId && (
+          <Popconfirm
+            title="确定删除此商品的告警？"
+            onConfirm={async () => {
+              await deleteAlertMutation.mutateAsync(currentAlertId)
+              setCurrentAlertId(null)
+              setAlertEnabled(false)
+              refetchAlert()
+            }}
+          >
+            <Button size="small" danger icon={<DeleteOutlined />}>
+              删除告警
+            </Button>
+          </Popconfirm>
+        )}
+      </Space>
     </Modal>
   )
 }

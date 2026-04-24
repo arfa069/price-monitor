@@ -1,18 +1,19 @@
 import { useState, useMemo, useEffect } from 'react'
 import {
   Table, Button, Space, Input, Select, Tag, Popconfirm,
-  Card, message, notification, Row, Col, Alert,
+  Card, message, notification, Row, Col, Alert, Tooltip,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, ImportOutlined,
   SearchOutlined, LineChartOutlined, ExportOutlined,
-  RocketOutlined,
+  RocketOutlined, ReloadOutlined, HistoryOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
   useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAlerts,
+  useCrawlLogs,
 } from '@/hooks/api'
 import BatchImportModal from '@/components/BatchImportModal'
 import ProductFormModal from '@/components/ProductFormModal'
@@ -57,6 +58,7 @@ export default function ProductsPage() {
   const batchDelete = useBatchDelete()
   const batchUpdate = useBatchUpdate()
   const crawlNow = useCrawlNow()
+  const { data: crawlLogs, isLoading: logsLoading, refetch: refetchLogs } = useCrawlLogs({ limit: 10 })
   const { data: alertsData } = useAlerts(undefined as unknown as undefined)
   const alertMap = useMemo(() => {
     const map = new Map<number, { threshold_percent: number; active: boolean }>()
@@ -330,6 +332,98 @@ export default function ProductsPage() {
           </div>
         )}
       </Space>
+
+      {/* Crawl Logs Panel */}
+      <Card
+        size="small"
+        title={
+          <Space>
+            <HistoryOutlined />
+            最近爬取记录
+            {crawlLogs && (
+              <span style={{ fontSize: 12, color: '#64748b' }}>
+                ({crawlLogs.length} 条)
+              </span>
+            )}
+          </Space>
+        }
+        extra={
+          <Button
+            size="small"
+            icon={<ReloadOutlined />}
+            onClick={() => refetchLogs()}
+            loading={logsLoading}
+          >
+            刷新
+          </Button>
+        }
+        style={{ marginTop: 16 }}
+      >
+        {logsLoading && crawlLogs?.length === 0 ? (
+          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>
+            加载中...
+          </div>
+        ) : crawlLogs && crawlLogs.length > 0 ? (
+          <Table
+            size="small"
+            dataSource={crawlLogs}
+            rowKey="id"
+            pagination={false}
+            scroll={{ x: 800 }}
+            columns={[
+              {
+                title: '时间',
+                dataIndex: 'timestamp',
+                width: 160,
+                render: (v: string) => new Date(v).toLocaleString('zh-CN'),
+              },
+              {
+                title: '平台',
+                dataIndex: 'platform',
+                width: 80,
+                render: (v: string) => {
+                  const colors: Record<string, string> = { taobao: '#f97316', jd: '#dc2626', amazon: '#2563eb' }
+                  return <Tag color={colors[v] || 'default'}>{v === 'taobao' ? '淘宝' : v === 'jd' ? '京东' : v || '-'}</Tag>
+                },
+              },
+              {
+                title: '状态',
+                dataIndex: 'status',
+                width: 100,
+                render: (v: string) => {
+                  const config: Record<string, { color: string; text: string }> = {
+                    SUCCESS: { color: 'success', text: '成功' },
+                    ERROR: { color: 'error', text: '失败' },
+                    SKIPPED: { color: 'default', text: '跳过' },
+                  }
+                  const c = config[v] || { color: 'default', text: v || '-' }
+                  return <Tag color={c.color}>{c.text}</Tag>
+                },
+              },
+              {
+                title: '价格',
+                dataIndex: 'price',
+                width: 100,
+                render: (v: number) => v ? `¥${v}` : '-',
+              },
+              {
+                title: '错误信息',
+                dataIndex: 'error_message',
+                ellipsis: true,
+                render: (v: string) => v ? (
+                  <Tooltip title={v}>
+                    <span style={{ color: '#dc2626' }}>{v}</span>
+                  </Tooltip>
+                ) : '-',
+              },
+            ]}
+          />
+        ) : (
+          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>
+            暂无爬取记录
+          </div>
+        )}
+      </Card>
 
       {/* Create/Edit modal */}
       <ProductFormModal

@@ -124,13 +124,13 @@ export default function AppLayout({
         style={{
           flex: 1,
           marginTop: 56,
-          marginBottom: 40,
+          marginBottom: 56,
           marginLeft: siderWidth,
           padding: 20,
           background: '#fff',
           borderRadius: 8,
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-          minHeight: 'calc(100vh - 96px)',
+          minHeight: 'calc(100vh - 112px)',
           overflow: 'auto',
         }}
       >

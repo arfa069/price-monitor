@@ -5,6 +5,7 @@ import {
   ShoppingCartOutlined,
   ClockCircleOutlined,
   ReloadOutlined,
+  BarsOutlined,
 } from '@ant-design/icons'
 
 const { Sider, Content, Header, Footer } = Layout
@@ -16,7 +17,7 @@ export default function AppLayout({
   children: React.ReactNode
   onRefresh?: () => void
 }) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true) // 移动端默认折叠
   const navigate = useNavigate()
   const location = useLocation()
   const [selectedKey, setSelectedKey] = useState('/products')
@@ -47,6 +48,13 @@ export default function AppLayout({
           价格监控系统
         </div>
         <div style={{ flex: 1 }} />
+        <Button
+          type="text"
+          icon={<BarsOutlined />}
+          style={{ color: '#fff' }}
+          onClick={() => setCollapsed(!collapsed)}
+          aria-label={collapsed ? '展开菜单' : '收起菜单'}
+        />
         <Button
           type="text"
           icon={<ReloadOutlined />}

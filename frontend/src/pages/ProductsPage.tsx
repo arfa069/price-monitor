@@ -12,7 +12,7 @@ import type { ColumnsType } from 'antd/es/table'
 import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
-  useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAlerts,
+  useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAllAlerts,
   useCrawlLogs,
 } from '@/hooks/api'
 import BatchImportModal from '@/components/BatchImportModal'
@@ -59,7 +59,7 @@ export default function ProductsPage() {
   const batchUpdate = useBatchUpdate()
   const crawlNow = useCrawlNow()
   const { data: crawlLogs, isLoading: logsLoading, refetch: refetchLogs } = useCrawlLogs({ limit: 10 })
-  const { data: alertsData } = useAlerts(undefined as unknown as undefined)
+  const { data: alertsData } = useAllAlerts()
   const alertMap = useMemo(() => {
     const map = new Map<number, { threshold_percent: number; active: boolean }>()
     alertsData?.forEach((alert) => {

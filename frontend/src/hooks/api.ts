@@ -107,6 +107,13 @@ export const useAlerts = (productId?: number) => {
   })
 }
 
+export const useAllAlerts = () => {
+  return useQuery({
+    queryKey: ['alerts', 'all'],
+    queryFn: () => alertsApi.list().then((res) => res.data),
+  })
+}
+
 export const useCreateAlert = () => {
   const qc = useQueryClient()
   return useMutation({

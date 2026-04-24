@@ -9,15 +9,6 @@ import type {
   PriceHistoryRecord,
 } from '@/types'
 
-export interface CrawlNowResponse {
-  status: string
-  total?: number
-  success?: number
-  errors?: number
-  details?: Array<{ product_id: number; status: string; price?: number }>
-  reason?: string
-}
-
 export const productsApi = {
   list: (params: {
     platform?: string
@@ -49,6 +40,4 @@ export const productsApi = {
     api.get<PriceHistoryRecord[]>(`/products/${id}/history`, {
       params: { days, limit },
     }),
-
-  crawlNow: () => api.post<CrawlNowResponse>('/crawl/crawl-now'),
 }

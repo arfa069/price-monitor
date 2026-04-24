@@ -97,9 +97,9 @@ export default function ProductsPage() {
     {
       title: '操作',
       key: 'action',
-      width: 280,
+      width: 320,
       render: (_, record: Product) => (
-        <Space>
+        <Space size={4}>
           <Button size="small" icon={<ExportOutlined />} onClick={() => window.open(record.url, '_blank')}>查看</Button>
           <Button size="small" icon={<LineChartOutlined />} onClick={() => setTrendModal({ open: true, product: record })}>趋势</Button>
           <Button size="small" icon={<EditOutlined />} onClick={() => setEditModal({ open: true, record })}>编辑</Button>

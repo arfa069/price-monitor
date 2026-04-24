@@ -17,9 +17,9 @@ import BatchImportModal from '@/components/BatchImportModal'
 import ProductFormModal from '@/components/ProductFormModal'
 
 const PLATFORM_COLORS: Record<string, string> = {
-  taobao: '#13c2c2',
-  jd: '#722ed1',
-  amazon: '#1890ff',
+  taobao: '#f97316',
+  jd: '#dc2626',
+  amazon: '#2563eb',
 }
 
 export default function ProductsPage() {
@@ -84,7 +84,7 @@ export default function ProductsPage() {
       title: '状态',
       dataIndex: 'active',
       width: 80,
-      render: (v: boolean) => v ? <Tag color="green">启用</Tag> : <Tag color="red">停用</Tag>,
+      render: (v: boolean) => v ? <Tag color="success">启用</Tag> : <Tag color="error">停用</Tag>,
       filters: [
         { text: '启用', value: true },
         { text: '停用', value: false },
@@ -265,7 +265,7 @@ export default function ProductsPage() {
           locale={{
             emptyText: (
               <div style={{ padding: '40px 0' }}>
-                <p style={{ color: '#888', marginBottom: 16 }}>暂无商品</p>
+                <p style={{ color: '#64748b', marginBottom: 16 }}>暂无商品</p>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateFormOpen(true)}>
                   添加第一个商品
                 </Button>
@@ -276,7 +276,7 @@ export default function ProductsPage() {
 
         {/* Selection info */}
         {selectedRowKeys.length > 0 && (
-          <div style={{ color: '#888', fontSize: 12 }}>
+          <div style={{ color: '#64748b', fontSize: 12 }}>
             已选择 {selectedRowKeys.length} 项（仅当前页有效）
           </div>
         )}

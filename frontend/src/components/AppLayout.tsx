@@ -8,7 +8,7 @@ import {
   BarsOutlined,
 } from '@ant-design/icons'
 
-const { Sider, Content, Header, Footer } = Layout
+const { Sider, Header, Footer } = Layout
 
 export default function AppLayout({
   children,
@@ -17,7 +17,7 @@ export default function AppLayout({
   children: React.ReactNode
   onRefresh?: () => void
 }) {
-  const [collapsed, setCollapsed] = useState(true) // 移动端默认折叠
+  const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
   const [selectedKey, setSelectedKey] = useState('/products')
@@ -28,21 +28,32 @@ export default function AppLayout({
     else if (path === '/schedule') setSelectedKey('/schedule')
   }, [location])
 
+  const siderWidth = collapsed ? 60 : 180
+
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh', background: '#f1f5f9' }}>
+      {/* Header - 固定在顶部 */}
       <Header
         style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
-          background: '#001529',
+          height: 56,
+          background: '#0f172a',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }}
       >
         <div
           style={{
             color: '#fff',
-            fontSize: 18,
-            fontWeight: 'bold',
+            fontSize: 22,
+            fontWeight: 700,
+            letterSpacing: '-0.5px',
           }}
         >
           价格监控系统
@@ -64,63 +75,98 @@ export default function AppLayout({
           刷新
         </Button>
       </Header>
-      <Layout>
-        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-          <div
-            style={{
-              height: 32,
-              margin: 16,
-              color: '#fff',
-              fontSize: 16,
-              fontWeight: 'bold',
-              textAlign: 'center',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {collapsed ? '价' : '价格监控'}
-          </div>
-          <Menu
-            theme="dark"
-            selectedKeys={[selectedKey]}
-            onClick={({ key }) => navigate(key)}
-            items={[
-              {
-                key: '/products',
-                icon: <ShoppingCartOutlined />,
-                label: '商品管理',
-              },
-              {
-                key: '/schedule',
-                icon: <ClockCircleOutlined />,
-                label: '定时配置',
-              },
-            ]}
-          />
-        </Sider>
-        <Layout>
-          <Content
-            style={{
-              margin: '24px 16px',
-              padding: 24,
-              minHeight: 280,
-              background: '#fff',
-            }}
-          >
-            {children}
-          </Content>
-        </Layout>
-      </Layout>
-      <Footer
+
+      {/* Sidebar - 固定在左侧，不超出 footer */}
+      <Sider
+        collapsible
+        collapsed={collapsed}
+        onCollapse={setCollapsed}
         style={{
-          textAlign: 'center',
-          padding: '12px 24px',
-          background: '#001529',
-          color: '#fff',
-          fontSize: 12,
+          position: 'fixed',
+          top: 56,
+          left: 0,
+          bottom: 40,
+          zIndex: 100,
+          background: '#f8fafc',
+          boxShadow: '1px 0 3px rgba(0,0,0,0.04)',
+          overflow: 'auto',
+        }}
+        width={180}
+        collapsedWidth={60}
+        trigger={null}
+      >
+        <Menu
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          onClick={({ key }) => navigate(key)}
+          style={{
+            border: 'none',
+            background: 'transparent',
+            marginTop: 8,
+          }}
+          items={[
+            {
+              key: '/products',
+              icon: <ShoppingCartOutlined />,
+              label: '商品管理',
+            },
+            {
+              key: '/schedule',
+              icon: <ClockCircleOutlined />,
+              label: '定时配置',
+            },
+          ]}
+        />
+      </Sider>
+
+      {/* Content - 在 sidebar 和 footer 之间 */}
+      <div
+        style={{
+          flex: 1,
+          marginTop: 56,
+          marginBottom: 40,
+          marginLeft: siderWidth,
+          padding: 20,
+          background: '#fff',
+          borderRadius: 8,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+          minHeight: 'calc(100vh - 96px)',
+          overflow: 'auto',
         }}
       >
-        价格监控系统 v1.0 · 最后更新: {new Date().toLocaleString('zh-CN')}
+        {/* 覆盖 Card 边框，让子页面样式统一 */}
+        <style>{`
+          .ant-card-bordered {
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .ant-table-wrapper {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+        `}</style>
+        {children}
+      </div>
+
+      {/* Footer - 固定在底部 */}
+      <Footer
+        style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 1000,
+          textAlign: 'center',
+          padding: '12px 24px',
+          height: 40,
+          background: '#fff',
+          color: '#94a3b8',
+          fontSize: 12,
+          borderTop: '1px solid #e2e8f0',
+        }}
+      >
+        价格监控系统 v1.0
       </Footer>
     </Layout>
   )

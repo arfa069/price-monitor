@@ -18,8 +18,10 @@ export default function App() {
       theme={{
         algorithm: theme.defaultAlgorithm,
         token: {
-          colorPrimary: '#1677ff',
-          borderRadius: 6,
+          colorPrimary: '#2563eb',
+          colorBgLayout: '#f1f5f9',
+          colorTextSecondary: '#64748b',
+          borderRadius: 8,
           fontSize: 14,
         },
       }}

@@ -119,7 +119,7 @@ export default function ScheduleConfigPage() {
   }
 
   return (
-    <div style={{ maxWidth: 700 }}>
+    <div>
       {/* Draft restoration alert */}
       {draftDetected && pendingDraft && (
         <Alert
@@ -197,7 +197,7 @@ export default function ScheduleConfigPage() {
 
           {/* Cron-based config */}
           {scheduleMode === 'cron' && (
-            <>
+            <div style={{ maxWidth: 520 }}>
               <Form.Item label="Cron 表达式（5段格式）">
                 <Input
                   value={cronInput}
@@ -211,7 +211,7 @@ export default function ScheduleConfigPage() {
               {cronValid === false && (
                 <Alert message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）" type="error" showIcon style={{ marginBottom: 12 }} />
               )}
-              <Space>
+              <Space style={{ display: 'flex', width: '100%' }}>
                 <Button
                   type="primary"
                   icon={<SaveOutlined />}
@@ -226,11 +226,11 @@ export default function ScheduleConfigPage() {
                 </Button>
               </Space>
               {!cronInput && (
-                <div style={{ color: '#888', fontSize: 12, marginTop: 8 }}>
+                <div style={{ color: '#64748b', fontSize: 12, marginTop: 8 }}>
                   留空即不启用。合法示例：0 9 * * *（每天 9:00）
                 </div>
               )}
-            </>
+            </div>
           )}
         </Card>
         )}

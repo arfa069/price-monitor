@@ -1,12 +1,13 @@
 """Alerts API router."""
-from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+
 from app.database import get_db
 from app.models.alert import Alert
 from app.models.product import Product
-from app.schemas.alert import AlertCreate, AlertUpdate, AlertResponse
+from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -38,7 +39,7 @@ async def create_alert(
     return alert
 
 
-@router.get("", response_model=List[AlertResponse])
+@router.get("", response_model=list[AlertResponse])
 async def list_alerts(
     product_id: int | None = None,
     active: bool | None = None,

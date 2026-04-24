@@ -1,5 +1,6 @@
 """Base model with common fields."""
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from sqlalchemy import Column, DateTime
 from sqlalchemy.orm import declarative_base
 
@@ -8,7 +9,7 @@ Base = declarative_base()
 
 def _utc_now():
     """Return current UTC time as timezone-aware datetime."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 class TimestampMixin:

@@ -1,6 +1,16 @@
 """Crawl log model for tracking crawler activity."""
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, Text, ForeignKey, Index
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
+
 from app.models.base import Base
 
 

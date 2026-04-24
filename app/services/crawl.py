@@ -1,23 +1,22 @@
 """Crawl-related service functions: price history, logs, and alert checks."""
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
-from typing import List
 
 from sqlalchemy import select
 
 from app.database import AsyncSessionLocal
-from app.models.product import Product
-from app.models.price_history import PriceHistory
-from app.models.crawl_log import CrawlLog
 from app.models.alert import Alert
+from app.models.crawl_log import CrawlLog
+from app.models.price_history import PriceHistory
+from app.models.product import Product
 from app.models.user import User
 from app.services.notification import send_feishu_notification
 
 logger = logging.getLogger(__name__)
 
 
-async def get_active_products() -> List[Product]:
+async def get_active_products() -> list[Product]:
     """Fetch all active products from database."""
     async with AsyncSessionLocal() as db:
         result = await db.execute(
@@ -67,7 +66,7 @@ async def save_crawl_log(
             status=status,
             price=price,
             currency=currency,
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             error_message=error_message,
         )
         db.add(log)
@@ -152,7 +151,7 @@ async def check_price_alerts(product_id: int, current_price: Decimal) -> None:
                         )
 
                         # Update alert
-                        alert.last_notified_at = datetime.now(timezone.utc)
+                        alert.last_notified_at = datetime.now(UTC)
                         alert.last_notified_price = new_price
                         await db.commit()
                     except Exception:

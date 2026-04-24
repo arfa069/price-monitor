@@ -1,19 +1,19 @@
 """Crawl log schemas."""
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+
 from pydantic import BaseModel
 
 
 class CrawlLogResponse(BaseModel):
     """Schema for crawl log response."""
     id: int
-    product_id: Optional[int]
-    platform: Optional[str]
-    status: Optional[str]
-    price: Optional[Decimal]
-    currency: Optional[str]
+    product_id: int | None
+    platform: str | None
+    status: str | None
+    price: Decimal | None
+    currency: str | None
     timestamp: datetime
-    error_message: Optional[str]
+    error_message: str | None
 
     model_config = {"from_attributes": True}

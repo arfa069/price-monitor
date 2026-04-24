@@ -1,6 +1,16 @@
 """Alert configuration model."""
-from sqlalchemy import Column, Integer, Numeric, String, Boolean, DateTime, ForeignKey, Index
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.orm import relationship
+
 from app.models.base import Base, TimestampMixin
 
 

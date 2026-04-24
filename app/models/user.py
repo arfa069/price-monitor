@@ -1,5 +1,6 @@
 """User configuration model."""
-from sqlalchemy import Column, Integer, String, SmallInteger, Text
+from sqlalchemy import Column, Integer, SmallInteger, String, Text
+
 from app.models.base import Base, TimestampMixin
 
 

@@ -1,17 +1,18 @@
 """API tests for config, products pagination, and scheduler."""
-import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.main import app
 
 # --- Config Tests ---
 
 @pytest.mark.asyncio
 async def test_get_config_returns_crawl_cron_and_timezone():
     """GET /config returns crawl_cron and crawl_timezone fields."""
-    from app.models.user import User
     from app.database import get_db
+    from app.models.user import User
 
     mock_user = MagicMock(spec=User)
     mock_user.id = 1
@@ -100,8 +101,8 @@ async def test_patch_config_invalid_timezone_returns_422():
 @pytest.mark.asyncio
 async def test_patch_config_valid_cron_rebuilds_scheduler_job():
     """PATCH /config with valid cron rebuilds the scheduler job."""
-    from app.models.user import User
     from app.database import get_db
+    from app.models.user import User
 
     mock_user = MagicMock(spec=User)
     mock_user.id = 1
@@ -239,7 +240,7 @@ async def test_update_product_rejects_empty_url():
 async def test_create_product_strips_whitespace():
     """POST /products strips whitespace from URL before saving."""
     from datetime import UTC, datetime
-    from app.models.product import Product
+
     from app.database import get_db
 
     mock_result = MagicMock()

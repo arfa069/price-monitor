@@ -1,6 +1,7 @@
 """Price history model."""
-from sqlalchemy import Column, Integer, Numeric, String, DateTime, ForeignKey, Index
+from sqlalchemy import Column, DateTime, ForeignKey, Index, Integer, Numeric, String
 from sqlalchemy.orm import relationship
+
 from app.models.base import Base
 
 

@@ -1,10 +1,17 @@
 """Base platform adapter for price crawling."""
-from abc import ABC, abstractmethod
-from typing import Dict, Any
 import asyncio
 import random
+from abc import ABC, abstractmethod
+from typing import Any
 
-from playwright.async_api import async_playwright, Playwright, Browser, BrowserContext, Page, TimeoutError as PlaywrightTimeoutError
+from playwright.async_api import (
+    Browser,
+    BrowserContext,
+    Page,
+    Playwright,
+    async_playwright,
+)
+from playwright.async_api import TimeoutError as PlaywrightTimeoutError
 
 from app.config import settings
 
@@ -101,7 +108,7 @@ class BasePlatformAdapter(ABC):
             self._page = None
 
     @abstractmethod
-    async def extract_price(self, page) -> Dict[str, Any]:
+    async def extract_price(self, page) -> dict[str, Any]:
         """Extract price from page. Must be implemented by subclasses."""
         pass
 
@@ -110,7 +117,7 @@ class BasePlatformAdapter(ABC):
         """Extract title from page. Must be implemented by subclasses."""
         pass
 
-    async def crawl(self, url: str) -> Dict[str, Any]:
+    async def crawl(self, url: str) -> dict[str, Any]:
         """Crawl a product page and extract price and title.
 
         In CDP mode, reuses the existing browser page (with login session).
@@ -148,7 +155,7 @@ class BasePlatformAdapter(ABC):
                         "error": price_data.get("error", "Failed to extract price"),
                     }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "success": False,
                 "error": "Crawl timeout: page took longer than 90s to respond",

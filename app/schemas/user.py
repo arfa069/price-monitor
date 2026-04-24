@@ -1,6 +1,6 @@
 """User configuration schemas."""
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel, Field, field_validator
 
 _CRON_SEGMENT_RE = __import__("re").compile(
@@ -13,12 +13,12 @@ class UserConfigCreate(BaseModel):
     feishu_webhook_url: str = Field(default="", description="Feishu webhook URL for notifications")
     crawl_frequency_hours: int = Field(default=1, ge=1, le=168, description="Crawl frequency in hours")
     data_retention_days: int = Field(default=365, ge=1, le=3650, description="Data retention period in days")
-    crawl_cron: Optional[str] = Field(default=None, description="Cron expression (5-segment)")
-    crawl_timezone: Optional[str] = Field(default="Asia/Shanghai", description="Timezone for cron")
+    crawl_cron: str | None = Field(default=None, description="Cron expression (5-segment)")
+    crawl_timezone: str | None = Field(default="Asia/Shanghai", description="Timezone for cron")
 
     @field_validator("crawl_cron")
     @classmethod
-    def validate_cron(cls, v: Optional[str]) -> Optional[str]:
+    def validate_cron(cls, v: str | None) -> str | None:
         if v is None:
             return v
         parts = v.strip().split()
@@ -31,7 +31,7 @@ class UserConfigCreate(BaseModel):
 
     @field_validator("crawl_timezone")
     @classmethod
-    def validate_timezone(cls, v: Optional[str]) -> Optional[str]:
+    def validate_timezone(cls, v: str | None) -> str | None:
         if v is None:
             return v
         try:
@@ -44,15 +44,15 @@ class UserConfigCreate(BaseModel):
 
 class UserConfigUpdate(BaseModel):
     """Schema for updating user configuration."""
-    feishu_webhook_url: Optional[str] = Field(default=None, description="Feishu webhook URL")
-    crawl_frequency_hours: Optional[int] = Field(default=None, ge=1, le=168)
-    data_retention_days: Optional[int] = Field(default=None, ge=1, le=3650)
-    crawl_cron: Optional[str] = Field(default=None, description="Cron expression (5-segment)")
-    crawl_timezone: Optional[str] = Field(default=None, description="Timezone for cron")
+    feishu_webhook_url: str | None = Field(default=None, description="Feishu webhook URL")
+    crawl_frequency_hours: int | None = Field(default=None, ge=1, le=168)
+    data_retention_days: int | None = Field(default=None, ge=1, le=3650)
+    crawl_cron: str | None = Field(default=None, description="Cron expression (5-segment)")
+    crawl_timezone: str | None = Field(default=None, description="Timezone for cron")
 
     @field_validator("crawl_cron")
     @classmethod
-    def validate_cron(cls, v: Optional[str]) -> Optional[str]:
+    def validate_cron(cls, v: str | None) -> str | None:
         if v is None:
             return v
         if v.strip() == "":
@@ -67,7 +67,7 @@ class UserConfigUpdate(BaseModel):
 
     @field_validator("crawl_timezone")
     @classmethod
-    def validate_timezone(cls, v: Optional[str]) -> Optional[str]:
+    def validate_timezone(cls, v: str | None) -> str | None:
         if v is None:
             return v
         try:
@@ -82,13 +82,13 @@ class UserConfigResponse(BaseModel):
     """Schema for user configuration response."""
     id: int
     username: str
-    feishu_webhook_url: Optional[str] = ""
+    feishu_webhook_url: str | None = ""
     crawl_frequency_hours: int = 1
     data_retention_days: int = 365
-    crawl_cron: Optional[str] = None
-    crawl_timezone: Optional[str] = "Asia/Shanghai"
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    crawl_cron: str | None = None
+    crawl_timezone: str | None = "Asia/Shanghai"
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
     model_config = {"from_attributes": True}
 
@@ -97,5 +97,5 @@ class UserConfigDefaults(BaseModel):
     """Default configuration values."""
     crawl_frequency_hours: int = 1
     data_retention_days: int = 365
-    crawl_cron: Optional[str] = None
-    crawl_timezone: Optional[str] = "Asia/Shanghai"
+    crawl_cron: str | None = None
+    crawl_timezone: str | None = "Asia/Shanghai"

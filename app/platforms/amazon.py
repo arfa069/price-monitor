@@ -1,12 +1,13 @@
 """Amazon platform adapter."""
-from typing import Dict, Any
+from typing import Any
+
 from app.platforms.base import BasePlatformAdapter
 
 
 class AmazonAdapter(BasePlatformAdapter):
     """Adapter for Amazon price crawling."""
 
-    async def extract_price(self, page) -> Dict[str, Any]:
+    async def extract_price(self, page) -> dict[str, Any]:
         """Extract price from Amazon page."""
         try:
             price_selectors = [

@@ -11,17 +11,13 @@ Real Database Integration Tests
 - 使用独立 session 模式
 """
 import pytest
-import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy import select, delete, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import delete, select
 
-from app.main import app
 from app.database import AsyncSessionLocal
-from app.models.user import User
+from app.main import app
 from app.models.product import Product
-from app.models.price_history import PriceHistory
-
+from app.models.user import User
 
 # =============================================================================
 # Helper: run in isolated session
@@ -52,7 +48,7 @@ class TestConfigApiRealDb:
             result = await session.execute(select(User).where(User.id == 1))
             return result.scalar_one_or_none()
 
-        user = await run_in_session(_check)
+        await run_in_session(_check)
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -164,7 +160,7 @@ class TestProductCrudApiRealDb:
             assert response.status_code == 200
             data = response.json()
             assert data["title"] == "更新后的标题"
-            print(f"[Product-02] PASS: product title updated")
+            print("[Product-02] PASS: product title updated")
 
         finally:
             # 清理
@@ -204,7 +200,7 @@ class TestProductCrudApiRealDb:
 
             product = await run_in_session(_verify)
             assert product is None
-            print(f"[Product-03] PASS: product deleted")
+            print("[Product-03] PASS: product deleted")
 
         finally:
             # 清理（如果删除失败）
@@ -245,7 +241,7 @@ class TestPaginationApiRealDb:
         data = response.json()
         assert data["page_size"] == 5
         assert data["has_next"] is not None
-        print(f"[Pagination-02] PASS: explicit size=5 works")
+        print("[Pagination-02] PASS: explicit size=5 works")
 
     @pytest.mark.asyncio
     async def test_pagination_out_of_range_returns_empty(self):
@@ -257,8 +253,8 @@ class TestPaginationApiRealDb:
         assert response.status_code == 200
         data = response.json()
         assert data["items"] == []
-        assert data["has_next"] == False
-        print(f"[Pagination-03] PASS: out of range returns empty items")
+        assert data["has_next"] is False
+        print("[Pagination-03] PASS: out of range returns empty items")
 
 
 # =============================================================================

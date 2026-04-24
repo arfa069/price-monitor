@@ -1,4 +1,4 @@
 """API routers."""
-from app.routers import config, products, alerts, crawl
+from app.routers import alerts, config, crawl, products
 
 __all__ = ["config", "products", "alerts", "crawl"]

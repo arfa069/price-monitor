@@ -3,6 +3,7 @@ import asyncio
 import logging
 import sys
 from contextlib import asynccontextmanager
+
 from fastapi.responses import JSONResponse
 
 # Windows requires ProactorEventLoop for subprocess support (Playwright spawns browser drivers)
@@ -10,16 +11,14 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 import redis.asyncio as redis
-from sqlalchemy import text
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import select, text
 
 from app.config import settings
-from app.database import engine, AsyncSessionLocal
-from app.routers import config, products, alerts, crawl
+from app.database import AsyncSessionLocal, engine
 from app.models.user import User
-from sqlalchemy import select
+from app.routers import alerts, config, crawl, products
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +37,10 @@ async def lifespan(app: FastAPI):
 
 async def _start_scheduler(app: FastAPI) -> None:
     """Initialize APScheduler with AsyncIOScheduler and register cron job from DB config."""
+    import zoneinfo
+
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
     from apscheduler.triggers.cron import CronTrigger
-    import zoneinfo
 
     # Initialize concurrency lock
     app.state.crawl_lock = asyncio.Semaphore(1)

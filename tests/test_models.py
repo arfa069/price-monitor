@@ -1,10 +1,11 @@
 """Model unit tests."""
 from datetime import datetime
 from decimal import Decimal
+
 from app.models.alert import Alert
-from app.models.product import Product
-from app.models.price_history import PriceHistory
 from app.models.crawl_log import CrawlLog
+from app.models.price_history import PriceHistory
+from app.models.product import Product
 from app.models.user import User
 
 

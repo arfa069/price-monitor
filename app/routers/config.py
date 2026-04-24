@@ -1,11 +1,18 @@
 """Config API router."""
 import logging
+
 from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
 from app.models.user import User
-from app.schemas.user import UserConfigCreate, UserConfigUpdate, UserConfigResponse, UserConfigDefaults
+from app.schemas.user import (
+    UserConfigCreate,
+    UserConfigDefaults,
+    UserConfigResponse,
+    UserConfigUpdate,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +61,9 @@ def _rebuild_scheduler_job(cron_expr: str, timezone_str: str) -> None:
             scheduler.remove_job(job_id)
             logger.info("Removed existing cron job: %s", job_id)
 
-        from apscheduler.triggers.cron import CronTrigger
         import zoneinfo
+
+        from apscheduler.triggers.cron import CronTrigger
         tz = zoneinfo.ZoneInfo(timezone_str)
         scheduler.add_job(
             _trigger_crawl_all,
@@ -76,9 +84,9 @@ def _rebuild_scheduler_job(cron_expr: str, timezone_str: str) -> None:
 
 async def _trigger_crawl_all() -> None:
     """APScheduler job callback: crawl all active products with concurrency protection."""
-    from app.services.scheduler_service import crawl_all_products
-    from app.services.crawl import save_crawl_log, get_user_config
+    from app.services.crawl import get_user_config, save_crawl_log
     from app.services.notification import send_feishu_notification
+    from app.services.scheduler_service import crawl_all_products
 
     result = await crawl_all_products(source="cron")
 

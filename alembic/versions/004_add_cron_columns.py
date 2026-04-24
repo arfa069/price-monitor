@@ -4,9 +4,9 @@ Revision ID: 004_add_cron_columns
 Revises: ae69317e99ff
 Create Date: 2026-04-23
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "004_add_cron_columns"

@@ -1,11 +1,12 @@
 """Crawl API router."""
-from typing import List
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import JSONResponse
+from sqlalchemy import delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc, delete
-from app.database import get_db, AsyncSessionLocal
+
+from app.database import AsyncSessionLocal, get_db
 from app.models.crawl_log import CrawlLog
 from app.models.price_history import PriceHistory
 from app.models.product import Product
@@ -20,7 +21,7 @@ def _get_adapters():
     """Lazy-load adapters to avoid circular imports."""
     global PLATFORM_ADAPTERS
     if not PLATFORM_ADAPTERS:
-        from app.platforms import TaobaoAdapter, JDAdapter, AmazonAdapter
+        from app.platforms import AmazonAdapter, JDAdapter, TaobaoAdapter
         PLATFORM_ADAPTERS.update({
             "taobao": TaobaoAdapter,
             "jd": JDAdapter,
@@ -30,8 +31,13 @@ def _get_adapters():
 
 async def _crawl_one(product_id: int) -> dict:
     """Core crawl logic — runs in the same event loop as the caller."""
-    from app.services.crawl import save_price_history, save_crawl_log, check_price_alerts
     from decimal import Decimal
+
+    from app.services.crawl import (
+        check_price_alerts,
+        save_crawl_log,
+        save_price_history,
+    )
 
     _get_adapters()
 
@@ -60,7 +66,7 @@ async def _crawl_one(product_id: int) -> dict:
             if result_data.get("success"):
                 price = Decimal(str(result_data["price"]))
                 currency = result_data.get("currency", "CNY")
-                scraped_at = datetime.now(timezone.utc)
+                scraped_at = datetime.now(UTC)
 
                 await save_price_history(product_id, price, currency, scraped_at)
                 await save_crawl_log(product_id, product.platform, "SUCCESS", price=price, currency=currency)
@@ -88,7 +94,7 @@ async def _crawl_one(product_id: int) -> dict:
             return {"status": "error", "product_id": product_id, "error": str(e)}
 
 
-@router.get("/logs", response_model=List[CrawlLogResponse])
+@router.get("/logs", response_model=list[CrawlLogResponse])
 async def get_crawl_logs(
     product_id: int | None = None,
     status: str | None = None,
@@ -97,7 +103,7 @@ async def get_crawl_logs(
     db: AsyncSession = Depends(get_db),
 ):
     """Get recent crawl logs."""
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
     query = select(CrawlLog).where(CrawlLog.timestamp >= cutoff)
 
     if product_id is not None:
@@ -143,7 +149,7 @@ async def cleanup_old_data(
     from app.config import settings
 
     days = min(retention_days, settings.data_retention_days)
-    cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+    cutoff = datetime.now(UTC) - timedelta(days=days)
 
     # Count before deleting
     price_count = await db.execute(

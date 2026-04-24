@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     crawl_proxy_url: str = ""  # e.g. "http://user:pass@host:port" or "socks5://host:port"
     crawl_proxy_enabled: bool = False
 
+    # Taobao-specific options
+    taobao_js_deep_scan_enabled: bool = False
+
     # Platform cookies (optional, for bypassing login walls)
     jd_cookie: str = ""  # Cookie string for JD login session
 

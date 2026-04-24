@@ -21,11 +21,13 @@ Phase C Integration & Regression Tests
     - 关键响应字段截图
     - API 请求/响应记录
 """
-import pytest
-from unittest.mock import patch, AsyncMock, MagicMock
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from datetime import UTC
+from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from app.main import app
 
 # =============================================================================
 # C-01 ~ C-02: 前端基础行为 (需要浏览器验证，pytest 无法覆盖)
@@ -48,7 +50,8 @@ class TestProductCRUD:
     @pytest.mark.asyncio
     async def test_c03_create_product(self):
         """C-03a: 创建商品"""
-        from datetime import datetime, timezone
+        from datetime import datetime
+
         from app.database import get_db
 
         mock_result = MagicMock()
@@ -60,8 +63,8 @@ class TestProductCRUD:
 
         def _refresh_side_effect(p):
             p.id = 1
-            p.created_at = datetime.now(timezone.utc)
-            p.updated_at = datetime.now(timezone.utc)
+            p.created_at = datetime.now(UTC)
+            p.updated_at = datetime.now(UTC)
 
         mock_session.refresh = AsyncMock(side_effect=_refresh_side_effect)
         mock_session.commit = AsyncMock()
@@ -122,7 +125,7 @@ class TestProductCRUD:
             assert response.status_code == 200
             data = response.json()
             assert data["title"] == "New Title"
-            assert data["active"] == False
+            assert data["active"] is False
             print("[C-03b] PASS: Updated product")
         finally:
             app.dependency_overrides.clear()
@@ -191,7 +194,7 @@ class TestServerSidePagination:
             data = response.json()
             assert data["page_size"] == 15, f"Expected 15, got {data['page_size']}"
             assert data["page"] == 1
-            print(f"[C-04a] PASS: Default page_size=15")
+            print("[C-04a] PASS: Default page_size=15")
         finally:
             app.dependency_overrides.clear()
 
@@ -220,7 +223,7 @@ class TestServerSidePagination:
             assert response.status_code == 200
             data = response.json()
             assert data["page_size"] == 10
-            print(f"[C-04b] PASS: Explicit size=10 works")
+            print("[C-04b] PASS: Explicit size=10 works")
         finally:
             app.dependency_overrides.clear()
 
@@ -249,7 +252,7 @@ class TestServerSidePagination:
             assert response.status_code == 200
             data = response.json()
             assert data["total"] == 5
-            print(f"[C-04c] PASS: Filter + pagination works, total=5")
+            print("[C-04c] PASS: Filter + pagination works, total=5")
         finally:
             app.dependency_overrides.clear()
 
@@ -294,7 +297,7 @@ class TestScheduleConfigRealReadWrite:
             data = response.json()
             assert data["crawl_cron"] == "0 9 * * *"
             assert data["crawl_timezone"] == "Asia/Shanghai"
-            print(f"[C-05a] PASS: GET /config returns backend value")
+            print("[C-05a] PASS: GET /config returns backend value")
         finally:
             app.dependency_overrides.clear()
 
@@ -341,7 +344,7 @@ class TestScheduleConfigRealReadWrite:
             assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
             data = response.json()
             assert data["crawl_cron"] == "0 10 * * *"
-            print(f"[C-05b] PASS: PATCH /config updates and syncs")
+            print("[C-05b] PASS: PATCH /config updates and syncs")
         finally:
             app.dependency_overrides.clear()
 
@@ -525,8 +528,8 @@ class TestPageOutOfRange:
             assert data["total"] == 10
             assert data["page"] == 999
             assert data["total_pages"] == 1
-            assert data["has_next"] == False
-            print(f"[C-E01] PASS: page=999 returns empty items, total=10, total_pages=1")
+            assert data["has_next"] is False
+            print("[C-E01] PASS: page=999 returns empty items, total=10, total_pages=1")
         finally:
             app.dependency_overrides.clear()
 
@@ -563,7 +566,7 @@ class TestFilterNoResults:
             data = response.json()
             assert data["items"] == []
             assert data["total"] == 0, f"Expected total=0, got {data['total']}"
-            print(f"[C-E02] PASS: filter no results returns total=0")
+            print("[C-E02] PASS: filter no results returns total=0")
         finally:
             app.dependency_overrides.clear()
 
@@ -642,7 +645,7 @@ class TestBatchCreateDeduplication:
             results = response.json()
             existing_error = [r for r in results if not r["success"] and "已存在" in (r.get("error") or "")]
             assert len(existing_error) >= 1, "Expected '已存在' error for duplicate URL"
-            print(f"[C-E03b] PASS: existing URL detected with '已存在' error")
+            print("[C-E03b] PASS: existing URL detected with '已存在' error")
         finally:
             app.dependency_overrides.clear()
 
@@ -739,7 +742,7 @@ class TestInvalidCronBlocksSave:
             assert response.status_code == 422, f"Expected 422, got {response.status_code}"
             data = response.json()
             assert "detail" in data
-            print(f"[C-E06a] PASS: invalid 3-segment cron returns 422")
+            print("[C-E06a] PASS: invalid 3-segment cron returns 422")
         finally:
             app.dependency_overrides.clear()
 
@@ -763,7 +766,7 @@ class TestInvalidCronBlocksSave:
             async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.patch("/config", json={"crawl_cron": "abc def ghi jkl mno"})
             assert response.status_code == 422, f"Expected 422, got {response.status_code}"
-            print(f"[C-E06b] PASS: non-numeric cron returns 422")
+            print("[C-E06b] PASS: non-numeric cron returns 422")
         finally:
             app.dependency_overrides.clear()
 
@@ -830,7 +833,7 @@ class TestConfigMissingDefaults:
             assert response.status_code == 200
             data = response.json()
             assert data["crawl_cron"] == "0 9 * * *"
-            print(f"[C-E07b] PASS: PATCH /config creates default config")
+            print("[C-E07b] PASS: PATCH /config creates default config")
         finally:
             app.dependency_overrides.clear()
 
@@ -852,7 +855,6 @@ class TestSchedulerConcurrencyProtection:
     @pytest.mark.asyncio
     async def test_ce09_concurrent_crawl_returns_skipped(self):
         """C-E09: 并发爬取返回 skipped 状态"""
-        from app.database import get_db
 
         # Mock existing job
         mock_job = MagicMock()

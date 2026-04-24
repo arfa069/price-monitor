@@ -165,7 +165,7 @@ export default function ScheduleConfigPage() {
             <Skeleton active paragraph={{ rows: 4 }} />
           </Card>
         ) : (
-        <Card title="爬取频率配置">
+<Card title="爬取频率配置">
           {/* Schedule mode selector */}
           <Form.Item label="调度模式" style={{ marginBottom: 16 }}>
             <Radio.Group

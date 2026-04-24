@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { Form, InputNumber, Button, Card, message, Alert, Input, Radio, Space, Skeleton } from 'antd'
 import { SaveOutlined, UndoOutlined, DeleteOutlined } from '@ant-design/icons'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
-import type { UserConfig } from '@/types'
 
 const CRON_DRAFT_KEY = 'crawl_cron_draft'
 const TZ_DRAFT_KEY = 'crawl_timezone_draft'

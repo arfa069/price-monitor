@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Layout, Menu } from 'antd'
+import { Layout, Menu, Button } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   ShoppingCartOutlined,
   ClockCircleOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons'
 
-const { Sider, Content } = Layout
+const { Sider, Content, Header, Footer } = Layout
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
@@ -22,51 +23,86 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+      <Header
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          padding: '0 24px',
+          background: '#001529',
+        }}
+      >
         <div
           style={{
-            height: 32,
-            margin: 16,
             color: '#fff',
-            fontSize: 16,
+            fontSize: 18,
             fontWeight: 'bold',
-            textAlign: 'center',
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
           }}
         >
-          {collapsed ? '价' : '价格监控'}
+          价格监控系统
         </div>
-        <Menu
-          theme="dark"
-          selectedKeys={[selectedKey]}
-          onClick={({ key }) => navigate(key)}
-          items={[
-            {
-              key: '/products',
-              icon: <ShoppingCartOutlined />,
-              label: '商品管理',
-            },
-            {
-              key: '/schedule',
-              icon: <ClockCircleOutlined />,
-              label: '定时配置',
-            },
-          ]}
-        />
-      </Sider>
+        <div style={{ flex: 1 }} />
+        <Button type="text" icon={<ReloadOutlined />} style={{ color: '#fff' }}>
+          刷新
+        </Button>
+      </Header>
       <Layout>
-        <Content
-          style={{
-            margin: '24px 16px',
-            padding: 24,
-            minHeight: 280,
-            background: '#fff',
-          }}
-        >
-          {children}
-        </Content>
+        <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
+          <div
+            style={{
+              height: 32,
+              margin: 16,
+              color: '#fff',
+              fontSize: 16,
+              fontWeight: 'bold',
+              textAlign: 'center',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {collapsed ? '价' : '价格监控'}
+          </div>
+          <Menu
+            theme="dark"
+            selectedKeys={[selectedKey]}
+            onClick={({ key }) => navigate(key)}
+            items={[
+              {
+                key: '/products',
+                icon: <ShoppingCartOutlined />,
+                label: '商品管理',
+              },
+              {
+                key: '/schedule',
+                icon: <ClockCircleOutlined />,
+                label: '定时配置',
+              },
+            ]}
+          />
+        </Sider>
+        <Layout>
+          <Content
+            style={{
+              margin: '24px 16px',
+              padding: 24,
+              minHeight: 280,
+              background: '#fff',
+            }}
+          >
+            {children}
+          </Content>
+        </Layout>
       </Layout>
+      <Footer
+        style={{
+          textAlign: 'center',
+          padding: '12px 24px',
+          background: '#001529',
+          color: '#fff',
+          fontSize: 12,
+        }}
+      >
+        价格监控系统 v1.0 · 最后更新: {new Date().toLocaleString('zh-CN')}
+      </Footer>
     </Layout>
   )
 }

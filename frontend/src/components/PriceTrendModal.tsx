@@ -1,6 +1,6 @@
 import React from 'react'
 import { Modal, Segmented, Card, Table, Skeleton, Empty, Tag, Button } from 'antd'
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts'
 import type { Product } from '@/types'
 
 interface PriceTrendModalProps {
@@ -208,34 +208,32 @@ function PriceTrendContent({ productId, timeRange, onTimeRangeChange }: PriceTre
       )}
 
       {/* 价格折线图 */}
-      <div style={{ width: '100%', height: 200, marginBottom: 20 }}>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={[...data].reverse()}>
-            <XAxis
-              dataKey="scraped_at"
-              tickFormatter={(v) => new Date(v).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
-              tick={{ fontSize: 12 }}
-            />
-            <YAxis
-              tickFormatter={(v) => `¥${v}`}
-              tick={{ fontSize: 12 }}
-              domain={['dataMin - 1', 'dataMax + 1']}
-              width={60}
-            />
-            <Tooltip
-              formatter={(value: any) => [`¥${Number(value).toFixed(2)}`, '价格']}
-              labelFormatter={(label) => new Date(label).toLocaleString('zh-CN')}
-            />
-            <Line
-              type="monotone"
-              dataKey="price"
-              stroke="#2563eb"
-              strokeWidth={2}
-              dot={{ fill: '#2563eb', strokeWidth: 0, r: 3 }}
-              activeDot={{ r: 5 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+      <div style={{ width: '100%', height: 200, marginBottom: 20 }} id="chart-container">
+        <LineChart width={600} height={200} data={[...data].reverse()} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+          <XAxis
+            dataKey="scraped_at"
+            tickFormatter={(v) => new Date(v).toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })}
+            tick={{ fontSize: 12 }}
+          />
+          <YAxis
+            tickFormatter={(v) => `¥${v}`}
+            tick={{ fontSize: 12 }}
+            domain={['dataMin - 1', 'dataMax + 1']}
+            width={60}
+          />
+          <Tooltip
+            formatter={(value: any) => [`¥${Number(value).toFixed(2)}`, '价格']}
+            labelFormatter={(label) => new Date(label).toLocaleString('zh-CN')}
+          />
+          <Line
+            type="monotone"
+            dataKey="price"
+            stroke="#2563eb"
+            strokeWidth={2}
+            dot={{ fill: '#2563eb', strokeWidth: 0, r: 3 }}
+            activeDot={{ r: 5 }}
+          />
+        </LineChart>
       </div>
 
       {/* 价格记录表格 */}

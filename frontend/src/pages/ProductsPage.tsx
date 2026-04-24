@@ -186,7 +186,7 @@ export default function ProductsPage() {
 
   return (
     <div>
-      <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+      <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         {/* Action bar */}
         <Card size="small">
           <Row gutter={[8, 8]} align="middle">

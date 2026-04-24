@@ -208,8 +208,8 @@ function PriceTrendContent({ productId, timeRange, onTimeRangeChange }: PriceTre
       )}
 
       {/* 价格折线图 */}
-      <div style={{ height: 200, marginBottom: 20, minHeight: 0 }}>
-        <ResponsiveContainer width="100%" height={200}>
+      <div style={{ width: '100%', height: 200, marginBottom: 20 }}>
+        <ResponsiveContainer width="100%" height="100%">
           <LineChart data={[...data].reverse()}>
             <XAxis
               dataKey="scraped_at"
@@ -219,7 +219,8 @@ function PriceTrendContent({ productId, timeRange, onTimeRangeChange }: PriceTre
             <YAxis
               tickFormatter={(v) => `¥${v}`}
               tick={{ fontSize: 12 }}
-              domain={['auto', 'auto']}
+              domain={['dataMin - 1', 'dataMax + 1']}
+              width={60}
             />
             <Tooltip
               formatter={(value: any) => [`¥${Number(value).toFixed(2)}`, '价格']}

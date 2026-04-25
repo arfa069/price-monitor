@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Modal, Form, Input, Select, Switch, InputNumber, Button, Divider, Space, Popconfirm, message } from 'antd'
-import { AlertOutlined, DeleteOutlined } from '@ant-design/icons'
-import { useAlerts, useCreateAlert, useUpdateAlert, useDeleteAlert } from '@/hooks/api'
+import { useEffect } from 'react'
+import { Modal, Form, Input, Select, Switch, InputNumber, Divider, Space } from 'antd'
+import { AlertOutlined } from '@ant-design/icons'
 import type { Product } from '@/types'
 
 interface Props {
   open: boolean
   record?: Product
+  existingAlert?: { id: number; active: boolean; threshold_percent: number } | null
   onCancel: () => void
   onSubmit: (values: any) => void
   confirmLoading?: boolean
@@ -20,17 +20,8 @@ const detectPlatform = (url: string): string | null => {
   return null
 }
 
-export default function ProductFormModal({ open, record, onCancel, onSubmit, confirmLoading }: Props) {
+export default function ProductFormModal({ open, record, existingAlert, onCancel, onSubmit, confirmLoading }: Props) {
   const [form] = Form.useForm()
-
-  const [alertEnabled, setAlertEnabled] = useState(false)
-  const [alertThreshold, setAlertThreshold] = useState(5)
-  const [currentAlertId, setCurrentAlertId] = useState<number | null>(null)
-
-  const { data: alertData, refetch: refetchAlert } = useAlerts(record?.id)
-  const createAlertMutation = useCreateAlert()
-  const updateAlertMutation = useUpdateAlert()
-  const deleteAlertMutation = useDeleteAlert()
 
   useEffect(() => {
     if (record) {
@@ -39,24 +30,13 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
         url: record.url,
         title: record.title,
         active: record.active,
+        alert_enabled: existingAlert?.active ?? false,
+        alert_threshold: existingAlert?.threshold_percent ?? 5,
       })
     } else {
-      form.resetFields()
+      form.resetFields(['alert_enabled', 'alert_threshold'])
     }
-  }, [record, open, form])
-
-  useEffect(() => {
-    if (alertData && alertData.length > 0) {
-      const alert = alertData[0]
-      setCurrentAlertId(alert.id)
-      setAlertEnabled(alert.active)
-      setAlertThreshold(Number(alert.threshold_percent) || 5)
-    } else {
-      setCurrentAlertId(null)
-      setAlertEnabled(false)
-      setAlertThreshold(5)
-    }
-  }, [alertData])
+  }, [record, open, form, existingAlert])
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!record) {
@@ -65,7 +45,18 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
     }
   }
 
-  const handleOk = () => form.validateFields().then((values) => onSubmit(values))
+  const handleOk = () => form.validateFields().then((values) => {
+    // Extract alert settings from form values
+    const { alert_enabled, alert_threshold, ...productValues } = values
+    onSubmit({
+      ...productValues,
+      alert: {
+        existingId: existingAlert?.id ?? null,
+        enabled: alert_enabled ?? false,
+        threshold: alert_threshold ?? 5,
+      },
+    })
+  })
 
   return (
     <Modal
@@ -103,99 +94,40 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
         <Form.Item name="active" label="启用" valuePropName="checked" initialValue>
           <Switch />
         </Form.Item>
+
+        <Divider orientation="horizontal" plain>
+          <Space>
+            <AlertOutlined />
+            价格告警设置
+          </Space>
+        </Divider>
+
+        <Form.Item name="alert_enabled" label="启用告警" valuePropName="checked" initialValue={false}>
+          <Switch />
+        </Form.Item>
+
+        <Form.Item
+          noStyle
+          shouldUpdate={(prev, curr) => prev.alert_enabled !== curr.alert_enabled}
+        >
+          {({ getFieldValue }) =>
+            getFieldValue('alert_enabled') ? (
+              <Form.Item
+                name="alert_threshold"
+                label="降价阈值"
+                rules={[{ required: true, message: '请输入阈值' }]}
+              >
+                <InputNumber
+                  min={1}
+                  max={100}
+                  addonAfter="%"
+                  style={{ width: 120 }}
+                />
+              </Form.Item>
+            ) : null
+          }
+        </Form.Item>
       </Form>
-
-      <Divider orientation="horizontal" plain>
-        <Space>
-          <AlertOutlined />
-          价格告警设置
-        </Space>
-      </Divider>
-
-      <Space direction="vertical" style={{ width: '100%' }}>
-        <Space>
-          <span>启用告警：</span>
-          <Switch
-            checked={alertEnabled}
-            onChange={async (checked) => {
-              setAlertEnabled(checked)
-              try {
-                if (currentAlertId) {
-                  await updateAlertMutation.mutateAsync({
-                    id: currentAlertId,
-                    data: { active: checked },
-                  })
-                  refetchAlert()
-                } else if (checked && record?.id) {
-                  const res = await createAlertMutation.mutateAsync({
-                    product_id: record.id,
-                    threshold_percent: alertThreshold,
-                    active: true,
-                  })
-                  setCurrentAlertId(res.data.id)
-                  refetchAlert()
-                }
-              } catch {
-                setAlertEnabled(!checked)
-                message.error('操作失败')
-              }
-            }}
-          />
-        </Space>
-
-        <Space>
-          <span>降价阈值：</span>
-          <InputNumber
-            min={1}
-            max={100}
-            value={alertThreshold}
-            onChange={(val) => setAlertThreshold(val || 5)}
-            disabled={!currentAlertId}
-            addonAfter="%"
-            style={{ width: 120 }}
-          />
-          <Button
-            size="small"
-            onClick={async () => {
-              if (currentAlertId) {
-                try {
-                  await updateAlertMutation.mutateAsync({
-                    id: currentAlertId,
-                    data: { threshold_percent: alertThreshold },
-                  })
-                  refetchAlert()
-                  message.success('阈值已保存')
-                } catch {
-                  message.error('保存失败')
-                }
-              }
-            }}
-          >
-            保存阈值
-          </Button>
-        </Space>
-
-        {currentAlertId && (
-          <Popconfirm
-            title="确定删除此商品的告警？"
-            onConfirm={async () => {
-              try {
-                await deleteAlertMutation.mutateAsync(currentAlertId)
-                setCurrentAlertId(null)
-                setAlertEnabled(false)
-                refetchAlert()
-                message.success('告警已删除')
-              } catch {
-                message.error('删除失败')
-              }
-            }}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />}>
-              删除告警
-            </Button>
-          </Popconfirm>
-        )}
-      </Space>
     </Modal>
   )
 }

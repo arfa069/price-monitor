@@ -13,7 +13,7 @@ import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues, 
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
   useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAllAlerts,
-  useCrawlLogs,
+  useCrawlLogs, useCreateAlert, useUpdateAlert,
 } from '@/hooks/api'
 import BatchImportModal from '@/components/BatchImportModal'
 import ProductFormModal from '@/components/ProductFormModal'
@@ -58,12 +58,15 @@ export default function ProductsPage() {
   const batchDelete = useBatchDelete()
   const batchUpdate = useBatchUpdate()
   const crawlNow = useCrawlNow()
+  const createAlertMutation = useCreateAlert()
+  const updateAlertMutation = useUpdateAlert()
   const { data: crawlLogs, isLoading: logsLoading, refetch: refetchLogs } = useCrawlLogs({ limit: 10 })
   const { data: alertsData } = useAllAlerts()
   const alertMap = useMemo(() => {
-    const map = new Map<number, { threshold_percent: number; active: boolean }>()
+    const map = new Map<number, { id: number; threshold_percent: number; active: boolean }>()
     alertsData?.forEach((alert) => {
       map.set(alert.product_id, {
+        id: alert.id,
         threshold_percent: alert.threshold_percent || 0,
         active: alert.active,
       })
@@ -119,7 +122,7 @@ export default function ProductsPage() {
         return alert.active ? (
           <Tag color="orange">{String(alert.threshold_percent)}%</Tag>
         ) : (
-          <Tag color="default">{String(alert.threshold_percent)}% (停用)</Tag>
+          <Tag color="default">停用</Tag>
         )
       },
     },
@@ -138,7 +141,7 @@ export default function ProductsPage() {
         </Space>
       ),
     },
-  ], [])  // deleteMutation stable — no need in deps
+  ], [alertMap])  // alertMap needed for reactive alert column
 
   const handleDelete = (id: number) => {
     deleteMutation.mutate(id, {
@@ -186,22 +189,51 @@ export default function ProductsPage() {
     }
   }
 
-  const handleFormSubmit = (values: ProductFormValues) => {
-    if (editModal.record) {
-      updateMutation.mutate({ id: editModal.record.id, data: values }, {
-        onSuccess: () => {
-          message.success('更新成功')
-          setEditModal({ open: false })
-        },
-      })
-    } else {
-      createMutation.mutate(values as ProductFormValues & { platform: NonNullable<ProductFormValues['platform']> }, {
-        onSuccess: () => {
-          message.success('添加成功')
-          setCreateFormOpen(false)
-        },
-        onError: (err: any) => message.error('添加失败：' + (err.message || '未知错误')),
-      })
+  const handleFormSubmit = async (values: ProductFormValues & { alert?: { existingId: number | null; enabled: boolean; threshold: number } }) => {
+    const { alert, ...productValues } = values
+
+    try {
+      let productId: number
+
+      if (editModal.record) {
+        await updateMutation.mutateAsync({ id: editModal.record.id, data: productValues })
+        productId = editModal.record.id
+      } else {
+        const result = await createMutation.mutateAsync(productValues as ProductFormValues & { platform: NonNullable<ProductFormValues['platform']> })
+        productId = result.data.id
+      }
+
+      // Handle alert settings
+      if (alert && productId) {
+        if (alert.enabled) {
+          if (alert.existingId) {
+            // Update existing alert
+            await updateAlertMutation.mutateAsync({
+              id: alert.existingId,
+              data: { threshold_percent: alert.threshold, active: true },
+            })
+          } else {
+            // Create new alert
+            await createAlertMutation.mutateAsync({
+              product_id: productId,
+              threshold_percent: alert.threshold,
+              active: true,
+            })
+          }
+        } else if (alert.existingId) {
+          // Disable existing alert
+          await updateAlertMutation.mutateAsync({
+            id: alert.existingId,
+            data: { active: false },
+          })
+        }
+      }
+
+      message.success(editModal.record ? '更新成功' : '添加成功')
+      setEditModal({ open: false })
+      setCreateFormOpen(false)
+    } catch (err: any) {
+      message.error(editModal.record ? '更新失败：' + (err.message || '未知错误') : '添加失败：' + (err.message || '未知错误'))
     }
   }
 
@@ -431,8 +463,10 @@ export default function ProductsPage() {
 
       {/* Create/Edit modal */}
       <ProductFormModal
+        key={editModal.record?.id ?? 'new'}
         open={createFormOpen || editModal.open}
         record={editModal.record}
+        existingAlert={editModal.record ? alertMap.get(editModal.record.id) : undefined}
         onCancel={() => { setCreateFormOpen(false); setEditModal({ open: false }) }}
         onSubmit={handleFormSubmit}
         confirmLoading={createMutation.isPending || updateMutation.isPending}

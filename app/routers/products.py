@@ -1,5 +1,6 @@
 """Products API router."""
 from datetime import UTC, datetime, timedelta
+from urllib.parse import parse_qs, urlparse
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import desc, func, select
@@ -24,16 +25,52 @@ from app.schemas.product import (
 router = APIRouter(prefix="/products", tags=["products"])
 
 
+def _normalize_tmall_url(url: str) -> str:
+    """Extract id and skuId from Taobao/Tmall URL and rebuild full URL.
+
+    Example:
+      Input:  https://detail.tmall.com/item.htm?id=xxx&skuId=yyy&other=zzz
+      Output: https://detail.tmall.com/item.htm?id=xxx&skuId=yyy
+    """
+    parsed = urlparse(url)
+    params = parse_qs(parsed.query)
+
+    # Extract id (required) and skuId (optional)
+    item_id = params.get("id", [None])[0]
+    sku_id = params.get("skuId", [None])[0]
+
+    if not item_id:
+        return url  # Not a valid Tmall URL, return as-is
+
+    # Rebuild URL with only id and skuId
+    query_parts = [f"id={item_id}"]
+    if sku_id:
+        query_parts.append(f"skuId={sku_id}")
+
+    return f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{'&'.join(query_parts)}"
+
+
+def _normalize_product_url(url: str, platform: str) -> str:
+    """Normalize product URL based on platform."""
+    if platform == "taobao":
+        return _normalize_tmall_url(url)
+    # Add other platforms if needed
+    return url
+
+
 @router.post("", response_model=ProductResponse)
 async def create_product(
     product_data: ProductCreate,
     db: AsyncSession = Depends(get_db),
 ):
     """Add a new product to track."""
+    # Normalize URL to extract and preserve skuId for Tmall
+    normalized_url = _normalize_product_url(product_data.url, product_data.platform)
+
     product = Product(
         user_id=1,  # Single user system
         platform=product_data.platform,
-        url=product_data.url,
+        url=normalized_url,
         title=product_data.title,
         active=product_data.active,
     )
@@ -207,17 +244,20 @@ async def batch_create_products(
             results.append(BatchOperationResult(url=url, success=False, error="无法识别平台"))
             continue
         try:
+            # Normalize URL to extract and preserve skuId for Tmall
+            normalized_url = _normalize_product_url(url, platform)
+
             product = Product(
                 user_id=1,
                 platform=platform,
-                url=url,
+                url=normalized_url,
                 title=item.title,
                 active=True,
             )
             db.add(product)
             await db.flush()
             results.append(BatchOperationResult(
-                id=product.id, url=url, success=True
+                id=product.id, url=normalized_url, success=True
             ))
         except Exception as e:
             results.append(BatchOperationResult(url=url, success=False, error=str(e)))

@@ -9,7 +9,7 @@ import {
   RocketOutlined, ReloadOutlined, HistoryOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
-import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues } from '@/types'
+import type { Product, BatchOperationResult, BatchImportRow, ProductFormValues, CrawlLog } from '@/types'
 import {
   useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct,
   useBatchCreate, useBatchDelete, useBatchUpdate, useCrawlNow, useAllAlerts,
@@ -215,18 +215,22 @@ export default function ProductsPage() {
   }
 
   const handleCrawlNow = () => {
+    message.loading({ content: '正在启动爬取任务...', key: 'crawl', duration: 0 })
     crawlNow.mutate(undefined, {
-      onSuccess: (res) => {
-        if (res.status === 'skipped') {
-          message.warning('没有需要爬取的活跃商品')
-        } else if (res.status === 'error') {
-          message.error('爬取失败：' + (res.reason || '未知错误'))
+      onSuccess: (res: any) => {
+        if (res.type === 'skipped') {
+          message.warning({ content: '没有需要爬取的活跃商品', key: 'crawl' })
+        } else if (res.type === 'error') {
+          message.error({ content: '爬取失败：' + (res.reason || '未知错误'), key: 'crawl' })
         } else {
-          message.success(`爬取完成：${res.success || 0} 成功，${res.errors || 0} 失败`)
+          message.success({
+            content: `爬取完成：${res.success || 0} 成功，${res.errors || 0} 失败`,
+            key: 'crawl',
+          })
         }
       },
       onError: (err: any) => {
-        message.error('爬取请求失败：' + (err.message || '未知错误'))
+        message.error({ content: '爬取请求失败：' + (err.message || '未知错误'), key: 'crawl' })
       },
     })
   }
@@ -359,7 +363,7 @@ export default function ProductsPage() {
         }
         style={{ marginTop: 16 }}
       >
-        {logsLoading && crawlLogs?.length === 0 ? (
+        {logsLoading && ((crawlLogs as unknown as CrawlLog[])?.length ?? 0) === 0 ? (
           <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>
             加载中...
           </div>

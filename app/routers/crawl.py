@@ -118,25 +118,78 @@ async def get_crawl_logs(
 
 @router.post("/crawl-now")
 async def crawl_now():
-    """Crawl all active products immediately.
+    """Start crawling all active products immediately.
 
-    Uses the shared scheduler service for concurrency protection.
-    One product's failure does not affect others.
+    Returns immediately with a task_id. Poll /crawl/status/{task_id} for progress.
     """
     from app.services.scheduler_service import crawl_all_products
 
-    result = await crawl_all_products(source="manual")
+    result = await crawl_all_products(source="manual", background=True)
+
     if result["status"] == "skipped":
-        return JSONResponse(content={"status": "skipped", "reason": result["reason"]})
+        return JSONResponse(content={"status": "skipped", "reason": result["reason"]}, status_code=409)
     if result["status"] == "error":
         return JSONResponse(content={"status": "error", "reason": result["reason"]}, status_code=500)
 
     return JSONResponse(content={
-        "status": result["status"],
-        "total": result.get("total", 0),
-        "success": result.get("success", 0),
-        "errors": result.get("errors", 0),
-        "details": result.get("details", []),
+        "status": "pending",
+        "task_id": result["task_id"],
+        "message": "爬取任务已启动，请通过 /crawl/status/{task_id} 查询进度",
+    })
+
+
+@router.get("/status/{task_id}")
+async def get_crawl_status(task_id: str):
+    """Get the status of a crawl task."""
+    from app.services.scheduler_service import get_task, TaskStatus
+
+    task = get_task(task_id)
+    if not task:
+        return JSONResponse(content={"status": "error", "reason": "task_not_found"}, status_code=404)
+
+    return JSONResponse(content={
+        "task_id": task.task_id,
+        "status": task.status.value,
+        "total": task.total,
+        "success": task.success,
+        "errors": task.errors,
+        "reason": task.reason,
+    })
+
+
+@router.get("/result/{task_id}")
+async def get_crawl_result(task_id: str):
+    """Get the final result of a completed crawl task."""
+    from app.services.scheduler_service import get_task, TaskStatus
+
+    task = get_task(task_id)
+    if not task:
+        return JSONResponse(content={"status": "error", "reason": "task_not_found"}, status_code=404)
+
+    if task.status == TaskStatus.PENDING or task.status == TaskStatus.RUNNING:
+        return JSONResponse(content={
+            "status": task.status.value,
+            "task_id": task.task_id,
+            "total": task.total,
+            "success": task.success,
+            "errors": task.errors,
+        }, status_code=202)
+
+    if task.status == TaskStatus.FAILED:
+        return JSONResponse(content={
+            "status": "error",
+            "task_id": task.task_id,
+            "reason": task.reason,
+        }, status_code=500)
+
+    # Completed
+    return JSONResponse(content={
+        "status": "completed",
+        "task_id": task.task_id,
+        "total": task.total,
+        "success": task.success,
+        "errors": task.errors,
+        "details": task.details,
     })
 
 

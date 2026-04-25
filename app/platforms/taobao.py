@@ -28,13 +28,23 @@ class TaobaoAdapter(BasePlatformAdapter):
         self.js_deep_scan_enabled = settings.taobao_js_deep_scan_enabled
 
         # Primary strategy: CSS selector-based extraction
+        # Updated with Tmall's current price structure
         self.css_strategy = CSSSelectorStrategy(
             selectors=[
+                # Tmall new structure (priceWrap/highlightPrice pattern)
+                "[class*='priceWrap'] [class*='highlightPrice']",
+                "[class*='priceWrap'] [class*='text--']",
+                "[class*='priceWrap']",
+                # Classic Tmall/Taobao selectors
                 ".price-value",
                 ".tm-price-panel .tm-price",
                 "[data-price]",
                 ".originPrice",
                 "#J_PromoPrice .price-value",
+                ".price",
+                # Try price in highlight area first
+                ".highlightPrice",
+                "[class*='highlightPrice']",
             ],
             currency="CNY",
         )

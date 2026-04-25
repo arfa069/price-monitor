@@ -3,7 +3,7 @@ import { productsApi } from '@/api/products'
 import { configApi } from '@/api/config'
 import { crawlApi } from '@/api/crawl'
 import { alertsApi } from '@/api/alerts'
-import type { AlertUpdateRequest } from '@/types'
+import type { AlertUpdateRequest, CrawlLog } from '@/types'
 
 export const useProducts = (params: {
   platform?: string
@@ -94,8 +94,60 @@ export const useProductHistory = (id: number, days = 30) => {
 }
 
 export const useCrawlNow = () => {
+  const qc = useQueryClient()
+
   return useMutation({
-    mutationFn: () => crawlApi.crawlNow().then((res) => res.data),
+    mutationFn: async () => {
+      const response = await crawlApi.crawlNow()
+      const data = response.data
+
+      if (data.status === 'skipped') {
+        return { type: 'skipped', reason: data.reason }
+      }
+
+      if (data.status === 'error') {
+        return { type: 'error', reason: data.reason }
+      }
+
+      // Poll for result
+      const taskId = data.task_id!
+      const maxAttempts = 60 // 60 * 3s = 3 minutes max
+      let attempts = 0
+
+      while (attempts < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 3000))
+        attempts++
+
+        try {
+          const statusRes = await crawlApi.getStatus(taskId)
+          const status = statusRes.data
+
+          if (status.status === 'completed') {
+            // Get full result
+            const resultRes = await crawlApi.getResult(taskId)
+            const result = resultRes.data
+            qc.invalidateQueries({ queryKey: ['crawl-logs'] })
+            return {
+              type: 'completed',
+              total: result.total,
+              success: result.success,
+              errors: result.errors,
+              details: result.details,
+            }
+          }
+
+          if (status.status === 'failed') {
+            return { type: 'error', reason: status.reason }
+          }
+          // pending or running - continue polling
+        } catch (e) {
+          // Network error during polling - continue
+          console.warn('Polling error:', e)
+        }
+      }
+
+      return { type: 'error', reason: 'timeout_polling' }
+    },
   })
 }
 
@@ -146,7 +198,7 @@ export const useDeleteAlert = () => {
 }
 
 export const useCrawlLogs = (params?: { product_id?: number; hours?: number; limit?: number }) => {
-  return useQuery({
+  return useQuery<CrawlLog[]>({
     queryKey: ['crawl-logs', params],
     queryFn: () => crawlApi.getLogs(params).then((res) => res.data),
     refetchInterval: 60000, // 每分钟自动刷新

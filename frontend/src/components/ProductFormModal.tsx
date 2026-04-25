@@ -105,7 +105,7 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
         </Form.Item>
       </Form>
 
-      <Divider orientation="left" plain>
+      <Divider orientation="horizontal" plain>
         <Space>
           <AlertOutlined />
           价格告警设置
@@ -132,7 +132,7 @@ export default function ProductFormModal({ open, record, onCancel, onSubmit, con
                     threshold_percent: alertThreshold,
                     active: true,
                   })
-                  setCurrentAlertId(res.id)
+                  setCurrentAlertId(res.data.id)
                   refetchAlert()
                 }
               } catch {

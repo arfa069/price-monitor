@@ -19,6 +19,7 @@ from app.config import settings
 from app.database import AsyncSessionLocal, engine
 from app.models.user import User
 from app.routers import alerts, config, crawl, products
+from app.routers.jobs import router as jobs_router
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,34 @@ async def _start_scheduler(app: FastAPI) -> None:
         else:
             logger.info("No crawl_cron configured, skipping scheduler registration")
 
+    # 职位爬取定时任务（函数提升：在引用前定义）
+    async def _trigger_crawl_jobs():
+        """APScheduler job: crawl all active job searches (runs as background task)."""
+        from app.services.job_crawl import crawl_all_job_searches
+        logger.info("Job crawl cron triggered")
+        asyncio.create_task(crawl_all_job_searches(source="cron"))
+
+    # 注册职位爬取定时任务
+    job_crawl_job_id = "job_crawl_cron_job"
+    try:
+        tz = zoneinfo.ZoneInfo(user.crawl_timezone or "Asia/Shanghai") if user else zoneinfo.ZoneInfo("Asia/Shanghai")
+        # 职位爬取使用独立的 job_crawl_cron，默认为每天早上 9 点
+        job_cron = user.job_crawl_cron or "0 9 * * *"
+        scheduler.add_job(
+            _trigger_crawl_jobs,
+            trigger=CronTrigger.from_crontab(job_cron, timezone=tz),
+            id=job_crawl_job_id,
+            name="Crawl all active job searches",
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info(
+            "Registered job_crawl_cron_job with schedule '%s' (tz=%s)",
+            job_cron, tz,
+        )
+    except Exception:
+        logger.exception("Failed to register job_crawl_cron job")
+
     scheduler.start()
     logger.info("APScheduler started")
 
@@ -121,6 +150,7 @@ app.include_router(config.router)
 app.include_router(products.router)
 app.include_router(alerts.router)
 app.include_router(crawl.router)
+app.include_router(jobs_router)
 
 # Scheduler status endpoint
 @app.get("/scheduler/status", tags=["scheduler"])

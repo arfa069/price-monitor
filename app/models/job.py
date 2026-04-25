@@ -1,7 +1,17 @@
 """Job models for boss zhipin job crawling."""
+
 from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Index, Integer, String, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import relationship
 
 from app.models.base import Base, TimestampMixin
@@ -9,10 +19,13 @@ from app.models.base import Base, TimestampMixin
 
 class JobSearchConfig(Base, TimestampMixin):
     """Job search configuration for scheduled crawling."""
+
     __tablename__ = "job_search_configs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     name = Column(String(100), nullable=False)
     keyword = Column(String(200), nullable=True)
     city_code = Column(String(20), nullable=True)
@@ -25,11 +38,14 @@ class JobSearchConfig(Base, TimestampMixin):
     notify_on_new = Column(Boolean, nullable=False, default=True)
 
     # Relationships
-    jobs = relationship("Job", back_populates="search_config", cascade="all, delete-orphan")
+    jobs = relationship(
+        "Job", back_populates="search_config", cascade="all, delete-orphan"
+    )
 
 
 class Job(Base):
     """Individual job posting from boss zhipin."""
+
     __tablename__ = "jobs"
     __table_args__ = (
         Index("ix_jobs_job_id", "job_id"),
@@ -38,7 +54,9 @@ class Job(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     job_id = Column(String(100), nullable=False, unique=True)  # boss's encryptJobId
-    search_config_id = Column(Integer, ForeignKey("job_search_configs.id", ondelete="CASCADE"), nullable=False)
+    search_config_id = Column(
+        Integer, ForeignKey("job_search_configs.id", ondelete="CASCADE"), nullable=False
+    )
     title = Column(String(300), nullable=True)
     company = Column(String(200), nullable=True)
     company_id = Column(String(100), nullable=True)
@@ -50,8 +68,12 @@ class Job(Base):
     education = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     url = Column(Text, nullable=True)
-    first_seen_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
-    last_updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    first_seen_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    last_updated_at = Column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
     is_active = Column(Boolean, nullable=False, default=True)
 
     # Relationships

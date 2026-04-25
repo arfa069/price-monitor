@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
-from app.models.user import User
 from app.schemas.job import (
     JobCrawlResult,
     JobResponse,

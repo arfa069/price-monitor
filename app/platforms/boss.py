@@ -56,7 +56,7 @@ class BossZhipinAdapter(BasePlatformAdapter):
                     "count": len(jobs),
                 }
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             return {
                 "success": False,
                 "error": "Crawl timeout: page took longer than 90s to respond",

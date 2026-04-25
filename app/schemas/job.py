@@ -77,7 +77,6 @@ class JobResponse(BaseModel):
 
 class JobCrawlResult(BaseModel):
     """Schema for job crawl result."""
-    total_scanned: int
     new_count: int
     updated_count: int
     deactivated_count: int = 0

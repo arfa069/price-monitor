@@ -5,6 +5,7 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from app.database import AsyncSessionLocal
+from app.models.job import JobSearchConfig
 
 
 @retry(
@@ -41,7 +42,7 @@ async def send_feishu_notification(webhook_url: str, message: str) -> dict:
 
 
 async def send_new_job_notification(
-    config: "JobSearchConfig",
+    config: JobSearchConfig,
     new_job_count: int,
     total_scraped: int,
 ) -> dict:

@@ -79,7 +79,7 @@ async def process_job_results(
             result = await db.execute(
                 select(Job).where(
                     Job.search_config_id == config_id,
-                    Job.is_active == True,
+                    Job.is_active,
                 )
             )
             all_active_jobs = list(result.scalars().all())
@@ -217,7 +217,7 @@ async def crawl_all_job_searches(source: str = "manual") -> dict:
     """Crawl all active job search configs."""
     async with AsyncSessionLocal() as db:
         result = await db.execute(
-            select(JobSearchConfig).where(JobSearchConfig.active == True)
+            select(JobSearchConfig).where(JobSearchConfig.active)
         )
         configs = list(result.scalars().all())
 

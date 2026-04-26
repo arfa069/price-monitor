@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider, theme } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/AppLayout'
+import JobsPage from '@/pages/JobsPage'
 import ProductsPage from '@/pages/ProductsPage'
 import ScheduleConfigPage from '@/pages/ScheduleConfigPage'
 
@@ -29,10 +30,11 @@ export default function App() {
       <BrowserRouter>
         <AppLayout onRefresh={handleRefresh}>
           <Routes>
+            <Route path="/jobs" element={<JobsPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/schedule" element={<ScheduleConfigPage />} />
-            <Route path="/" element={<Navigate to="/products" replace />} />
-            <Route path="*" element={<Navigate to="/products" replace />} />
+            <Route path="/" element={<Navigate to="/jobs" replace />} />
+            <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>
         </AppLayout>
       </BrowserRouter>

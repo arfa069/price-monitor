@@ -1,62 +1,91 @@
 import { useEffect } from 'react'
-import { Modal, Form, Input, Select, Switch, InputNumber, Divider, Space } from 'antd'
 import { AlertOutlined } from '@ant-design/icons'
-import type { Product } from '@/types'
+import { Divider, Form, Input, InputNumber, Modal, Select, Space, Switch } from 'antd'
+import type { Product, ProductFormValues } from '@/types'
+
+type AlertFormValues = {
+  existingId: number | null
+  enabled: boolean
+  threshold: number
+}
+
+export type ProductFormSubmitValues = ProductFormValues & {
+  alert: AlertFormValues
+}
 
 interface Props {
   open: boolean
   record?: Product
   existingAlert?: { id: number; active: boolean; threshold_percent: number } | null
   onCancel: () => void
-  onSubmit: (values: any) => void
+  onSubmit: (values: ProductFormSubmitValues) => void
   confirmLoading?: boolean
 }
 
-const detectPlatform = (url: string): string | null => {
-  const u = url.toLowerCase()
-  if (u.includes('jd.com') || u.includes('item.jd')) return 'jd'
-  if (u.includes('taobao.com') || u.includes('tmall.com')) return 'taobao'
-  if (u.includes('amazon.')) return 'amazon'
+type ProductFormFields = ProductFormValues & {
+  alert_enabled?: boolean
+  alert_threshold?: number
+}
+
+const detectPlatform = (url: string): ProductFormValues['platform'] | null => {
+  const lowerUrl = url.toLowerCase()
+  if (lowerUrl.includes('jd.com') || lowerUrl.includes('item.jd')) return 'jd'
+  if (lowerUrl.includes('taobao.com') || lowerUrl.includes('tmall.com')) return 'taobao'
+  if (lowerUrl.includes('amazon.')) return 'amazon'
   return null
 }
 
-export default function ProductFormModal({ open, record, existingAlert, onCancel, onSubmit, confirmLoading }: Props) {
-  const [form] = Form.useForm()
+export default function ProductFormModal({
+  open,
+  record,
+  existingAlert,
+  onCancel,
+  onSubmit,
+  confirmLoading,
+}: Props) {
+  const [form] = Form.useForm<ProductFormFields>()
 
   useEffect(() => {
+    if (!open) return
     if (record) {
       form.setFieldsValue({
-        platform: record.platform,
+        platform: record.platform as ProductFormValues['platform'],
         url: record.url,
-        title: record.title,
+        title: record.title || undefined,
         active: record.active,
         alert_enabled: existingAlert?.active ?? false,
         alert_threshold: existingAlert?.threshold_percent ?? 5,
       })
-    } else {
-      form.resetFields(['alert_enabled', 'alert_threshold'])
+      return
     }
-  }, [record, open, form, existingAlert])
+    form.resetFields()
+    form.setFieldsValue({
+      active: true,
+      alert_enabled: false,
+      alert_threshold: 5,
+    })
+  }, [open, record, existingAlert, form])
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!record) {
-      const detected = detectPlatform(e.target.value)
-      if (detected) form.setFieldValue('platform', detected)
+    if (record) return
+    const detected = detectPlatform(e.target.value)
+    if (detected) {
+      form.setFieldValue('platform', detected)
     }
   }
 
-  const handleOk = () => form.validateFields().then((values) => {
-    // Extract alert settings from form values
-    const { alert_enabled, alert_threshold, ...productValues } = values
-    onSubmit({
-      ...productValues,
-      alert: {
-        existingId: existingAlert?.id ?? null,
-        enabled: alert_enabled ?? false,
-        threshold: alert_threshold ?? 5,
-      },
+  const handleOk = () =>
+    form.validateFields().then((values) => {
+      const { alert_enabled, alert_threshold, ...productValues } = values
+      onSubmit({
+        ...productValues,
+        alert: {
+          existingId: existingAlert?.id ?? null,
+          enabled: alert_enabled ?? false,
+          threshold: alert_threshold ?? 5,
+        },
+      })
     })
-  })
 
   return (
     <Modal
@@ -72,11 +101,13 @@ export default function ProductFormModal({ open, record, existingAlert, onCancel
           label="平台"
           rules={[{ required: true, message: '请选择平台' }]}
         >
-          <Select options={[
-            { label: '淘宝', value: 'taobao' },
-            { label: '京东', value: 'jd' },
-            { label: '亚马逊', value: 'amazon' },
-          ]} />
+          <Select
+            options={[
+              { label: '淘宝', value: 'taobao' },
+              { label: '京东', value: 'jd' },
+              { label: '亚马逊', value: 'amazon' },
+            ]}
+          />
         </Form.Item>
         <Form.Item
           name="url"
@@ -89,9 +120,9 @@ export default function ProductFormModal({ open, record, existingAlert, onCancel
           <Input placeholder="https://..." onChange={handleUrlChange} />
         </Form.Item>
         <Form.Item name="title" label="标题">
-          <Input placeholder="留空将自动抓取" />
+          <Input placeholder="留空时自动抓取" />
         </Form.Item>
-        <Form.Item name="active" label="启用" valuePropName="checked" initialValue>
+        <Form.Item name="active" label="启用" valuePropName="checked">
           <Switch />
         </Form.Item>
 
@@ -102,14 +133,10 @@ export default function ProductFormModal({ open, record, existingAlert, onCancel
           </Space>
         </Divider>
 
-        <Form.Item name="alert_enabled" label="启用告警" valuePropName="checked" initialValue={false}>
+        <Form.Item name="alert_enabled" label="启用告警" valuePropName="checked">
           <Switch />
         </Form.Item>
-
-        <Form.Item
-          noStyle
-          shouldUpdate={(prev, curr) => prev.alert_enabled !== curr.alert_enabled}
-        >
+        <Form.Item noStyle shouldUpdate={(prev, curr) => prev.alert_enabled !== curr.alert_enabled}>
           {({ getFieldValue }) =>
             getFieldValue('alert_enabled') ? (
               <Form.Item
@@ -117,12 +144,7 @@ export default function ProductFormModal({ open, record, existingAlert, onCancel
                 label="降价阈值"
                 rules={[{ required: true, message: '请输入阈值' }]}
               >
-                <InputNumber
-                  min={1}
-                  max={100}
-                  addonAfter="%"
-                  style={{ width: 120 }}
-                />
+                <InputNumber min={1} max={100} addonAfter="%" style={{ width: 120 }} />
               </Form.Item>
             ) : null
           }

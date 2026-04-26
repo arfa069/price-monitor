@@ -1,13 +1,14 @@
 """Job search API router."""
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import JSONResponse
-from sqlalchemy import asc, desc, select
+from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
 from app.schemas.job import (
     JobCrawlResult,
+    JobListResponse,
     JobResponse,
     JobSearchConfigCreate,
     JobSearchConfigResponse,
@@ -111,7 +112,7 @@ async def delete_config(config_id: int, db: AsyncSession = Depends(get_db)):
 
 # ── Job Listing ──────────────────────────────────────────────────
 
-@router.get("", response_model=list[JobResponse])
+@router.get("", response_model=JobListResponse)
 async def list_jobs(
     search_config_id: int | None = None,
     keyword: str | None = None,
@@ -129,25 +130,36 @@ async def list_jobs(
     """List jobs with filtering and pagination."""
     # Join with JobSearchConfig to filter by user_id=1
     query = select(Job).join(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+    count_query = select(func.count()).select_from(Job).join(JobSearchConfig).where(
+        JobSearchConfig.user_id == 1
+    )
 
     if search_config_id is not None:
         query = query.where(Job.search_config_id == search_config_id)
+        count_query = count_query.where(Job.search_config_id == search_config_id)
     if keyword:
-        query = query.where(
+        keyword_filter = (
             Job.title.ilike(f"%{keyword}%") |
             Job.company.ilike(f"%{keyword}%") |
             Job.description.ilike(f"%{keyword}%")
         )
+        query = query.where(keyword_filter)
+        count_query = count_query.where(keyword_filter)
     if company:
         query = query.where(Job.company.ilike(f"%{company}%"))
+        count_query = count_query.where(Job.company.ilike(f"%{company}%"))
     if salary_min is not None:
         query = query.where(Job.salary_min >= salary_min)
+        count_query = count_query.where(Job.salary_min >= salary_min)
     if salary_max is not None:
         query = query.where(Job.salary_max <= salary_max)
+        count_query = count_query.where(Job.salary_max <= salary_max)
     if location:
         query = query.where(Job.location.ilike(f"%{location}%"))
+        count_query = count_query.where(Job.location.ilike(f"%{location}%"))
     if is_active is not None:
         query = query.where(Job.is_active == is_active)
+        count_query = count_query.where(Job.is_active == is_active)
 
     # Sorting
     sort_column = {
@@ -160,12 +172,23 @@ async def list_jobs(
     else:
         query = query.order_by(desc(sort_column))
 
+    # Count
+    count_result = await db.execute(count_query)
+    total = count_result.scalar() or 0
+
     # Pagination
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
 
     result = await db.execute(query)
-    return result.scalars().all()
+    items = result.scalars().all()
+
+    return JobListResponse(
+        items=items,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/{job_id_str}", response_model=JobResponse)

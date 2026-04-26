@@ -80,3 +80,11 @@ class JobCrawlResult(BaseModel):
     new_count: int
     updated_count: int
     deactivated_count: int = 0
+
+
+class JobListResponse(BaseModel):
+    """Paginated job list response."""
+    items: list[JobResponse]
+    total: int
+    page: int
+    page_size: int

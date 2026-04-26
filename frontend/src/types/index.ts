@@ -110,3 +110,79 @@ export interface CrawlLog {
   timestamp: string
   error_message: string | null
 }
+
+export interface JobSearchConfig {
+  id: number
+  user_id: number
+  name: string
+  keyword: string | null
+  city_code: string | null
+  salary_min: number | null
+  salary_max: number | null
+  experience: string | null
+  education: string | null
+  url: string
+  active: boolean
+  notify_on_new: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface JobSearchConfigCreate {
+  name: string
+  keyword?: string
+  city_code?: string
+  salary_min?: number
+  salary_max?: number
+  experience?: string
+  education?: string
+  url: string
+  active?: boolean
+  notify_on_new?: boolean
+}
+
+export interface JobSearchConfigUpdate {
+  name?: string
+  keyword?: string
+  city_code?: string
+  salary_min?: number
+  salary_max?: number
+  experience?: string
+  education?: string
+  url?: string
+  active?: boolean
+  notify_on_new?: boolean
+}
+
+export interface Job {
+  id: number
+  job_id: string
+  search_config_id: number
+  title: string | null
+  company: string | null
+  company_id: string | null
+  salary: string | null
+  salary_min: number | null
+  salary_max: number | null
+  location: string | null
+  experience: string | null
+  education: string | null
+  description: string | null
+  url: string | null
+  first_seen_at: string
+  last_updated_at: string
+  is_active: boolean
+}
+
+export interface JobListResponse {
+  items: Job[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface JobCrawlResult {
+  new_count: number
+  updated_count: number
+  deactivated_count: number
+}

@@ -1,18 +1,26 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { QueryClient, QueryClientProvider, QueryCache } from '@tanstack/react-query'
+import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { message } from 'antd'
 import App from './App'
 
+type QueryError = {
+  response?: { status?: number }
+  code?: string
+  message?: string
+}
+
 const queryCache = new QueryCache({
   onError: (error) => {
-    const err = error as { response?: { status?: number }; code?: string }
+    const err = error as QueryError
     if (err.response?.status != null && err.response.status >= 500) {
-      // Handled by axios interceptor (client.ts)
-    } else if (err.code === 'ECONNABORTED' || !err.response) {
-      // Handled by axios interceptor (client.ts)
-    } else if (err.response?.status != null && err.response.status >= 400) {
-      message.error('请求失败：' + (err as any).message)
+      return
+    }
+    if (err.code === 'ECONNABORTED' || !err.response) {
+      return
+    }
+    if (err.response?.status != null && err.response.status >= 400) {
+      message.error(`请求失败: ${err.message || '未知错误'}`)
     }
   },
 })

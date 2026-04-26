@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Layout, Menu, Button } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
+  TeamOutlined,
   ShoppingCartOutlined,
   ClockCircleOutlined,
   ReloadOutlined,
@@ -20,13 +21,11 @@ export default function AppLayout({
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
-  const [selectedKey, setSelectedKey] = useState('/products')
-
-  useEffect(() => {
-    const path = location.pathname
-    if (path.startsWith('/products')) setSelectedKey('/products')
-    else if (path === '/schedule') setSelectedKey('/schedule')
-  }, [location])
+  const selectedKey = location.pathname.startsWith('/jobs')
+    ? '/jobs'
+    : location.pathname.startsWith('/products')
+      ? '/products'
+      : '/schedule'
 
   const siderWidth = collapsed ? 60 : 180
 
@@ -105,6 +104,11 @@ export default function AppLayout({
             marginTop: 8,
           }}
           items={[
+            {
+              key: '/jobs',
+              icon: <TeamOutlined />,
+              label: '职位管理',
+            },
             {
               key: '/products',
               icon: <ShoppingCartOutlined />,

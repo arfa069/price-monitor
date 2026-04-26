@@ -732,186 +732,112 @@ git commit -m "feat(frontend): add JobDrawer component"
 - [ ] **Step 1: 创建 JobList.tsx**
 
 ```typescript
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
-  Table, Button, Space, Input, Select, Tag, message, Row, Col, Card,
+  Table, Button, Space, Input, Select, Tag, Row, Col, Card,
 } from 'antd'
-import { SearchOutlined, RocketOutlined } from '@ant-design/icons'
+import { RocketOutlined } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 import type { Job } from '@/types'
 
-const PLATFORM_COLOR = '#667eea' // Boss 直聘主题色
-
 interface JobListProps {
   jobs: Job[] | undefined
+  total: number
   isLoading: boolean
   onViewDetail: (job: Job) => void
   onCrawlAll: () => Promise<void>
   crawlAllLoading?: boolean
-}
-
-export default function JobList({
-  jobs,
-  isLoading,
-  onViewDetail,
-  onCrawlAll,
-  crawlAllLoading,
-}: JobListProps) {
-  const [keyword, setKeyword] = useState('')
-  const [debouncedKeyword, setDebouncedKeyword] = useState('')
-  const [isActive, setIsActive] = useState<boolean | undefined>(undefined)
-
-  // Debounce keyword
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedKeyword(keyword), 400)
-    return () => clearTimeout(timer)
-  }, [keyword])
-
-  const filteredJobs = jobs?.filter((job) => {
-    // Filter by keyword
-    if (debouncedKeyword) {
-      const kw = debouncedKeyword.toLowerCase()
-      const matchTitle = job.title?.toLowerCase().includes(kw)
-      const matchCompany = job.company?.toLowerCase().includes(kw)
-      if (!matchTitle && !matchCompany) return false
-    }
-    // Filter by is_active
-    if (isActive !== undefined && job.is_active !== isActive) return false
-    return true
-  })
-
-  const columns: ColumnsType<Job> = [
-    {
-      title: '职位名称',
-      dataIndex: 'title',
-      width: 200,
-      ellipsis: true,
-      render: (v: string | null) => v || '-',
-    },
-    {
-      title: '公司',
-      dataIndex: 'company',
-      width: 120,
-      ellipsis: true,
-      render: (v: string | null) => v || '-',
-    },
-    {
-      title: '薪资',
-      dataIndex: 'salary',
-      width: 120,
-      render: (v: string | null) => v ? (
-        <Tag color="orange">{v}</Tag>
-      ) : '-',
-    },
-    {
-      title: '地区',
-      dataIndex: 'location',
-      width: 120,
-      ellipsis: true,
-      render: (v: string | null) => v || '-',
-    },
-    {
-      title: '经验',
-      dataIndex: 'experience',
-      width: 80,
-      render: (v: string | null) => v || '-',
-    },
-    {
-      title: '学历',
-      dataIndex: 'education',
-      width: 80,
-      render: (v: string | null) => v || '-',
-    },
-    {
-      title: '发现时间',
-      dataIndex: 'first_seen_at',
-      width: 160,
-      sorter: true,
-      render: (v: string) => new Date(v).toLocaleString('zh-CN'),
-    },
-    {
-      title: '状态',
-      dataIndex: 'is_active',
-      width: 80,
-      render: (v: boolean) => v ? (
-        <Tag color="success">活跃</Tag>
-      ) : (
-        <Tag color="default">下架</Tag>
-      ),
-    },
-    {
-      title: '操作',
-      key: 'action',
-      width: 80,
-      render: (_, record: Job) => (
-        <Button size="small" onClick={() => onViewDetail(record)}>
-          查看
-        </Button>
-      ),
-    },
-  ]
-
-  return (
-    <Card size="small" style={{ marginTop: 20 }}>
-      <Row gutter={[8, 8]} align="middle" style={{ marginBottom: 16 }}>
-        <Col flex="none">
-          <Button
-            type="primary"
-            icon={<RocketOutlined />}
-            onClick={onCrawlAll}
-            loading={crawlAllLoading}
-          >
-            全部爬取
-          </Button>
-        </Col>
-        <Col flex="auto">
-          <Space>
-            <Input
-              placeholder="搜索职位/公司"
-              prefix={<SearchOutlined />}
-              allowClear
-              style={{ width: 200 }}
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-            />
-            <Select
-              placeholder="状态"
-              allowClear
-              style={{ width: 100 }}
-              value={isActive}
-              onChange={(v) => setIsActive(v)}
-              options={[
-                { label: '活跃', value: true },
-                { label: '下架', value: false },
-              ]}
-            />
-          </Space>
-        </Col>
-      </Row>
-
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={filteredJobs || []}
-        loading={isLoading}
-        pagination={{
-          pageSize: 20,
-          showTotal: (total) => `共 ${total} 条`,
-          showSizeChanger: false,
-        }}
-        scroll={{ x: 1200 }}
-        locale={{
-          emptyText: (
-            <div style={{ padding: '40px 0' }}>
-              <p style={{ color: '#64748b', marginBottom: 16 }}>暂无职位</p>
-            </div>
-          ),
-        }}
-      />
-    </Card>
-  )
+  // 筛选参数
+  filters: {
+    keyword: string
+    is_active: boolean | undefined
+  }
+  onFilterChange: (filters: { keyword?: string; is_active?: boolean | undefined }) => void
+  // 分页
+  page: number
+  pageSize: number
+  onPageChange: (page: number) => void
 }
 ```
+
+修改 `useJobs` hook 接受过滤参数，删除客户端 filter 逻辑：
+
+```typescript
+// Job hooks - 修改签名
+export const useJobs = (params?: {
+  keyword?: string
+  is_active?: boolean
+  page?: number
+  page_size?: number
+}) => {
+  return useQuery({
+    queryKey: ['jobs', params],
+    queryFn: () => jobsApi.getJobs(params).then((res) => res.data),
+    staleTime: 30_000,
+  })
+}
+```
+
+在 JobList 中连接筛选状态和分页：
+
+```typescript
+const handleKeywordChange = (value: string) => {
+  onFilterChange({ keyword: value })
+}
+
+const handleStatusChange = (value: boolean | undefined) => {
+  onFilterChange({ is_active: value })
+}
+
+return (
+  <Card size="small" style={{ marginTop: 20 }}>
+    <Row gutter={[8, 8]} align="middle" style={{ marginBottom: 16 }}>
+      <Col flex="none">
+        <Button type="primary" icon={<RocketOutlined />} onClick={onCrawlAll} loading={crawlAllLoading}>
+          全部爬取
+        </Button>
+      </Col>
+      <Col flex="auto">
+        <Space>
+          <Input
+            placeholder="搜索职位/公司"
+            allowClear
+            style={{ width: 200 }}
+            value={filters.keyword}
+            onChange={(e) => handleKeywordChange(e.target.value)}
+          />
+          <Select
+            placeholder="状态"
+            allowClear
+            style={{ width: 100 }}
+            value={filters.is_active}
+            onChange={handleStatusChange}
+            options={[
+              { label: '活跃', value: true },
+              { label: '下架', value: false },
+            ]}
+          />
+        </Space>
+      </Col>
+    </Row>
+
+    <Table
+      rowKey="id"
+      columns={columns}
+      dataSource={jobs || []}
+      loading={isLoading}
+      pagination={{
+        current: page,
+        pageSize: pageSize,
+        total: total,
+        showTotal: (t) => `共 ${t} 条`,
+        showSizeChanger: false,
+        onChange: onPageChange,
+      }}
+      scroll={{ x: 1200 }}
+    />
+  </Card>
+)
 
 - [ ] **Step 2: 提交**
 
@@ -947,14 +873,26 @@ import JobDrawer from '@/components/JobDrawer'
 import type { Job, JobSearchConfigCreate } from '@/types'
 
 export default function JobsPage() {
+  // 分页和筛选状态
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
+  const [keyword, setKeyword] = useState('')
+  const [isActive, setIsActive] = useState<boolean | undefined>(undefined)
+
   // Config hooks
   const { data: configs, isLoading: configsLoading, refetch: refetchConfigs } = useJobConfigs()
   const createConfig = useCreateJobConfig()
   const updateConfig = useUpdateJobConfig()
   const deleteConfig = useDeleteJobConfig()
 
-  // Jobs hooks
-  const { data: jobs, isLoading: jobsLoading, refetch: refetchJobs } = useJobs()
+  // Jobs hooks - 传入筛选参数
+  const { data: jobs, isLoading: jobsLoading, refetch: refetchJobs } = useJobs({
+    keyword: keyword || undefined,
+    is_active: isActive,
+    page,
+    page_size: pageSize,
+  })
+
   const crawlAll = useCrawlAllJobs()
   const crawlSingle = useCrawlSingleJob()
 
@@ -995,6 +933,12 @@ export default function JobsPage() {
     setDrawerOpen(true)
   }
 
+  const handleFilterChange = (filters: { keyword?: string; is_active?: boolean | undefined }) => {
+    setPage(1) // 重置到第一页
+    if (filters.keyword !== undefined) setKeyword(filters.keyword)
+    if (filters.is_active !== undefined) setIsActive(filters.is_active)
+  }
+
   return (
     <div>
       <Card size="small">
@@ -1007,16 +951,22 @@ export default function JobsPage() {
           onCrawl={handleCrawlSingle}
           createLoading={createConfig.isPending}
           updateLoading={updateConfig.isPending}
-          crawlLoading={crawlSingle.isPending ? crawlSingle.variables : null}
+          crawlLoading={crawlSingle.isPending}
         />
       </Card>
 
       <JobList
         jobs={jobs}
+        total={jobs?.length || 0}  // TODO: 后端应返回 total 字段
         isLoading={jobsLoading}
         onViewDetail={handleViewDetail}
         onCrawlAll={handleCrawlAll}
         crawlAllLoading={crawlAll.isPending}
+        filters={{ keyword, is_active: isActive }}
+        onFilterChange={handleFilterChange}
+        page={page}
+        pageSize={pageSize}
+        onPageChange={setPage}
       />
 
       <JobDrawer
@@ -1028,6 +978,13 @@ export default function JobsPage() {
   )
 }
 ```
+
+**注意:** 后端 `/jobs` API 当前返回 `Job[]`，没有 `total` 字段。需要修改后端 schema 添加分页响应：
+- `total: int` - 总数
+- `page: int` - 当前页
+- `page_size: int` - 每页大小
+
+或者接受前端用数组长度作为 total（不够精确但可工作）。
 
 - [ ] **Step 2: 提交**
 
@@ -1083,9 +1040,72 @@ git add frontend/src/App.tsx frontend/src/components/AppLayout.tsx
 git commit -m "feat(frontend): add jobs route and menu"
 ```
 
+| 修改 | `frontend/src/components/JobConfigList.tsx` | 添加 loading 状态简化和 Popconfirm |
+
 ---
 
-## Task 10: 验证
+## Task 10: 修复后端 API 分页响应
+
+**Files:**
+- Modify: `app/routers/jobs.py`
+- Modify: `app/schemas/job.py`
+
+- [ ] **Step 1: 添加 JobListResponse schema**
+
+在 `app/schemas/job.py` 中添加：
+
+```python
+class JobListResponse(BaseModel):
+    items: list[JobResponse]
+    total: int
+    page: int
+    page_size: int
+```
+
+- [ ] **Step 2: 修改 list_jobs endpoint**
+
+在 `app/routers/jobs.py` 的 `list_jobs` 函数中添加 count 查询：
+
+```python
+@router.get("", response_model=list[JobResponse])
+async def list_jobs(...):
+    # ... existing filter logic ...
+
+    # 添加 count 查询
+    count_query = select(func.count()).select_from(Job).join(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+    # ... apply filters to count_query ...
+    total_result = await db.execute(count_query)
+    total = total_result.scalar() or 0
+
+    # 分页
+    offset = (page - 1) * page_size
+    query = query.offset(offset).limit(page_size)
+
+    result = await db.execute(query)
+    return result.scalars().all()
+```
+
+或者返回包含 total 的响应：
+
+```python
+@router.get("", response_model=JobListResponse)
+async def list_jobs(...):
+    # ... same filtering ...
+    result = await db.execute(query)
+    items = result.scalars().all()
+    return JobListResponse(items=items, total=total, page=page, page_size=page_size)
+```
+
+- [ ] **Step 3: 提交**
+
+```bash
+git add app/routers/jobs.py app/schemas/job.py
+git commit -m "feat(jobs): add pagination response with total count"
+```
+
+---
+
+## Task 11: 验证
 
 **Files:**
 - None (verification only)

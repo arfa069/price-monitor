@@ -1,56 +1,25 @@
-# Price Monitor
+# Repository Guidelines
 
-淘宝、京东、亚马逊电商价格监控系统，支持降价提醒与飞书通知。
+## Project Structure & Module Organization
+`app/` contains the FastAPI backend: `main.py` for app startup, `routers/` for HTTP endpoints, `services/` for crawl and notification logic, `models/` and `schemas/` for persistence and validation, and `platforms/` for Taobao/JD/Amazon adapters. `alembic/` and `alembic.ini` hold database migrations. `frontend/` is the Vite + React client, with source under `frontend/src/`. Tests live in `tests/`; screenshots and manual QA artifacts are stored under `tests/screenshots/` and `tests/*.md`.
 
-## 项目概览
+## Build, Test, and Development Commands
+- `uvicorn app.main:app` starts the backend locally. On Windows, do not use `--reload`.
+- `alembic upgrade head` applies database migrations.
+- `pytest` runs the Python test suite from `tests/`.
+- `ruff check .` runs Python linting.
+- `cd frontend; npm run dev` starts the UI on port `3000`.
+- `cd frontend; npm run build` type-checks and builds the frontend.
+- `cd frontend; npm run lint` runs ESLint.
 
-- 类型：Python 3.11+ FastAPI 应用
-- 技术栈：FastAPI · 异步 SQLAlchemy · PostgreSQL · Redis · Playwright · 飞书 Webhook
-- 入口：`app/main.py`
-- 架构基线：抓取任务在 FastAPI 异步上下文内执行，不依赖 Celery worker
+## Coding Style & Naming Conventions
+Use Python 3.11+, 4-space indentation, and keep imports sorted for Ruff (`E`, `F`, `I`, `N`, `W`, `UP`). Prefer explicit async/await code and keep business logic in services rather than routers. Name backend files by domain, such as `crawl.py`, `notification.py`, or `jd.py`. In the frontend, use TypeScript, PascalCase for components, camelCase for hooks and helpers, and colocate feature code under `frontend/src/components/` or `frontend/src/pages/`.
 
-## 常用命令
+## Testing Guidelines
+Pytest is the standard test framework. Tests follow `test_*.py` naming and belong in `tests/`. Prefer focused unit tests for adapters and services, plus API tests for endpoints and pagination. When changing crawl, scheduler, or notification behavior, add coverage for failure and edge cases, not just happy paths. Use `coverage run -m pytest` and `coverage report` when validating broader changes.
 
-```powershell
-# 启动服务（Windows 建议不要加 --reload）
-uvicorn app.main:app
+## Commit & Pull Request Guidelines
+Recent commits use short Conventional Commit style messages such as `feat(scope): ...`, `fix(scope): ...`, and occasional verification tags like `[verified]`. Keep messages imperative and scoped when practical. Pull requests should describe the change, list verification performed, and include screenshots for visible frontend updates. Link related issues or notes when applicable.
 
-# 迁移
-alembic upgrade head
-
-# 测试
-pytest
-
-# 代码检查
-ruff check .
-```
-
-## 关键能力
-
-- 多平台价格采集：淘宝 / 京东 / 亚马逊
-- CDP 模式：复用已登录浏览器会话，降低反爬与登录墙影响
-- 降价告警：基于价格历史比较并通过飞书 webhook 推送
-- 数据清理：支持按保留天数清理历史价格和抓取日志
-
-## 关键文件
-
-| 文件 | 用途 |
-|------|------|
-| `app/main.py` | FastAPI 入口与生命周期管理 |
-| `app/config.py` | Pydantic Settings（数据库、Redis、飞书、CDP/代理配置） |
-| `app/database.py` | 异步 SQLAlchemy 引擎与会话 |
-| `app/platforms/base.py` | 平台适配器抽象基类 |
-| `app/routers/crawl.py` | 抓取、日志查询、数据清理接口 |
-| `app/services/crawl.py` | 抓取编排与告警触发逻辑 |
-| `app/services/notification.py` | 飞书通知发送 |
-
-## 架构要点
-
-- 平台适配器模式：`BasePlatformAdapter` -> `taobao.py` / `jd.py` / `amazon.py`
-- 浏览器模式：Launch（默认）与 CDP（连接 `--remote-debugging-port=9222`）
-- 抓取策略：`domcontentloaded` + 价格选择器等待 + 随机延时，单次抓取超时 90s
-- API 入口：`/config`、`/products`、`/alerts`、`/crawl/*`、`/health`
-
-## 与文档保持一致
-
-更新本文件时，以 `README.md` 与 `ARCHITECTURE.md` 为准；若实现与文档冲突，优先修正文档并在 PR 中说明。
+## Security & Configuration Tips
+Keep secrets in `.env`; never hardcode database, Redis, Feishu, or browser/CDP credentials. Review `README.md` and `ARCHITECTURE.md` before changing config, scheduling, or crawl behavior, because the backend runs crawls in-process inside FastAPI rather than through a separate worker.

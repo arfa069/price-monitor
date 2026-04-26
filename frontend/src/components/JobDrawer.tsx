@@ -9,7 +9,7 @@ interface JobDrawerProps {
 
 export default function JobDrawer({ open, job, onClose }: JobDrawerProps) {
   return (
-    <Drawer title="职位详情" open={open} onClose={onClose} width={560}>
+    <Drawer title="职位详情" open={open} onClose={onClose} size="large">
       {!job ? (
         <Typography.Text type="secondary">暂无职位信息</Typography.Text>
       ) : (

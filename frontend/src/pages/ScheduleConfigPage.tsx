@@ -146,7 +146,7 @@ export default function ScheduleConfigPage() {
           showIcon
           style={{ marginBottom: 24 }}
           action={
-            <Space direction="vertical">
+            <Space orientation="vertical">
               <Button size="small" icon={<UndoOutlined />} onClick={handleRestoreDraft}>
                 恢复草稿
               </Button>

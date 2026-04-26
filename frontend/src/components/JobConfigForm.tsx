@@ -48,9 +48,9 @@ export default function JobConfigForm({
       onCancel={onCancel}
       onOk={handleOk}
       confirmLoading={confirmLoading}
-      destroyOnClose
+      destroyOnHidden
     >
-      <Form form={form} layout="vertical">
+      <Form form={form} layout="vertical" preserve={false}>
         <Form.Item
           name="name"
           label="配置名称"

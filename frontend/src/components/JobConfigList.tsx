@@ -79,7 +79,7 @@ export default function JobConfigList({
       ) : !configs?.length ? (
         <Empty description="暂无配置" />
       ) : (
-        <Space direction="vertical" style={{ width: '100%' }}>
+        <Space orientation="vertical" style={{ width: '100%' }}>
           {configs.map((config) => (
             <Card
               key={config.id}

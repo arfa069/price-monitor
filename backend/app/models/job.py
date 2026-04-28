@@ -68,6 +68,7 @@ class Job(Base):
     salary_min = Column(Integer, nullable=True)
     salary_max = Column(Integer, nullable=True)
     location = Column(String(200), nullable=True)
+    address = Column(String(500), nullable=True)
     experience = Column(String(100), nullable=True)
     education = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)

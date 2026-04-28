@@ -201,3 +201,140 @@ class TestProcessJobResults:
         assert result["deactivated_count"] == 0
         assert existing_job.is_active is True
         assert existing_job.consecutive_miss_count == 1  # Incremented but not deactivated
+
+
+class TestCrawlDetail:
+    """Test job detail scraping."""
+
+    @pytest.mark.asyncio
+    async def test_crawl_detail_success(self):
+        """crawl_detail should return parsed job details."""
+        from app.platforms.boss import BossZhipinAdapter
+
+        with patch.object(BossZhipinAdapter, "_acquire_cookies", new_callable=AsyncMock, return_value=True):
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {
+                "code": 0,
+                "zpData": {
+                    "jobInfo": {
+                        "jobName": "Java",
+                        "salaryDesc": "10-15K·14薪",
+                        "locationName": "深圳",
+                        "address": "深圳南山区前海周大福金融大厦1401-05",
+                        "experienceName": "在校/应届",
+                        "degreeName": "本科",
+                        "postDescription": "岗位职责: ...",
+                    },
+                    "bossInfo": {"name": "李俊滨", "title": "AI全栈工程师"},
+                    "brandComInfo": {"brandName": "望尘科技"},
+                },
+            }
+
+            with patch("app.platforms.boss.CffiSession") as mock_session_cls:
+                mock_session = MagicMock()
+                mock_session.get.return_value = mock_response
+                mock_session.cookies.get_dict.return_value = {}
+                mock_session_cls.return_value = mock_session
+
+                adapter = BossZhipinAdapter()
+                result = await adapter.crawl_detail("test_security_id")
+
+        assert result["success"] is True
+        assert result["detail"]["title"] == "Java"
+        assert result["detail"]["address"] == "深圳南山区前海周大福金融大厦1401-05"
+        assert result["detail"]["description"] == "岗位职责: ..."
+        assert result["detail"]["company"] == "望尘科技"
+
+    @pytest.mark.asyncio
+    async def test_crawl_detail_no_cookies(self):
+        """crawl_detail should fail gracefully without cookies."""
+        from app.platforms.boss import BossZhipinAdapter
+
+        with patch.object(BossZhipinAdapter, "_acquire_cookies", new_callable=AsyncMock, return_value=False):
+            adapter = BossZhipinAdapter()
+            result = await adapter.crawl_detail("test_security_id")
+
+        assert result["success"] is False
+        assert "cookies" in result["error"].lower()
+
+    @pytest.mark.asyncio
+    async def test_crawl_detail_api_error(self):
+        """crawl_detail should handle API errors gracefully."""
+        from app.platforms.boss import BossZhipinAdapter
+
+        with patch.object(BossZhipinAdapter, "_acquire_cookies", new_callable=AsyncMock, return_value=True):
+            mock_response = MagicMock()
+            mock_response.status_code = 200
+            mock_response.json.return_value = {"code": 37, "message": "Cookie expired"}
+
+            with patch("app.platforms.boss.CffiSession") as mock_session_cls:
+                mock_session = MagicMock()
+                mock_session.get.return_value = mock_response
+                mock_session.cookies.get_dict.return_value = {}
+                mock_session_cls.return_value = mock_session
+
+                adapter = BossZhipinAdapter()
+                result = await adapter.crawl_detail("test_security_id")
+
+        assert result["success"] is False
+        assert "code=37" in result["error"]
+
+
+class TestUpdateJobDetail:
+    """Test update_job_detail service function."""
+
+    @pytest.mark.asyncio
+    async def test_update_job_detail_success(self):
+        """update_job_detail should update job record with detail data."""
+        from app.services.job_crawl import update_job_detail
+
+        mock_job = MagicMock()
+        mock_job.id = 1
+        mock_job.job_id = "test_encrypt_id"
+        mock_job.description = None
+        mock_job.address = None
+
+        mock_db = MagicMock()
+        mock_db.get = AsyncMock(return_value=mock_job)
+        mock_db.commit = AsyncMock()
+
+        mock_adapter = MagicMock()
+        mock_adapter.crawl_detail = AsyncMock(return_value={
+            "success": True,
+            "detail": {
+                "description": "岗位职责: ...",
+                "address": "深圳南山区",
+                "title": "Java",
+            },
+        })
+
+        with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
+            mock_session.return_value.__aenter__.return_value = mock_db
+            mock_session.return_value.__aexit__.return_value = None
+
+            with patch("app.platforms.BossZhipinAdapter") as mock_adapter_cls:
+                mock_adapter_cls.return_value = mock_adapter
+                result = await update_job_detail(1)
+
+        assert result["success"] is True
+        assert result["detail"]["description"] == "岗位职责: ..."
+        assert mock_job.description == "岗位职责: ..."
+        assert mock_job.address == "深圳南山区"
+
+    @pytest.mark.asyncio
+    async def test_update_job_detail_not_found(self):
+        """update_job_detail should return error if job not found."""
+        from app.services.job_crawl import update_job_detail
+
+        mock_db = MagicMock()
+        mock_db.get = AsyncMock(return_value=None)
+
+        with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
+            mock_session.return_value.__aenter__.return_value = mock_db
+            mock_session.return_value.__aexit__.return_value = None
+
+            result = await update_job_detail(999)
+
+        assert result["success"] is False
+        assert "not found" in result["error"].lower()

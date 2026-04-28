@@ -188,6 +188,40 @@ async def process_job_results(
     }
 
 
+async def update_job_detail(job_id: int) -> dict:
+    """Fetch and update job detail (description, address) from Boss API.
+
+    Args:
+        job_id: The internal Job record ID.
+
+    Returns:
+        {"success": True, "detail": {...}} or {"success": False, "error": "..."}
+    """
+    from app.platforms import BossZhipinAdapter
+
+    async with AsyncSessionLocal() as db:
+        job = await db.get(Job, job_id)
+        if not job:
+            return {"success": False, "error": "Job not found"}
+
+        # Use the boss job_id (encryptId) as securityId for the detail API
+        adapter = BossZhipinAdapter()
+        result = await adapter.crawl_detail(job.job_id)
+
+        if not result.get("success"):
+            return result
+
+        detail = result["detail"]
+
+        # Update job record with detail data
+        job.description = detail.get("description", "")
+        job.address = detail.get("address", "")
+        job.last_updated_at = datetime.now(UTC)
+        await db.commit()
+
+        return {"success": True, "detail": detail}
+
+
 async def crawl_single_config(config_id: int) -> dict:
     """Crawl a single JobSearchConfig and process results."""
     from app.platforms import BossZhipinAdapter

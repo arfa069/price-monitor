@@ -9,6 +9,7 @@ import {
   useJobs,
   useUpdateJobConfig,
 } from '@/hooks/api'
+import CronSettings from '@/components/CronSettings'
 import JobConfigList from '@/components/JobConfigList'
 import JobDrawer from '@/components/JobDrawer'
 import JobList from '@/components/JobList'
@@ -77,6 +78,8 @@ export default function JobsPage() {
 
   return (
     <div>
+      <CronSettings />
+
       <Card size="small">
         <JobConfigList
           configs={configs}

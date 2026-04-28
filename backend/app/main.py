@@ -84,21 +84,17 @@ async def _start_scheduler(app: FastAPI) -> None:
         else:
             logger.info("No crawl_cron configured, skipping scheduler registration")
 
-    # 职位爬取定时任务（函数提升：在引用前定义）
-    async def _trigger_crawl_jobs():
-        """APScheduler job: crawl all active job searches (runs as background task)."""
-        from app.services.job_crawl import crawl_all_job_searches
-        logger.info("Job crawl cron triggered")
-        asyncio.create_task(crawl_all_job_searches(source="cron"))
+    # 职位爬取定时任务（使用模块级函数避免循环依赖）
+    from app.services.scheduler_job import trigger_job_crawl
 
     # 注册职位爬取定时任务
     job_crawl_job_id = "job_crawl_cron_job"
     try:
         tz = zoneinfo.ZoneInfo(user.crawl_timezone or "Asia/Shanghai") if user else zoneinfo.ZoneInfo("Asia/Shanghai")
         # 职位爬取使用独立的 job_crawl_cron，默认为每天早上 9 点
-        job_cron = user.job_crawl_cron or "0 9 * * *"
+        job_cron = user.job_crawl_cron or "0 9 * * *" if user else "0 9 * * *"
         scheduler.add_job(
-            _trigger_crawl_jobs,
+            trigger_job_crawl,
             trigger=CronTrigger.from_crontab(job_cron, timezone=tz),
             id=job_crawl_job_id,
             name="Crawl all active job searches",

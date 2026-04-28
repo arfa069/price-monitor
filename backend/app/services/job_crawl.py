@@ -76,7 +76,7 @@ async def process_job_results(
         # Get job_ids seen in this crawl
         seen_job_ids = {job["job_id"] for job in jobs if job.get("job_id")}
 
-        # Deactivate jobs that were seen last time but not this time
+        # Deactivate jobs that were seen last time but not this time (grace period)
         if seen_job_ids:
             result = await db.execute(
                 select(Job).where(
@@ -86,11 +86,20 @@ async def process_job_results(
             )
             all_active_jobs = list(result.scalars().all())
 
+            threshold = config.deactivation_threshold or 3
+
             for job in all_active_jobs:
-                if job.job_id not in seen_job_ids:
-                    job.is_active = False
-                    job.last_updated_at = datetime.now(UTC)
-                    deactivated_count += 1
+                if job.job_id in seen_job_ids:
+                    # Job is still present — reset counter
+                    job.consecutive_miss_count = 0
+                    job.last_active_at = datetime.now(UTC)
+                else:
+                    # Job not seen this crawl — increment miss counter
+                    job.consecutive_miss_count = (job.consecutive_miss_count or 0) + 1
+                    if job.consecutive_miss_count >= threshold:
+                        job.is_active = False
+                        job.last_updated_at = datetime.now(UTC)
+                        deactivated_count += 1
 
         # Process each scraped job
         for job_data in jobs:

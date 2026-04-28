@@ -36,6 +36,10 @@ class JobSearchConfig(Base, TimestampMixin):
     url = Column(Text, nullable=False)
     active = Column(Boolean, nullable=False, default=True)
     notify_on_new = Column(Boolean, nullable=False, default=True)
+    deactivation_threshold = Column(
+        Integer, nullable=False, default=3,
+        comment="Consecutive crawl misses before marking a job inactive",
+    )
 
     # Relationships
     jobs = relationship(
@@ -53,13 +57,13 @@ class Job(Base):
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    job_id = Column(String(100), nullable=False, unique=True)  # boss's encryptJobId
+    job_id = Column(String(500), nullable=False, unique=True)  # boss's encrypted job ID
     search_config_id = Column(
         Integer, ForeignKey("job_search_configs.id", ondelete="CASCADE"), nullable=False
     )
     title = Column(String(300), nullable=True)
     company = Column(String(200), nullable=True)
-    company_id = Column(String(100), nullable=True)
+    company_id = Column(String(200), nullable=True)
     salary = Column(String(100), nullable=True)
     salary_min = Column(Integer, nullable=True)
     salary_max = Column(Integer, nullable=True)
@@ -75,6 +79,17 @@ class Job(Base):
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )
     is_active = Column(Boolean, nullable=False, default=True)
+
+    # Grace period fields for deduplication
+    consecutive_miss_count = Column(Integer, nullable=False, default=0)
+    # Number of consecutive crawls where this job was NOT seen.
+    # Reset to 0 when the job IS seen. Deactivated when >= threshold.
+
+    last_active_at = Column(
+        DateTime(timezone=True), nullable=True,
+        default=lambda: datetime.now(UTC),
+    )
+    # Timestamp when this job was last seen in a crawl.
 
     # Relationships
     search_config = relationship("JobSearchConfig", back_populates="jobs")

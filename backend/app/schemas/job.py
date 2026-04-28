@@ -16,6 +16,7 @@ class JobSearchConfigCreate(BaseModel):
     url: str = Field(..., description="boss 直聘搜索页完整 URL")
     active: bool = Field(default=True, description="是否启用定时爬取")
     notify_on_new: bool = Field(default=True, description="新职位是否发送通知")
+    deactivation_threshold: int = Field(default=3, ge=1, description="连续漏抓次数阈值，超过后标记职位下架")
 
 
 class JobSearchConfigUpdate(BaseModel):
@@ -30,6 +31,7 @@ class JobSearchConfigUpdate(BaseModel):
     url: str | None = None
     active: bool | None = None
     notify_on_new: bool | None = None
+    deactivation_threshold: int | None = Field(default=None, ge=1, description="连续漏抓次数阈值")
 
 
 class JobSearchConfigResponse(BaseModel):
@@ -46,6 +48,7 @@ class JobSearchConfigResponse(BaseModel):
     url: str
     active: bool
     notify_on_new: bool
+    deactivation_threshold: int
     created_at: datetime
     updated_at: datetime
 

@@ -184,14 +184,13 @@ async def process_job_results(
         # Single commit for both job data and crawl log
         await db.commit()
 
-        # Fetch job details (description, address) from Boss API for new jobs
+        # Fetch job details (description, address) from Boss API for new jobs (concurrent)
         if new_job_ids:
-            detail_errors = 0
-            for jid in new_job_ids:
-                try:
-                    await update_job_detail(jid)
-                except Exception:
-                    detail_errors += 1
+            results = await asyncio.gather(
+                *[update_job_detail(jid) for jid in new_job_ids],
+                return_exceptions=True,
+            )
+            detail_errors = sum(1 for r in results if isinstance(r, Exception))
             if detail_errors:
                 logger.info("Detail fetch completed: %d errors out of %d jobs", detail_errors, len(new_job_ids))
 

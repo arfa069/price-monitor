@@ -54,7 +54,6 @@ class BossZhipinAdapter(BasePlatformAdapter):
     # ── Cookie acquisition via raw WebSocket CDP ───────────────────────
 
     @staticmethod
-    @staticmethod
     async def _get_cookies_via_raw_cdp() -> dict[str, str]:
         """Read Boss cookies via raw WebSocket CDP — only 2 commands."""
         ws_url = await BossZhipinAdapter._find_page_ws()
@@ -397,7 +396,6 @@ class BossZhipinAdapter(BasePlatformAdapter):
                 }
 
             job_info = data.get("zpData", {}).get("jobInfo", {})
-            boss_info = data.get("zpData", {}).get("bossInfo", {})
             brand_info = data.get("zpData", {}).get("brandComInfo", {})
 
             self._save_cookies(session)
@@ -417,9 +415,6 @@ class BossZhipinAdapter(BasePlatformAdapter):
                     "company_stage": brand_info.get("stageName", ""),
                     "company_scale": brand_info.get("scaleName", ""),
                     "company_industry": brand_info.get("industryName", ""),
-                    "boss_name": boss_info.get("name", ""),
-                    "boss_title": boss_info.get("title", ""),
-                    "boss_active": boss_info.get("activeTimeDesc", ""),
                 },
             }
 
@@ -427,23 +422,11 @@ class BossZhipinAdapter(BasePlatformAdapter):
             logger.exception("Boss detail crawl failed")
             return {"success": False, "error": str(e)}
 
-        except Exception as e:
-            logger.exception("Boss crawl failed")
-            return {"success": False, "error": str(e)}
-
-    # ── Data transformation ────────────────────────────────────────────
+        # ── Data transformation ────────────────────────────────────────────
 
     def _transform_jobs(self, raw_jobs: list[dict]) -> list[dict]:
         transformed = []
         for job in raw_jobs:
-            raw_skills = job.get("skills", []) or []
-            skills = []
-            for s in raw_skills:
-                if isinstance(s, dict):
-                    skills.append(s.get("name", ""))
-                elif isinstance(s, str):
-                    skills.append(s)
-
             job_id = job.get("encryptId") or job.get("securityId") or ""
             encrypt_id = job.get("encryptId") or ""
 
@@ -457,8 +440,5 @@ class BossZhipinAdapter(BasePlatformAdapter):
                 "experience": job.get("jobExperience", ""),
                 "education": job.get("jobDegree", ""),
                 "url": f"https://www.zhipin.com/job_detail/{encrypt_id}.html" if encrypt_id else "",
-                "boss_name": job.get("bossName", ""),
-                "boss_title": job.get("bossTitle", ""),
-                "skills": skills,
             })
         return transformed

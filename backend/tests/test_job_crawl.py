@@ -73,12 +73,14 @@ class TestProcessJobResults:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.add = MagicMock()
         mock_db.commit = AsyncMock()
+        mock_db.flush = AsyncMock()
 
         with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
             mock_session.return_value.__aenter__.return_value = mock_db
             mock_session.return_value.__aexit__.return_value = None
 
-            result = await process_job_results(1, [{"job_id": "abc123", "title": "Dev"}], 1)
+            with patch("app.services.job_crawl.update_job_detail", new_callable=AsyncMock):
+                result = await process_job_results(1, [{"job_id": "abc123", "title": "Dev"}], 1)
 
         assert result["new_count"] == 1
         assert result["deactivated_count"] == 0
@@ -150,6 +152,7 @@ class TestProcessJobResults:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.add = MagicMock()
         mock_db.commit = AsyncMock()
+        mock_db.flush = AsyncMock()
 
         with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
             mock_session.return_value.__aenter__.return_value = mock_db
@@ -190,6 +193,7 @@ class TestProcessJobResults:
         mock_db.execute = AsyncMock(return_value=mock_result)
         mock_db.add = MagicMock()
         mock_db.commit = AsyncMock()
+        mock_db.flush = AsyncMock()
 
         with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
             mock_session.return_value.__aenter__.return_value = mock_db

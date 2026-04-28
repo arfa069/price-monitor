@@ -62,7 +62,7 @@ export default function JobList({
         key: 'action',
         width: 100,
         render: (_, record) => (
-          <Button size="small" onClick={() => onViewDetail(record)}>
+          <Button size="small" onClick={(e) => { e.stopPropagation(); onViewDetail(record); }}>
             查看
           </Button>
         ),

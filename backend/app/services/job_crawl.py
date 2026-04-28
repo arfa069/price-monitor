@@ -66,6 +66,7 @@ async def process_job_results(
     new_count = 0
     updated_count = 0
     deactivated_count = 0
+    new_job_ids: list[int] = []
 
     async with AsyncSessionLocal() as db:
         config = await db.get(JobSearchConfig, config_id)
@@ -157,7 +158,9 @@ async def process_job_results(
                     is_active=True,
                 )
                 db.add(new_job)
+                await db.flush()  # Get the inserted job's id
                 new_count += 1
+                new_job_ids.append(new_job.id)
 
         # Send notification for new jobs (after commit so config.notify_on_new is available)
         if new_count > 0 and config.notify_on_new:
@@ -180,6 +183,17 @@ async def process_job_results(
 
         # Single commit for both job data and crawl log
         await db.commit()
+
+        # Fetch job details (description, address) from Boss API for new jobs
+        if new_job_ids:
+            detail_errors = 0
+            for jid in new_job_ids:
+                try:
+                    await update_job_detail(jid)
+                except Exception:
+                    detail_errors += 1
+            if detail_errors:
+                logger.info("Detail fetch completed: %d errors out of %d jobs", detail_errors, len(new_job_ids))
 
     return {
         "new_count": new_count,

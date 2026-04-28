@@ -1,5 +1,7 @@
 """Job crawling service: process results, deduplicate, send notifications."""
+import asyncio
 import logging
+import random
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -157,7 +159,7 @@ async def process_job_results(
 
         # Log crawl result — in same transaction as job inserts/updates
         crawl_log = CrawlLog(
-            product_id=config_id,
+            product_id=None,  # job crawl, not a product
             platform="boss",
             status="SUCCESS",
             price=Decimal(new_count),
@@ -200,7 +202,7 @@ async def crawl_single_config(config_id: int) -> dict:
         # Log error
         async with AsyncSessionLocal() as db:
             log = CrawlLog(
-                product_id=config_id,
+                product_id=None,  # job crawl, not a product
                 platform="boss",
                 status="ERROR",
                 price=None,
@@ -229,13 +231,19 @@ async def crawl_all_job_searches(source: str = "manual") -> dict:
     error_count = 0
     details = []
 
-    for config in configs:
+    for i, config in enumerate(configs):
         result = await crawl_single_config(config.id)
         details.append({"config_id": config.id, **result})
         if result.get("status") == "success":
             success_count += 1
         else:
             error_count += 1
+
+        # Space out configs to avoid CDP exhaustion (new-tab refresh is ~5s)
+        if i < len(configs) - 1:
+            delay = random.uniform(3, 6)
+            logger.debug("Waiting %.1fs before next config", delay)
+            await asyncio.sleep(delay)
 
     return {
         "status": "completed",

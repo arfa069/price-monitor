@@ -276,6 +276,7 @@ class TestScheduleConfigRealReadWrite:
         mock_user.data_retention_days = 365
         mock_user.crawl_cron = "0 9 * * *"
         mock_user.crawl_timezone = "Asia/Shanghai"
+        mock_user.job_crawl_cron = None
         mock_user.created_at = None
         mock_user.updated_at = None
 
@@ -314,6 +315,7 @@ class TestScheduleConfigRealReadWrite:
         mock_user.data_retention_days = 365
         mock_user.crawl_cron = None
         mock_user.crawl_timezone = "Asia/Shanghai"
+        mock_user.job_crawl_cron = None
         mock_user.created_at = None
         mock_user.updated_at = None
 
@@ -384,6 +386,7 @@ class TestSchedulerTriggerAndHotUpdate:
         mock_user.data_retention_days = 365
         mock_user.crawl_cron = "0 9 * * *"  # 旧 cron
         mock_user.crawl_timezone = "Asia/Shanghai"
+        mock_user.job_crawl_cron = None
         mock_user.created_at = None
         mock_user.updated_at = None
 

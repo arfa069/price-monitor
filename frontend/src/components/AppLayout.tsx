@@ -149,6 +149,7 @@ export default function AppLayout({
               icon={<ReloadOutlined />}
               style={{ color: '#fff' }}
               onClick={onRefresh}
+              aria-label="刷新页面数据"
             >
               刷新
             </Button>
@@ -270,18 +271,6 @@ export default function AppLayout({
           overflow: 'auto',
         }}
       >
-        {/* 覆盖 Card 边框，让子页面样式统一 */}
-        <style>{`
-          .ant-card-bordered {
-            border: none !important;
-            box-shadow: none !important;
-          }
-          .ant-table-wrapper {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            overflow: hidden;
-          }
-        `}</style>
         {children}
       </div>
 

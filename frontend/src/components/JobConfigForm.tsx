@@ -56,32 +56,32 @@ export default function JobConfigForm({
           label="配置名称"
           rules={[{ required: true, message: '请输入配置名称' }]}
         >
-          <Input placeholder="例如：上海前端岗位" />
+          <Input placeholder="例如：上海前端岗位" autocomplete="off" name="name" />
         </Form.Item>
         <Form.Item
           name="url"
           label="Boss 搜索 URL"
           rules={[{ required: true, message: '请输入 URL' }, { type: 'url', message: 'URL 格式不正确' }]}
         >
-          <Input placeholder="https://www.zhipin.com/web/geek/job?query=..." />
+          <Input placeholder="https://www.zhipin.com/web/geek/job?query=…" autocomplete="off" name="url" />
         </Form.Item>
         <Form.Item name="keyword" label="关键词">
-          <Input placeholder="例如：React" />
+          <Input placeholder="例如：React" autocomplete="off" name="keyword" />
         </Form.Item>
         <Form.Item name="city_code" label="城市代码">
-          <Input placeholder="例如：101020100" />
+          <Input placeholder="例如：101020100" autocomplete="off" name="city_code" />
         </Form.Item>
         <Form.Item name="salary_min" label="最低薪资(K)">
-          <InputNumber min={0} style={{ width: '100%' }} />
+          <InputNumber min={0} style={{ width: '100%' }} autocomplete="off" name="salary_min" />
         </Form.Item>
         <Form.Item name="salary_max" label="最高薪资(K)">
-          <InputNumber min={0} style={{ width: '100%' }} />
+          <InputNumber min={0} style={{ width: '100%' }} autocomplete="off" name="salary_max" />
         </Form.Item>
         <Form.Item name="experience" label="经验要求">
-          <Input placeholder="例如：3-5年" />
+          <Input placeholder="例如：3-5年" autocomplete="off" name="experience" />
         </Form.Item>
         <Form.Item name="education" label="学历要求">
-          <Input placeholder="例如：本科" />
+          <Input placeholder="例如：本科" autocomplete="off" name="education" />
         </Form.Item>
         <Form.Item name="active" label="启用配置" valuePropName="checked">
           <Switch />

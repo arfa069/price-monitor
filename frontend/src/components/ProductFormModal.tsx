@@ -102,6 +102,7 @@ export default function ProductFormModal({
           rules={[{ required: true, message: '请选择平台' }]}
         >
           <Select
+            name="platform"
             options={[
               { label: '淘宝', value: 'taobao' },
               { label: '京东', value: 'jd' },
@@ -117,10 +118,10 @@ export default function ProductFormModal({
             { type: 'url', message: 'URL 格式不正确' },
           ]}
         >
-          <Input placeholder="https://..." onChange={handleUrlChange} />
+          <Input placeholder="https://…" onChange={handleUrlChange} autocomplete="off" name="url" />
         </Form.Item>
         <Form.Item name="title" label="标题">
-          <Input placeholder="留空时自动抓取" />
+          <Input placeholder="留空时自动抓取" autocomplete="off" name="title" />
         </Form.Item>
         <Form.Item name="active" label="启用" valuePropName="checked">
           <Switch />

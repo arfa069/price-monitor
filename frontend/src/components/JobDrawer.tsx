@@ -37,7 +37,7 @@ export default function JobDrawer({ open, job, onClose }: JobDrawerProps) {
           </Descriptions.Item>
           <Descriptions.Item label="链接">
             {job.url ? (
-              <Button type="link" onClick={() => window.open(job.url!, '_blank')}>
+              <Button type="link" aria-label="在新窗口打开原始页面" onClick={() => window.open(job.url!, '_blank')}>
                 打开原始页面
               </Button>
             ) : (

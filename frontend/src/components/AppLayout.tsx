@@ -149,6 +149,7 @@ export default function AppLayout({
               icon={<ReloadOutlined />}
               style={{ color: '#fff' }}
               onClick={onRefresh}
+              aria-label="刷新页面数据"
             >
               刷新
             </Button>

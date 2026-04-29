@@ -339,6 +339,7 @@ export default function ProductsPage() {
           <Button
             size="small"
             icon={<ExportOutlined />}
+            aria-label="在新窗口打开商品链接"
             onClick={() => window.open(record.url, '_blank')}
           >
             查看

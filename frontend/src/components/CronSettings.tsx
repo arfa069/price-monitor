@@ -39,7 +39,7 @@ export default function CronSettings() {
           placeholder="0 9 * * *"
           style={{ width: 200 }}
           disabled={fetching}
-          autocomplete="off"
+          autoComplete="off"
           name="cron"
         />
         <Button type="primary" onClick={handleSave} loading={loading}>

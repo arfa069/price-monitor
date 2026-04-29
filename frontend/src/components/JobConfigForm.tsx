@@ -63,7 +63,7 @@ export default function JobConfigForm({
           label="Boss 搜索 URL"
           rules={[{ required: true, message: '请输入 URL' }, { type: 'url', message: 'URL 格式不正确' }]}
         >
-          <Input placeholder="https://www.zhipin.com/web/geek/job?query=..." autocomplete="off" name="url" />
+          <Input placeholder="https://www.zhipin.com/web/geek/job?query=…" autocomplete="off" name="url" />
         </Form.Item>
         <Form.Item name="keyword" label="关键词">
           <Input placeholder="例如：React" autocomplete="off" name="keyword" />

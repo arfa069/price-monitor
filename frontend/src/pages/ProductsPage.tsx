@@ -259,7 +259,7 @@ export default function ProductsPage() {
   }
 
   const handleCrawlNow = () => {
-    message.loading({ content: '正在启动爬取任务...', key: 'crawl', duration: 0 })
+    message.loading({ content: '正在启动爬取任务…', key: 'crawl', duration: 0 })
     crawlNow.mutate(undefined, {
       onSuccess: (result: CrawlNowMutationResult) => {
         if (result.type === 'skipped') {
@@ -597,7 +597,7 @@ export default function ProductsPage() {
         style={{ marginTop: 16 }}
       >
         {logsLoading && crawlLogItems.length === 0 ? (
-          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>加载中...</div>
+          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>加载中…</div>
         ) : crawlLogItems.length > 0 ? (
           <Table
             size="small"

@@ -118,7 +118,7 @@ export default function ProductFormModal({
             { type: 'url', message: 'URL 格式不正确' },
           ]}
         >
-          <Input placeholder="https://..." onChange={handleUrlChange} autocomplete="off" name="url" />
+          <Input placeholder="https://…" onChange={handleUrlChange} autocomplete="off" name="url" />
         </Form.Item>
         <Form.Item name="title" label="标题">
           <Input placeholder="留空时自动抓取" autocomplete="off" name="title" />

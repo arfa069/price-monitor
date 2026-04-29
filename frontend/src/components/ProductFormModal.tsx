@@ -144,7 +144,10 @@ export default function ProductFormModal({
                 label="降价阈值"
                 rules={[{ required: true, message: '请输入阈值' }]}
               >
-                <InputNumber min={1} max={100} addonAfter="%" style={{ width: 120 }} />
+                <Space.Compact>
+                  <InputNumber min={1} max={100} style={{ width: 80 }} />
+                  <Input value="%" disabled style={{ width: 40 }} />
+                </Space.Compact>
               </Form.Item>
             ) : null
           }

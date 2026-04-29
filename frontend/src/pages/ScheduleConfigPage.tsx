@@ -193,7 +193,10 @@ export default function ScheduleConfigPage() {
                   label="每隔几小时执行一次"
                   rules={[{ required: true, message: '请输入小时数' }]}
                 >
-                  <InputNumber min={1} max={168} style={{ width: '100%' }} addonAfter="小时" />
+                  <Space.Compact style={{ width: '100%' }}>
+                    <InputNumber min={1} max={168} style={{ width: '100%' }} />
+                    <Input value="小时" disabled style={{ width: 60 }} />
+                  </Space.Compact>
                 </Form.Item>
                 <Form.Item>
                   <Button
@@ -268,7 +271,10 @@ export default function ScheduleConfigPage() {
               label="数据保留天数"
               rules={[{ required: true, message: '请输入天数' }]}
             >
-              <InputNumber min={1} max={3650} style={{ width: '100%' }} addonAfter="天" />
+              <Space.Compact style={{ width: '100%' }}>
+                <InputNumber min={1} max={3650} style={{ width: '100%' }} />
+                <Input value="天" disabled style={{ width: 60 }} />
+              </Space.Compact>
             </Form.Item>
             <Form.Item>
               <Button

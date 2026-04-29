@@ -47,15 +47,42 @@ export default function AppLayout({
           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
         }}
       >
+        {/* Logo - 品牌标识 */}
         <div
           style={{
-            color: '#fff',
-            fontSize: 22,
-            fontWeight: 700,
-            letterSpacing: '-0.5px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
           }}
         >
-          价格监控系统
+          <div
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 8,
+              background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: 18,
+              fontWeight: 800,
+              fontFamily: 'system-ui, sans-serif',
+              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4)',
+            }}
+          >
+            价
+          </div>
+          <div
+            style={{
+              color: '#fff',
+              fontSize: 22,
+              fontWeight: 700,
+              letterSpacing: '-0.5px',
+            }}
+          >
+            价格监控系统
+          </div>
         </div>
         <div style={{ flex: 1 }} />
         <Button

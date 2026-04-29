@@ -38,3 +38,14 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* AppLayout content overrides */
+.ant-card-bordered {
+  border: none !important;
+  box-shadow: none !important;
+}
+.ant-table-wrapper {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+}

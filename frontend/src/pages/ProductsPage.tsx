@@ -421,6 +421,17 @@ export default function ProductsPage() {
 
   return (
     <div>
+      <h1
+        style={{
+          fontSize: 24,
+          color: '#1f2937',
+          marginBottom: 24,
+          fontWeight: 500,
+        }}
+      >
+        商品管理
+      </h1>
+
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <Card size="small">
           <Row gutter={[8, 8]} align="middle">

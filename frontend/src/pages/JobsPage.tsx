@@ -78,6 +78,17 @@ export default function JobsPage() {
 
   return (
     <div>
+      <h1
+        style={{
+          fontSize: 24,
+          color: '#1f2937',
+          marginBottom: 24,
+          fontWeight: 500,
+        }}
+      >
+        职位管理
+      </h1>
+
       <CronSettings />
 
       <Card size="small">

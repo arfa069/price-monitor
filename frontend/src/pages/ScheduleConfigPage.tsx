@@ -138,6 +138,17 @@ export default function ScheduleConfigPage() {
 
   return (
     <div>
+      <h1
+        style={{
+          fontSize: 24,
+          color: '#1f2937',
+          marginBottom: 24,
+          fontWeight: 500,
+        }}
+      >
+        定时配置
+      </h1>
+
       {pendingDraft && (
         <Alert
           message="检测到未保存的草稿"

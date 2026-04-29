@@ -335,7 +335,7 @@ export default function ProductsPage() {
       key: 'action',
       width: 380,
       render: (_value: unknown, record: Product) => (
-        <Space size={4}>
+        <Space size={8}>
           <Button
             size="small"
             icon={<ExportOutlined />}

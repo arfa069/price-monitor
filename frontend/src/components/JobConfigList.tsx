@@ -99,7 +99,7 @@ export default function JobConfigList({
               <Typography.Paragraph ellipsis={{ rows: 1 }} style={{ marginBottom: 8 }}>
                 {config.url}
               </Typography.Paragraph>
-              <Space wrap>
+              <Space wrap size={8}>
                 <Button
                   icon={<PlayCircleOutlined />}
                   loading={crawlLoading}

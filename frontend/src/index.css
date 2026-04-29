@@ -13,3 +13,22 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Focus visible styles for keyboard accessibility */
+*:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* For Ant Design components: buttons, inputs, selects */
+.ant-btn:focus-visible,
+.ant-input:focus-visible,
+.ant-select-selector:focus-visible,
+.ant-input-affix-wrapper:focus-visible,
+.ant-picker:focus-visible,
+.ant-switch:focus-visible,
+.ant-checkbox-input:focus-visible,
+.ant-radio-input:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}

@@ -14,24 +14,24 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 
 ```powershell
 # Install dependencies
-pip install -e .
+cd backend && pip install -e .
 
-# 1. Create and edit .env
+# 1. Create and edit .env at project root
 # Required: DATABASE_URL, REDIS_URL, FEISHU_WEBHOOK_URL
 # See the Configuration section below for the full .env content.
 
 # 2. Run migrations
-alembic upgrade head
+cd backend && alembic upgrade head
 
 # 3. Start the server
-uvicorn app.main:app
+cd backend && uvicorn app.main:app
 ```
 
 > **Windows note**: Do **not** add `--reload` — it breaks Playwright's subprocess handling. Use `uvicorn app.main:app` or `python -m app.main` instead.
 
 ## Configuration
 
-Create a `.env` file:
+Create a `.env` file at the project root:
 
 ```env
 DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/pricemonitor
@@ -77,14 +77,17 @@ JD_COOKIE=...
 
 ```powershell
 # Run linter
-ruff check .
+cd backend && ruff check .
 
 # Run tests
-pytest
+cd backend && pytest
 
 # Run with coverage
-coverage run -m pytest
-coverage report
+cd backend && coverage run -m pytest
+cd backend && coverage report
+
+# Start frontend
+cd frontend && npm run dev
 ```
 
 ## Architecture

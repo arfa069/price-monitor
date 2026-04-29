@@ -103,20 +103,43 @@ class BasePlatformAdapter(ABC):
         return await context.new_page()
 
     async def _init_browser(self):
-        """Initialize browser — use shared instance for efficiency."""
-        if self._playwright is not None:
+        """Initialize browser — use shared instance for efficiency.
+
+        In CDP mode, creates a new page (tab) in the existing context.
+        New tabs inherit the context's cookies and auth state, but allow
+        route interception to be set up before any navigation — essential
+        for bypassing anti-bot scripts that redirect to about:blank.
+        """
+        if self._playwright is not None and self._page is not None:
+            return
+
+        # Shared browser instance exists but page was cleared (e.g. after cleanup)
+        if self._playwright is not None and self._page is None:
+            self._page = await self._context.new_page()
             return
 
         self._playwright, self._browser, self._context, self._cdp_mode = await self._get_shared_browser()
+
+        # Always create a new page — in CDP mode this creates a new tab
+        # that inherits the context's cookies/login state, while allowing
+        # route interception to be set up before navigation.
         self._page = await self._context.new_page()
 
     async def _close_browser(self):
         """Clean up browser resources.
 
-        Only close the page - keep the shared browser instance alive.
+        Closes the page (tab). In CDP mode, the browser context is preserved
+        so cookies/session state carry over to new tabs created on next crawl.
         """
         if self._page:
-            await self._page.close()
+            try:
+                await self._page.unroute("**/*")
+            except Exception:
+                pass
+            try:
+                await self._page.close()
+            except Exception:
+                pass
             self._page = None
 
     @abstractmethod

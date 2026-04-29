@@ -1,0 +1,109 @@
+{
+  "code": 0,
+  "message": "Success",
+  "zpData": {
+    "pageType": 0,
+    "selfAccess": false,
+    "securityId": "WVSFFL857vNi7-L1EvQ2HZJw4w-tPtolc9Kes3eXVsbzfVT7Vq6C95XCzGKSl_0c0qIRKwqFtzHWCPjm-h_daSGIkOIcEqp8v6uVKkFNmHTSiaousXOVu4jjOuFtt22g9W2D0C_2E1dDkUh_vdSAc965CT0dhto37d7NYySBPNriQhrNNtGxo45qtZ10U4qPsadmjD5_IUIYSLhzsK7RwXZgdLj-JQOqQuEZ6RQzMtSLgmUDGq7fvvb31ndntm88oIp7Ga4X_SwZAa0vxhBL4VjoCu6UG_4NQyATVJrIXxRCwFDGwk2zoUFSYW7v5o0Uk670-I5_icpqqQjQu2hqz-uqnty-i9QacX0XS47lphl0V5hO_31BYS-rDBH7Ywd4wmFtdqyBXVTf7v-0_c8ty3sSqSbcczvP7S_PYXXlfuBaPeBL2R1L7y4ZjrF7ADUqymC9azz5lAyfbKnC",
+    "sessionId": null,
+    "lid": "",
+    "jobInfo": {
+      "encryptId": "ae0f47ae30bc9a710nd83tu9EFNQ",
+      "encryptUserId": "70fbb6e1f28040140nF73921E1FR",
+      "invalidStatus": false,
+      "jobName": "Java",
+      "position": 100101,
+      "positionName": "Java",
+      "location": 101280600,
+      "locationName": "深圳",
+      "locationUrl": "/c101280600/",
+      "experienceName": "在校/应届",
+      "degreeName": "本科",
+      "jobType": 5,
+      "proxyJob": 0,
+      "proxyType": 0,
+      "salaryDesc": "10-15K·14薪",
+      "payTypeDesc": null,
+      "postDescription": "岗位职责:  \n1. 负责后端平台功能开发及项⽬独⽴维护  \n2. 对现有业务系统进⾏性能优化与问题排查  \n3. 协同产品与前端团队，推进项目进度与系统调试  \n\n任职要求:  \n1. 熟练掌握SpringBoot、MySQL、Redis，了解Netty网络框架  \n2. 逻辑思维清晰，具备良好的业务理解与问题分析能⼒  \n3. 具备责任心与团队协作精神，学习能力突出",
+      "encryptAddressId": "be8e25fa9edb00591Hd809S8EVZVw423Vfya",
+      "address": "深圳南山区前海周大福金融大厦1401-05",
+      "longitude": 113.89689,
+      "latitude": 22.530958,
+      "staticMapUrl": "https://img.bosszhipin.com/beijin/upload/amap_proxy/20251105/48ba41acc9cef1bf4e2a3d8e62f48326aaa5faa021c3aa9f6bb61e3b7bce0931da574d19d1d82c88.png.webp",
+      "pcStaticMapUrl": "https://img.bosszhipin.com/beijin/upload/amap_proxy/20251105/48ba41acc9cef1bf0a7edc6b16db8ade840f705868b7d64d6bb61e3b7bce0931da574d19d1d82c88.png.webp",
+      "baiduStaticMapUrl": "https://img.bosszhipin.com/beijin/upload/amap_proxy/20251105/48ba41acc9cef1bff178aba718c2e58ec456c26b253f121d6bb61e3b7bce0931da574d19d1d82c88.png.webp",
+      "baiduPcStaticMapUrl": "https://img.bosszhipin.com/beijin/upload/amap_proxy/20251105/48ba41acc9cef1bf2dc0894e6aa39a70577953457ca0a9866bb61e3b7bce0931da574d19d1d82c88.png.webp",
+      "overseasAddressList": [],
+      "overseasInfo": null,
+      "showSkills": [],
+      "anonymous": 0,
+      "jobStatusDesc": "最新"
+    },
+    "bossInfo": {
+      "name": "李俊滨",
+      "title": "AI全栈工程师",
+      "tiny": "https://img.bosszhipin.com/beijin/upload/avatar/20250604/607f1f3d68754fd00ed8f7bf0f17ab430c8c41cd761e5fccae942b7848377d0c1cc64d6f89f17567_s.png.webp",
+      "large": "https://img.bosszhipin.com/beijin/upload/avatar/20250604/607f1f3d68754fd00ed8f7bf0f17ab430c8c41cd761e5fccae942b7848377d0c1cc64d6f89f17567.png.webp",
+      "activeTimeDesc": "刚刚活跃",
+      "bossOnline": false,
+      "brandName": "望尘科技",
+      "bossSource": 0,
+      "certificated": true,
+      "tagIconUrl": null,
+      "avatarStickerUrl": null
+    },
+    "brandComInfo": {
+      "encryptBrandId": "0673d9fa3a26008803N5090~",
+      "brandName": "望尘科技",
+      "logo": "https://img.bosszhipin.com/beijin/mcs/banner/8135a28dcceef945efced4c7b382f725cfcd208495d565ef66e7dff9f98764da.jpg",
+      "stage": 807,
+      "stageName": "已上市",
+      "scale": 304,
+      "scaleName": "500-999人",
+      "industry": 100002,
+      "industryName": "游戏",
+      "introduce": "望尘科技（GALA Sports）于2013年在深圳成立，2023年1月在港交所上市，股票代码02458.HK，是一家以技术为驱动的互联网公司，多年来致力于为用户提供高品质的体育在线娱乐游戏体验。\n凭借历年来在体育游戏市场的深耕与稳定的高质量产品研发，我们推出了《足球大师》、《NBA篮球大师》、《最佳11人》、《最佳球会》、《棒球大师》、《NBA巅峰对决》等多款体育类游戏，与FIFPro、NBA、MLB、中超、德国足协、拜仁、巴萨、曼联、皇马、国米、多特、曼城、大巴黎等体育联盟及豪门俱乐部保持着长期的合作关系。目前，望尘科技（GALA Sports）在全球拥有超过1亿的下载用户，全球日活跃用户量超100万人次。\n\n核心技术介绍：\n自研AI技术Arena4D\n● 独有的AI技术Arena4D，完成对虚拟空间及人物的实时计算、建模和照片级渲染，完成1:1实时赛场复刻\n● 物理学约束优化和神经网络算法有效结合，自动化批量解决球员滑步、脚步不匹配等难以处理的问题，进一步提高动作质量和动作生成效率；\n● Arena4D通过同步捕获职业赛事中的球员动态数据，将其生物力学特征精准迁移至游戏动作数据库，大幅降低传统专业球员动捕成本支出。\n \n球员三维人体/头/动作自动建模技术\n● AutoPortrait3D是Galasports开发一套全自动角色3D建模流水线，进一步开发3D人脸高精度建模，提升3D美术人脸重建效率\n● 游戏美术方面，推进AIGC技术，有效减少生产大量美术内容所需的时间和资源，高效提升游戏美术生产力\n \n球场与观众渲染技术\n● 大场景的万人动态渲染让体育场景的渲染质量接近甚至在某些方面超过PC或主机游戏，使玩家能够获得更好的现场氛围感体验。\n \nAI智能体开发与合成语音合成技术\n● Arena Intelligence是基于数据驱动的体育竞技AI系统，从上千场真实比赛中提取数据、建模，能够在虚拟数字空间真实地模拟完整的体育竞技\n● 已实现中、英、日、韩等多种语言的AI配音全流程覆盖，支持全球化游戏角色语音的生成与动态适配，显著优化跨时区玩家服务体验。\n● 全平台AI竞技生态的构建，在多个游戏中完成跨平台，支持多种AI风格切换，提高玩家在线匹配度。",
+      "labels": [
+        "交通补助",
+        "生日福利",
+        "节日福利",
+        "通讯补贴",
+        "团建聚餐",
+        "零食下午茶",
+        "员工旅游",
+        "带薪年假",
+        "全勤奖",
+        "年终奖",
+        "定期体检",
+        "补充医疗保险",
+        "五险一金"
+      ],
+      "activeTime": 1777390543000,
+      "visibleBrandInfo": true,
+      "focusBrand": false,
+      "customerBrandName": "望尘科技",
+      "customerBrandStageName": "已上市"
+    },
+    "oneKeyResumeInfo": {
+      "inviteType": 0,
+      "alreadySend": false,
+      "canSendResume": false,
+      "canSendPhone": false,
+      "canSendWechat": false
+    },
+    "relationInfo": {
+      "interestJob": false,
+      "beFriend": false
+    },
+    "handicappedInfo": null,
+    "appendixInfo": {
+      "canFeedback": false,
+      "chatBubble": null
+    },
+    "atsOnlineApplyInfo": {
+      "inviteType": 0,
+      "alreadyApply": false
+    },
+    "certMaterials": []
+  }
+}

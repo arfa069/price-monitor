@@ -174,10 +174,10 @@ The scheduler reads config from DB on startup and hot-reloads when `PATCH /confi
 ## Platform Adapter Pattern
 
 ```
-app/platforms/base.py     — BasePlatformAdapter (ABC): _init_browser, crawl, extract_price/title
-app/platforms/taobao.py   — TaobaoAdapter
-app/platforms/jd.py       — JDAdapter
-app/platforms/amazon.py   — AmazonAdapter
+backend/app/platforms/base.py     — BasePlatformAdapter (ABC): _init_browser, crawl, extract_price/title
+backend/app/platforms/taobao.py   — TaobaoAdapter
+backend/app/platforms/jd.py       — JDAdapter
+backend/app/platforms/amazon.py   — AmazonAdapter
 ```
 
 Each adapter implements `extract_price()` and `extract_title()`. The base class manages browser lifecycle (launch or CDP connection), page navigation with timeout handling, and error recovery.

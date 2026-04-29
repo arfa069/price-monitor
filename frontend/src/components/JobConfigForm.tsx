@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Form, Input, InputNumber, Modal, Switch } from 'antd'
 import type {
   JobSearchConfig,
@@ -21,11 +21,23 @@ export default function JobConfigForm({
   confirmLoading,
 }: JobConfigFormProps) {
   const [form] = Form.useForm()
+  const recordRef = useRef(record)
+  recordRef.current = record
 
   useEffect(() => {
     if (!open) return
-    if (record) {
-      form.setFieldsValue(record)
+    if (recordRef.current) {
+      setTimeout(() => {
+        form.setFieldsValue(recordRef.current!)
+        // 自动从 URL 解析 keyword（编辑已有配置时补充显示）
+        try {
+          const parsed = new URL(recordRef.current.url)
+          const query = parsed.searchParams.get('query')
+          if (query) form.setFieldsValue({ keyword: query })
+        } catch {
+          // ignore
+        }
+      }, 0)
       return
     }
     form.resetFields()
@@ -33,7 +45,24 @@ export default function JobConfigForm({
       active: true,
       notify_on_new: true,
     })
-  }, [open, record, form])
+  }, [open, form])
+
+  const handleCancel = () => {
+    form.resetFields()
+    onCancel()
+  }
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (recordRef.current) return
+    const url = e.target.value
+    try {
+      const parsed = new URL(url)
+      const query = parsed.searchParams.get('query')
+      if (query) form.setFieldsValue({ keyword: query })
+    } catch {
+      // invalid URL, ignore
+    }
+  }
 
   const handleOk = async () => {
     const values = await form.validateFields()
@@ -45,12 +74,11 @@ export default function JobConfigForm({
     <Modal
       title={record ? '编辑职位配置' : '新增职位配置'}
       open={open}
-      onCancel={onCancel}
+      onCancel={handleCancel}
       onOk={handleOk}
       confirmLoading={confirmLoading}
-      destroyOnHidden
     >
-      <Form form={form} layout="vertical" preserve={false}>
+      <Form form={form} layout="vertical">
         <Form.Item
           name="name"
           label="配置名称"
@@ -63,7 +91,7 @@ export default function JobConfigForm({
           label="Boss 搜索 URL"
           rules={[{ required: true, message: '请输入 URL' }, { type: 'url', message: 'URL 格式不正确' }]}
         >
-          <Input placeholder="https://www.zhipin.com/web/geek/job?query=…" autocomplete="off" name="url" />
+<Input placeholder="https://www.zhipin.com/web/geek/job?query=…" autocomplete="off" name="url" onChange={handleUrlChange} />
         </Form.Item>
         <Form.Item name="keyword" label="关键词">
           <Input placeholder="例如：React" autocomplete="off" name="keyword" />

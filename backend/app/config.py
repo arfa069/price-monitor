@@ -1,10 +1,20 @@
 """Application configuration using Pydantic Settings."""
+from pathlib import Path
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_env_file = next(
+    (p for p in (
+        Path(__file__).parent.parent.parent / ".env",
+        Path(__file__).parent.parent / ".env",
+    ) if p.exists()),
+    None,
+)
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(env_file=_env_file, extra="ignore")
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/pricemonitor"

@@ -12,19 +12,22 @@
 
 ```powershell
 # 安装依赖
-pip install -e .
+cd backend && pip install -e .
 
 # 运行数据库迁移
-alembic upgrade head
+cd backend && alembic upgrade head
 
 # 启动开发服务器
-uvicorn app.main:app --reload
+cd backend && uvicorn app.main:app --reload
 
 # 运行测试
-pytest
+cd backend && pytest
 
 # 代码检查
-ruff check .
+cd backend && ruff check .
+
+# 启动前端
+cd frontend && npm run dev
 
 # Docker Compose 完整启动
 docker-compose up -d
@@ -33,23 +36,23 @@ docker-compose up -d
 ## 架构
 
 ### 入口文件
-- `app/main.py` — FastAPI 应用工厂，含 lifespan、路由注册、/health 检查
-- `app/config.py` — Pydantic Settings，环境变量
+- `backend/app/main.py` — FastAPI 应用工厂，含 lifespan、路由注册、/health 检查
+- `backend/app/config.py` — Pydantic Settings，环境变量
 
 ### 平台适配器模式
 ```
-app/platforms/base.py     — BasePlatformAdapter (ABC)：_init_browser、crawl、extract_price/title（抽象方法）
-app/platforms/taobao.py   — TaobaoAdapter
-app/platforms/jd.py       — JDAdapter
-app/platforms/amazon.py  — AmazonAdapter
+backend/app/platforms/base.py     — BasePlatformAdapter (ABC)：_init_browser、crawl、extract_price/title（抽象方法）
+backend/app/platforms/taobao.py   — TaobaoAdapter
+backend/app/platforms/jd.py       — JDAdapter
+backend/app/platforms/amazon.py  — AmazonAdapter
 ```
 每个适配器实现 `extract_price()` 和 `extract_title()`。基类负责 Playwright 生命周期管理（每次抓取 90s 超时，支持代理/CDP 模式）。
 
 ### 数据库模式
 所有数据库操作用 `async with AsyncSessionLocal() as db:` 配合 `await db.commit()`。
-- `app/database.py` — 异步引擎、AsyncSessionLocal、get_db 依赖注入
-- `app/models/` — SQLAlchemy 模型：User、Product、PriceHistory、Alert、CrawlLog
-- `alembic/versions/` — 迁移文件
+- `backend/app/database.py` — 异步引擎、AsyncSessionLocal、get_db 依赖注入
+- `backend/app/models/` — SQLAlchemy 模型：User、Product、PriceHistory、Alert、CrawlLog
+- `backend/alembic/versions/` — 迁移文件
 
 ### 抓取流程（`POST /crawl/crawl-now`）
 - `_crawl_one()` 在 FastAPI async 上下文中直接运行，无 Celery 依赖

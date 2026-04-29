@@ -4,7 +4,6 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   TeamOutlined,
   ShoppingCartOutlined,
-  ClockCircleOutlined,
   ReloadOutlined,
   BarsOutlined,
 } from '@ant-design/icons'
@@ -38,9 +37,7 @@ export default function AppLayout({
 
   const selectedKey = location.pathname.startsWith('/jobs')
     ? '/jobs'
-    : location.pathname.startsWith('/products')
-      ? '/products'
-      : '/schedule'
+    : '/products'
 
   const siderWidth = collapsed ? 60 : 180
 
@@ -62,11 +59,6 @@ export default function AppLayout({
       key: '/products',
       icon: <ShoppingCartOutlined />,
       label: '商品管理',
-    },
-    {
-      key: '/schedule',
-      icon: <ClockCircleOutlined />,
-      label: '定时配置',
     },
   ]
 

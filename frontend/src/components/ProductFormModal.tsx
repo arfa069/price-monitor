@@ -102,6 +102,7 @@ export default function ProductFormModal({
           rules={[{ required: true, message: '请选择平台' }]}
         >
           <Select
+            name="platform"
             options={[
               { label: '淘宝', value: 'taobao' },
               { label: '京东', value: 'jd' },

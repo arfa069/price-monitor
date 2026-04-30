@@ -41,7 +41,6 @@ export default function ScheduleConfigPage() {
 
   // Cron card state
   const [productCron, setProductCron] = useState('')
-  const [productTz, setProductTz] = useState('Asia/Shanghai')
   const [jobCron, setJobCron] = useState('')
   const [productCronSaving, setProductCronSaving] = useState(false)
   const [jobCronSaving, setJobCronSaving] = useState(false)
@@ -77,7 +76,6 @@ export default function ScheduleConfigPage() {
     })
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external config into local state
     setProductCron(config.crawl_cron || '')
-    setProductTz(config.crawl_timezone || 'Asia/Shanghai')
     setJobCron(config.job_crawl_cron || '')
   }, [config, form])
 
@@ -114,7 +112,7 @@ export default function ScheduleConfigPage() {
     }
     setProductCronSaving(true)
     try {
-      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: productTz })
+      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: 'Asia/Shanghai' })
       message.success('商品爬取 Cron 已保存')
       refetch()
       fetchSchedulerStatus()
@@ -244,14 +242,6 @@ export default function ScheduleConfigPage() {
                   style={{ width: 200 }}
                   autoComplete="off"
                   name="product-cron"
-                />
-                <Input
-                  value={productTz}
-                  onChange={(e) => setProductTz(e.target.value)}
-                  placeholder="Asia/Shanghai"
-                  style={{ width: 160 }}
-                  autoComplete="off"
-                  name="product-timezone"
                 />
                 <Button
                   type="primary"

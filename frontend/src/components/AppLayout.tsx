@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import {
   TeamOutlined,
   ShoppingCartOutlined,
+  ScheduleOutlined,
   ReloadOutlined,
   BarsOutlined,
 } from '@ant-design/icons'
@@ -59,6 +60,11 @@ export default function AppLayout({
       key: '/products',
       icon: <ShoppingCartOutlined />,
       label: '商品管理',
+    },
+    {
+      key: '/schedule',
+      icon: <ScheduleOutlined />,
+      label: '定时配置',
     },
   ]
 

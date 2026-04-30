@@ -21,7 +21,7 @@ import type { SchedulerJobStatus } from '@/types'
 
 type ScheduleMode = 'hours' | 'cron'
 
-const CRON_SEGMENT_RE = /^\*|[0-9]+(?:-[0-9]+)?(?:\/[0-9]+)?$/
+const CRON_SEGMENT_RE = /^(\*|[0-9]+(?:-[0-9]+)?(?:\/[0-9]+)?)$/
 
 const isValidCronFormat = (value: string): boolean => {
   const parts = value.trim().split(/\s+/)

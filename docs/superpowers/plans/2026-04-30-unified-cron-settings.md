@@ -163,6 +163,7 @@ import {
   Skeleton,
   Space,
   Spin,
+  Tag,
   message,
 } from 'antd'
 import { SaveOutlined } from '@ant-design/icons'
@@ -201,7 +202,6 @@ export default function ScheduleConfigPage() {
 
   // Cron card state (uncontrolled until save)
   const [productCron, setProductCron] = useState('')
-  const [productTz, setProductTz] = useState('Asia/Shanghai')
   const [jobCron, setJobCron] = useState('')
   const [productCronSaving, setProductCronSaving] = useState(false)
   const [jobCronSaving, setJobCronSaving] = useState(false)
@@ -236,7 +236,6 @@ export default function ScheduleConfigPage() {
       data_retention_days: config.data_retention_days || 365,
     })
     setProductCron(config.crawl_cron || '')
-    setProductTz(config.crawl_timezone || 'Asia/Shanghai')
     setJobCron(config.job_crawl_cron || '')
   }, [config, form])
 
@@ -255,7 +254,7 @@ export default function ScheduleConfigPage() {
 ```
 
 The key design decisions here:
-- `productCron`, `productTz`, `jobCron` are plain `useState` — not backed by Form — because they save independently via different API calls
+- `productCron`, `jobCron` are plain `useState` — not backed by Form — because they save independently via different API calls
 - `fetchSchedulerStatus` is a standalone function so it can be called on mount AND after any save
 - No localStorage draft logic at all
 
@@ -282,7 +281,7 @@ The key design decisions here:
     }
     setProductCronSaving(true)
     try {
-      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: productTz })
+      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: 'Asia/Shanghai' })
       message.success('商品爬取 Cron 已保存')
       refetch()
       fetchSchedulerStatus()
@@ -422,7 +421,10 @@ Replace everything from `return (` to the closing `)` of the component with:
         )}
       </Form>
 
-      <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
+      <Card
+        title="Cron 定时配置"
+        extra={scheduleMode === 'cron' ? <Tag color="blue">Cron 模式已启用</Tag> : null}
+        style={{ marginTop: 24 }}>
         {isLoading && !config ? (
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : (
@@ -438,14 +440,6 @@ Replace everything from `return (` to the closing `)` of the component with:
                   style={{ width: 200 }}
                   autoComplete="off"
                   name="product-cron"
-                />
-                <Input
-                  value={productTz}
-                  onChange={(e) => setProductTz(e.target.value)}
-                  placeholder="Asia/Shanghai"
-                  style={{ width: 160 }}
-                  autoComplete="off"
-                  name="product-timezone"
                 />
                 <Button
                   type="primary"
@@ -660,6 +654,22 @@ Browse to 职位管理 page. Expected: Page loads normally, no blank space where
 ```bash
 git add -A && git commit -m "chore(frontend): manual QA verification fixes for unified cron card"
 ```
+
+---
+
+### QA-Driven Deviations From This Plan
+
+During implementation and browser QA, these changes were made beyond the original plan:
+
+| Change | Reason | Commit |
+|--------|--------|--------|
+| Added `/schedule` nav menu entry in `AppLayout.tsx` | Missing — users couldn't reach the page | `77d1b12` |
+| Removed timezone input, hardcoded `crawl_timezone: 'Asia/Shanghai'` | User request — timezone config unnecessary for single-user system | `4bd5abe` |
+| Moved cron mode indicator from body Alert to Card `extra` Tag | User request — cleaner layout | `87d4b76` |
+| Replaced `{scheduleMode === 'cron' && null}` in Card 1 | Alert moved to Card 2, Card 1 shows nothing in cron mode | `87d4b76` |
+| Fixed sidebar `selectedKey` logic for `/schedule` route | Bug found in code review — always highlighted "商品管理" | `4ee0b77` |
+| Fixed `CRON_SEGMENT_RE` regex anchoring | Bug found in code review — `*garbage` bypassed frontend validation | pending |
+| Updated this plan document | Code blocks were stale after above changes | pending |
 
 ---
 

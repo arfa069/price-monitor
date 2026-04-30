@@ -36,7 +36,9 @@ export default function AppLayout({
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const selectedKey = location.pathname.startsWith('/jobs')
+  const selectedKey = location.pathname.startsWith('/schedule')
+    ? '/schedule'
+    : location.pathname.startsWith('/jobs')
     ? '/jobs'
     : '/products'
 

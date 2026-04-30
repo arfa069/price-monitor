@@ -151,7 +151,7 @@ app.include_router(jobs_router)
 # Scheduler status endpoint
 @app.get("/scheduler/status", tags=["scheduler"])
 async def get_scheduler_status():
-    """Get APScheduler status and next run time."""
+    """Get APScheduler status and next run times for all cron jobs."""
     scheduler = getattr(app.state, "scheduler", None)
 
     if scheduler is None:
@@ -160,29 +160,28 @@ async def get_scheduler_status():
             content={"scheduler": "not_started"},
         )
 
-    job_id = "crawl_cron_job"
-    job = scheduler.get_job(job_id)
-
-    if job is None:
-        return JSONResponse(content={
-            "scheduler": "running",
-            "job_registered": False,
-            "next_run_at": None,
-            "cron_expression": None,
-        })
-
     from app.database import AsyncSessionLocal
     from app.models.user import User
     async with AsyncSessionLocal() as db:
         result = await db.execute(select(User).where(User.id == 1))
         user = result.scalar_one_or_none()
 
+    def _job_info(job_id: str, cron_attr: str | None = None, default_cron: str | None = None):
+        job = scheduler.get_job(job_id)
+        cron_expr = getattr(user, cron_attr, None) if cron_attr and user else None
+        return {
+            "registered": job is not None,
+            "cron_expression": cron_expr or default_cron,
+            "next_run_at": job.next_run_time.isoformat() if (job and job.next_run_time) else None,
+        }
+
     return JSONResponse(content={
         "scheduler": "running",
-        "job_registered": True,
-        "next_run_at": job.next_run_time.isoformat() if job.next_run_time else None,
-        "cron_expression": user.crawl_cron if user else None,
         "timezone": user.crawl_timezone if user else "Asia/Shanghai",
+        "jobs": {
+            "product_crawl": _job_info("crawl_cron_job", "crawl_cron"),
+            "job_crawl": _job_info("job_crawl_cron_job", "job_crawl_cron", "0 9 * * *"),
+        },
     })
 
 

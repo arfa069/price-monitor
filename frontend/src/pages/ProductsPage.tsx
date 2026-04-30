@@ -55,7 +55,6 @@ import type {
   CrawlLog,
   Product,
 } from '@/types'
-import ProductCrawlSettings from '@/components/ProductCrawlSettings'
 
 const PLATFORM_COLORS: Record<string, string> = {
   taobao: '#f97316',
@@ -434,7 +433,6 @@ export default function ProductsPage() {
         商品管理
       </h1>
 
-      <ProductCrawlSettings />
 
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         <Card size="small">

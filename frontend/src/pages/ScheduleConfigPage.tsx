@@ -11,11 +11,10 @@ import {
   Space,
   message,
 } from 'antd'
-import { DeleteOutlined, SaveOutlined, UndoOutlined } from '@ant-design/icons'
+import { SaveOutlined } from '@ant-design/icons'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
-
-const CRON_DRAFT_KEY = 'crawl_cron_draft'
-const TZ_DRAFT_KEY = 'crawl_timezone_draft'
+import { configApi } from '@/api/config'
+import type { SchedulerJobStatus } from '@/types'
 
 type ScheduleMode = 'hours' | 'cron'
 
@@ -31,91 +30,76 @@ type ScheduleFormValues = {
   schedule_mode: ScheduleMode
   crawl_frequency_hours?: number
   data_retention_days?: number
-  crawl_cron?: string
-  crawl_timezone?: string
 }
 
 export default function ScheduleConfigPage() {
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
   const [form] = Form.useForm<ScheduleFormValues>()
-  const [draftDismissed, setDraftDismissed] = useState(false)
 
+  // Cron card state
+  const [productCron, setProductCron] = useState('')
+  const [productTz, setProductTz] = useState('Asia/Shanghai')
+  const [jobCron, setJobCron] = useState('')
+  // productCronSaving / jobCronSaving values unused until Task 4 JSX
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [productCronSaving, setProductCronSaving] = useState(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [jobCronSaving, setJobCronSaving] = useState(false)
+
+  // Scheduler status
+  // schedulerJobs / schedulerLoading / schedulerError unused until Task 4 JSX
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [schedulerJobs, setSchedulerJobs] = useState<Record<string, SchedulerJobStatus>>({})
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [schedulerLoading, setSchedulerLoading] = useState(true)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [schedulerError, setSchedulerError] = useState(false)
+
+  const fetchSchedulerStatus = async () => {
+    setSchedulerLoading(true)
+    setSchedulerError(false)
+    try {
+      const res = await configApi.getSchedulerStatus()
+      if (res.status === 200) {
+        setSchedulerJobs(res.data.jobs)
+      }
+    } catch {
+      setSchedulerError(true)
+      setSchedulerJobs({})
+    } finally {
+      setSchedulerLoading(false)
+    }
+  }
+
+  // Populate form and cron inputs from config
   useEffect(() => {
     if (!config) return
     form.setFieldsValue({
       schedule_mode: config.crawl_cron ? 'cron' : 'hours',
       crawl_frequency_hours: config.crawl_frequency_hours || 1,
       data_retention_days: config.data_retention_days || 365,
-      crawl_cron: config.crawl_cron || '',
-      crawl_timezone: config.crawl_timezone || 'Asia/Shanghai',
     })
+    /* eslint-disable react-hooks/set-state-in-effect -- syncing external config into local state */
+    setProductCron(config.crawl_cron || '')
+    setProductTz(config.crawl_timezone || 'Asia/Shanghai')
+    setJobCron(config.job_crawl_cron || '')
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, [config, form])
+
+  // Fetch scheduler status on mount
+  useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- fetch on mount pattern */
+    fetchSchedulerStatus()
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [])
 
   const scheduleMode =
     Form.useWatch('schedule_mode', form) ?? (config?.crawl_cron ? 'cron' : 'hours')
-  const cronInput = Form.useWatch('crawl_cron', form) ?? ''
-  const cronTimezone = Form.useWatch('crawl_timezone', form) ?? 'Asia/Shanghai'
   const cronValid = useMemo(
-    () => (cronInput.trim() ? isValidCronFormat(cronInput) : null),
-    [cronInput],
+    () => (productCron.trim() ? isValidCronFormat(productCron) : null),
+    [productCron],
   )
-
-  const pendingDraft = useMemo(() => {
-    if (!config || draftDismissed) return null
-    const backendCron = config.crawl_cron || ''
-    const draftCron = localStorage.getItem(CRON_DRAFT_KEY) || ''
-    const draftTz =
-      localStorage.getItem(TZ_DRAFT_KEY) || config.crawl_timezone || 'Asia/Shanghai'
-
-    if (!draftCron || draftCron === backendCron) return null
-    return { cron: draftCron, tz: draftTz }
-  }, [config, draftDismissed])
-
-  const handleRestoreDraft = () => {
-    if (!pendingDraft) return
-    form.setFieldsValue({
-      schedule_mode: 'cron',
-      crawl_cron: pendingDraft.cron,
-      crawl_timezone: pendingDraft.tz,
-    })
-    setDraftDismissed(true)
-  }
-
-  const handleDiscardDraft = () => {
-    localStorage.removeItem(CRON_DRAFT_KEY)
-    localStorage.removeItem(TZ_DRAFT_KEY)
-    setDraftDismissed(true)
-    if (!config) return
-    form.setFieldsValue({
-      schedule_mode: config.crawl_cron ? 'cron' : 'hours',
-      crawl_cron: config.crawl_cron || '',
-      crawl_timezone: config.crawl_timezone || 'Asia/Shanghai',
-    })
-  }
-
-  const handleCronChange = (value: string) => {
-    form.setFieldValue('crawl_cron', value)
-  }
-
-  const handleSaveCron = async () => {
-    if (cronValid !== true) {
-      message.error('Cron 表达式不合法')
-      return
-    }
-    try {
-      await updateMutation.mutateAsync({
-        crawl_cron: cronInput.trim(),
-        crawl_timezone: cronTimezone,
-      })
-      localStorage.removeItem(CRON_DRAFT_KEY)
-      localStorage.removeItem(TZ_DRAFT_KEY)
-      message.success('Cron 配置已保存')
-      refetch()
-    } catch {
-      message.error('保存失败')
-    }
-  }
 
   const handleSaveHours = async (values: ScheduleFormValues) => {
     try {
@@ -130,10 +114,43 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  const handleSaveDraft = () => {
-    localStorage.setItem(CRON_DRAFT_KEY, cronInput)
-    localStorage.setItem(TZ_DRAFT_KEY, cronTimezone)
-    message.success('草稿已保存到本地')
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired in Task 4 JSX
+  const handleSaveProductCron = async () => {
+    if (cronValid !== true) {
+      message.error('Cron 表达式不合法')
+      return
+    }
+    setProductCronSaving(true)
+    try {
+      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: productTz })
+      message.success('商品爬取 Cron 已保存')
+      refetch()
+      fetchSchedulerStatus()
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setProductCronSaving(false)
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired in Task 4 JSX
+  const handleSaveJobCron = async () => {
+    const value = jobCron.trim() || null
+    if (value && !isValidCronFormat(value)) {
+      message.error('Cron 表达式不合法')
+      return
+    }
+    setJobCronSaving(true)
+    try {
+      await configApi.updateJobCrawlCron(value)
+      message.success('职位爬取 Cron 已保存')
+      refetch()
+      fetchSchedulerStatus()
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setJobCronSaving(false)
+    }
   }
 
   return (
@@ -148,26 +165,6 @@ export default function ScheduleConfigPage() {
       >
         定时配置
       </h1>
-
-      {pendingDraft && (
-        <Alert
-          message="检测到未保存的草稿"
-          description={`本地草稿: ${pendingDraft.cron}`}
-          type="warning"
-          showIcon
-          style={{ marginBottom: 24 }}
-          action={
-            <Space orientation="vertical">
-              <Button size="small" icon={<UndoOutlined />} onClick={handleRestoreDraft}>
-                恢复草稿
-              </Button>
-              <Button size="small" danger icon={<DeleteOutlined />} onClick={handleDiscardDraft}>
-                丢弃草稿
-              </Button>
-            </Space>
-          }
-        />
-      )}
 
       {isError && !isLoading && (
         <Alert
@@ -223,48 +220,12 @@ export default function ScheduleConfigPage() {
             )}
 
             {scheduleMode === 'cron' && (
-              <div style={{ maxWidth: 520 }}>
-                <Form.Item label="Cron 表达式（5 段）">
-                  <Input
-                    value={cronInput}
-                    onChange={(e) => handleCronChange(e.target.value)}
-                    placeholder="例如：0 9 * * *"
-                  />
-                </Form.Item>
-                <Form.Item name="crawl_timezone" label="时区">
-                  <Input placeholder="例如：Asia/Shanghai" />
-                </Form.Item>
-                {cronValid === true && (
-                  <Alert
-                    message="Cron 表达式合法"
-                    type="success"
-                    showIcon
-                    style={{ marginBottom: 12 }}
-                  />
-                )}
-                {cronValid === false && (
-                  <Alert
-                    message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）"
-                    type="error"
-                    showIcon
-                    style={{ marginBottom: 12 }}
-                  />
-                )}
-                <Space style={{ display: 'flex', width: '100%' }}>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    onClick={handleSaveCron}
-                    disabled={cronValid !== true}
-                    loading={updateMutation.isPending}
-                  >
-                    保存 Cron 配置
-                  </Button>
-                  <Button onClick={handleSaveDraft} disabled={cronValid !== true}>
-                    保存草稿（本地）
-                  </Button>
-                </Space>
-              </div>
+              <Alert
+                message="Cron 模式已启用"
+                description="Cron 表达式请在下方「Cron 定时配置」卡片中编辑。"
+                type="info"
+                showIcon
+              />
             )}
           </Card>
         )}

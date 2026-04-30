@@ -342,3 +342,135 @@ class TestUpdateJobDetail:
 
         assert result["success"] is False
         assert "not found" in result["error"].lower()
+
+
+class TestAdapterSharing:
+    """Verify single adapter is reused across multiple configs."""
+
+    @pytest.mark.asyncio
+    async def test_crawl_single_config_reuses_adapter(self):
+        """When adapter is passed, it should not create a new one."""
+        from app.services.job_crawl import crawl_single_config
+
+        mock_adapter = MagicMock()
+        mock_adapter.crawl = AsyncMock(return_value={
+            "success": True,
+            "jobs": [{"job_id": "j1", "title": "Test", "company": "Co",
+                      "salary": "20K", "location": "BJ", "experience": "3年",
+                      "education": "本科", "url": "https://zhipin.com/job_detail/j1.html"}],
+            "count": 1,
+        })
+
+        mock_config = MagicMock()
+        mock_config.id = 1
+        mock_config.url = "https://www.zhipin.com/web/geek/jobs?query=test"
+
+        # Build proper mock chain: db.execute() -> result -> result.scalars() -> scalars.all()
+        mock_scalars = MagicMock()
+        mock_scalars.all = MagicMock(return_value=[])
+        mock_result = MagicMock()
+        mock_result.scalars = MagicMock(return_value=mock_scalars)
+
+        mock_db = MagicMock()
+        mock_db.get = AsyncMock(return_value=mock_config)
+        mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+        mock_db.commit = AsyncMock()
+
+        with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
+            mock_session.return_value.__aenter__.return_value = mock_db
+            mock_session.return_value.__aexit__.return_value = None
+
+            with patch("app.services.notification.send_new_job_notification"):
+                result = await crawl_single_config(1, adapter=mock_adapter)
+
+        assert result["status"] == "success"
+        mock_adapter.crawl.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_crawl_single_config_creates_adapter_when_none(self):
+        """When no adapter is passed, a new BossZhipinAdapter should be created."""
+        from app.services.job_crawl import crawl_single_config
+
+        mock_config = MagicMock()
+        mock_config.id = 1
+        mock_config.url = "https://www.zhipin.com/web/geek/jobs?query=test"
+
+        mock_scalars = MagicMock()
+        mock_scalars.all = MagicMock(return_value=[])
+        mock_result = MagicMock()
+        mock_result.scalars = MagicMock(return_value=mock_scalars)
+
+        mock_db = MagicMock()
+        mock_db.get = AsyncMock(return_value=mock_config)
+        mock_db.execute = AsyncMock(return_value=mock_result)
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+        mock_db.commit = AsyncMock()
+
+        with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session:
+            mock_session.return_value.__aenter__.return_value = mock_db
+            mock_session.return_value.__aexit__.return_value = None
+
+            with patch("app.platforms.BossZhipinAdapter") as mock_cls:
+                mock_adapter = MagicMock()
+                mock_adapter.crawl = AsyncMock(return_value={
+                    "success": True, "jobs": [], "count": 0,
+                })
+                mock_cls.return_value = mock_adapter
+
+                await crawl_single_config(1)  # no adapter passed
+
+        mock_cls.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_crawl_all_searches_creates_one_adapter(self):
+        """crawl_all_job_searches should create exactly ONE adapter for all configs.
+
+        Patches crawl_single_config at its import location to avoid DB internals,
+        then verifies the shared adapter is passed correctly.
+        """
+        from app.services.job_crawl import crawl_all_job_searches
+
+        # Mock result for: result.scalars().all() -> [3 configs]
+        mock_scalars = MagicMock()
+        mock_scalars.all = MagicMock(return_value=[
+            MagicMock(id=1, url="https://www.zhipin.com/web/geek/jobs?query=a"),
+            MagicMock(id=2, url="https://www.zhipin.com/web/geek/jobs?query=b"),
+            MagicMock(id=3, url="https://www.zhipin.com/web/geek/jobs?query=c"),
+        ])
+        mock_execute_result = MagicMock()
+        mock_execute_result.scalars = MagicMock(return_value=mock_scalars)
+
+        mock_db = MagicMock()
+        mock_db.execute = AsyncMock(return_value=mock_execute_result)
+        mock_db.get = AsyncMock()
+        mock_db.add = MagicMock()
+        mock_db.flush = AsyncMock()
+        mock_db.commit = AsyncMock()
+
+        with patch("app.services.job_crawl.AsyncSessionLocal") as mock_session_cls:
+            mock_session_cls.return_value.__aenter__.return_value = mock_db
+            mock_session_cls.return_value.__aexit__.return_value = None
+
+            with patch("app.services.job_crawl.crawl_single_config") as mock_crawl_single:
+                mock_crawl_single.return_value = {
+                    "status": "success", "new_count": 1, "updated_count": 0,
+                    "deactivated_count": 0,
+                }
+
+                with patch("app.platforms.BossZhipinAdapter") as mock_adapter_cls:
+                    mock_adapter = MagicMock()
+                    mock_adapter_cls.return_value = mock_adapter
+
+                    result = await crawl_all_job_searches(source="test")
+
+        assert mock_adapter_cls.call_count == 1, \
+            f"Expected 1 adapter, got {mock_adapter_cls.call_count}"
+        assert mock_crawl_single.call_count == 3, \
+            f"Expected 3 crawl_single_config calls, got {mock_crawl_single.call_count}"
+        for _, kwargs in mock_crawl_single.call_args_list:
+            assert kwargs.get("adapter") is mock_adapter, \
+                "All crawl_single_config calls should receive the shared adapter"
+        assert result["total"] == 3

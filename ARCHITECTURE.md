@@ -2,7 +2,7 @@
 
 ## Overview
 
-A single-user e-commerce price monitoring system that tracks product prices across Taobao, JD, and Amazon. When price drops are detected, notifications are sent via Feishu Webhook.
+A single-user e-commerce price monitoring system that tracks product prices across Taobao, JD, Amazon, and Boss Zhipin job searches. When price drops are detected, notifications are sent via Feishu Webhook.
 
 ## Tech Stack
 
@@ -12,6 +12,7 @@ A single-user e-commerce price monitoring system that tracks product prices acro
 - **Cache**: Redis
 - **Crawler**: Playwright (handles dynamic JS-rendered pages, supports CDP mode)
 - **Notification**: Feishu Webhook
+- **Frontend**: React + Vite + TypeScript + Ant Design (mobile-responsive, WCAG accessible)
 
 ## Architecture
 
@@ -90,6 +91,7 @@ The scheduler reads config from DB on startup and hot-reloads when `PATCH /confi
 | data_retention_days | SMALLINT | History retention (default: 365) |
 | crawl_cron | VARCHAR | Cron expression for scheduled crawling (nullable) |
 | crawl_timezone | VARCHAR | Timezone for cron (default: Asia/Shanghai) |
+| job_crawl_cron | VARCHAR | Job crawl cron expression (nullable, default: "0 9 * * *") |
 | created_at | TIMESTAMPTZ | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Last update timestamp |
 
@@ -133,6 +135,43 @@ The scheduler reads config from DB on startup and hot-reloads when `PATCH /confi
 | timestamp | TIMESTAMPTZ | Crawl timestamp |
 | error_message | TEXT | Error details or summary if failed/skipped |
 
+### job_search_configs
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGSERIAL | Primary key |
+| user_id | BIGINT | FK to users |
+| name | VARCHAR | Config name |
+| url | TEXT | Boss search URL |
+| active | BOOLEAN | Whether monitoring is active |
+| notify_on_new | BOOLEAN | Send notification for new jobs |
+| deactivation_threshold | SMALLINT | Consecutive misses before deactivation (default: 3) |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
+
+### jobs
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGSERIAL | Primary key |
+| job_id | VARCHAR | Boss encryptId / securityId |
+| search_config_id | BIGINT | FK to job_search_configs |
+| title | TEXT | Job title |
+| company | TEXT | Company name |
+| company_id | VARCHAR | Boss encryptBrandId |
+| salary | VARCHAR | Salary string (e.g. "20-40K") |
+| salary_min | INTEGER | Parsed minimum salary (K) |
+| salary_max | INTEGER | Parsed maximum salary (K) |
+| location | VARCHAR | Job location |
+| experience | VARCHAR | Experience requirement |
+| education | VARCHAR | Education requirement |
+| description | TEXT | Job description (from detail API) |
+| address | TEXT | Company address (from detail API) |
+| url | TEXT | Job detail URL |
+| is_active | BOOLEAN | Whether job is currently listed |
+| first_seen_at | TIMESTAMPTZ | First discovery timestamp |
+| last_active_at | TIMESTAMPTZ | Last seen in crawl |
+| consecutive_miss_count | SMALLINT | Consecutive crawls not seen |
+| last_updated_at | TIMESTAMPTZ | Last update timestamp |
+
 ## API Endpoints
 
 | Method | Path | Description |
@@ -154,6 +193,17 @@ The scheduler reads config from DB on startup and hot-reloads when `PATCH /confi
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old data |
 | GET | /scheduler/status | Scheduler job state |
+| GET | /jobs/configs | List job search configs |
+| POST | /jobs/configs | Create job search config |
+| GET | /jobs/configs/{id} | Get job search config |
+| PATCH | /jobs/configs/{id} | Update job search config |
+| DELETE | /jobs/configs/{id} | Delete job search config |
+| GET | /jobs | List crawled jobs (paginated) |
+| GET | /jobs/{id} | Get job details |
+| POST | /jobs/crawl-now | Crawl all active job configs |
+| POST | /jobs/crawl-now/{id} | Crawl single job config |
+| GET | /config/job-crawl-cron | Get job crawl cron expression |
+| PUT | /config/job-crawl-cron | Update job crawl cron |
 
 ## Notification System
 
@@ -178,9 +228,21 @@ backend/app/platforms/base.py     — BasePlatformAdapter (ABC): _init_browser, 
 backend/app/platforms/taobao.py   — TaobaoAdapter
 backend/app/platforms/jd.py       — JDAdapter
 backend/app/platforms/amazon.py   — AmazonAdapter
+backend/app/platforms/boss.py    — BossZhipinAdapter (裸 WebSocket CDP + curl_cffi)
 ```
 
-Each adapter implements `extract_price()` and `extract_title()`. The base class manages browser lifecycle (launch or CDP connection), page navigation with timeout handling, and error recovery.
+Each product adapter implements `extract_price()` and `extract_title()`. The base class manages browser lifecycle (launch or CDP connection), page navigation with timeout handling, and error recovery.
+
+### BossZhipinAdapter (Job Crawling)
+
+Unlike product adapters, Boss does NOT use Playwright for crawling. Instead:
+
+- **curl_cffi** with `impersonate="chrome124"` calls the Boss search API directly (TLS-level Chrome fingerprint)
+- **Cookies** are acquired via a four-tier fallback: disk cache → CDP read → new-tab refresh → curl_cffi homepage
+- **Detail fetching** is sequential with 2-5s intervals (no `asyncio.gather`)
+- **Adapter sharing**: `crawl_all_job_searches` creates one adapter for all configs; `update_job_detail` reuses the passed adapter rather than creating new instances
+
+This avoids the Playwright CDP `about:blank` redirect that Boss's anti-bot script triggers on detection.
 
 ## Data Retention
 

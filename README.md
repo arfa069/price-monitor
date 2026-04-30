@@ -4,11 +4,14 @@ E-commerce price monitoring system for Taobao, JD, and Amazon with Feishu webhoo
 
 ## Features
 
-- Track product prices across multiple platforms
+- Track product prices across multiple platforms (Taobao, JD, Amazon, Boss Zhipin)
 - Automated crawling with Playwright (handles dynamic JS-rendered pages)
 - Price drop alerts via Feishu Webhook
 - CDP mode: reuse an existing browser session to bypass login walls and anti-bot detection
+- Per-product crawl schedule (cron support per product)
+- Job search monitoring for Boss Zhipin
 - RESTful API for product and alert management
+- Mobile-responsive UI with accessibility support (WCAG compliance)
 
 ## Quick Start
 
@@ -27,7 +30,7 @@ cd backend && alembic upgrade head
 cd backend && uvicorn app.main:app
 ```
 
-> **Windows note**: Do **not** add `--reload` — it breaks Playwright's subprocess handling. Use `uvicorn app.main:app` or `python -m app.main` instead.
+> **Windows note**: Do **not** add `--reload` — it breaks Playwright's subprocess handling. Use `python -m uvicorn app.main:app` or `uvicorn app.main:app` instead (without `--reload`).
 
 ## Configuration
 
@@ -72,6 +75,12 @@ JD_COOKIE=...
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old price history and crawl logs |
 | GET | /scheduler/status | Scheduler status (started/not_started) |
+| GET/POST | /jobs/configs | List/Create job search configs |
+| GET/PATCH/DELETE | /jobs/configs/{id} | Manage a job search config |
+| GET | /jobs | List crawled jobs (paginated) |
+| POST | /jobs/crawl-now | Crawl all active job configs |
+| POST | /jobs/crawl-now/{id} | Crawl single job config |
+| GET/PUT | /config/job-crawl-cron | Get/Update job crawl schedule |
 
 ## Development
 

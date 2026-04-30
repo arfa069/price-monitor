@@ -1,10 +1,16 @@
 """Job crawling service: process results, deduplicate, send notifications."""
+from __future__ import annotations
+
 import asyncio
 import logging
 import random
 import re
 from datetime import UTC, datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.platforms import BossZhipinAdapter
 
 from sqlalchemy import select
 
@@ -52,6 +58,7 @@ async def process_job_results(
     config_id: int,
     jobs: list[dict],
     total_scraped: int,
+    adapter: BossZhipinAdapter | None = None,
 ) -> dict:
     """Process crawl results: deduplicate, insert/update jobs, send notifications.
 
@@ -184,13 +191,18 @@ async def process_job_results(
         # Single commit for both job data and crawl log
         await db.commit()
 
-        # Fetch job details (description, address) from Boss API for new jobs (concurrent)
+        # Fetch job details sequentially with rate limiting (no concurrency)
         if new_job_ids:
-            results = await asyncio.gather(
-                *[update_job_detail(jid) for jid in new_job_ids],
-                return_exceptions=True,
-            )
-            detail_errors = sum(1 for r in results if isinstance(r, Exception))
+            detail_errors = 0
+            for jid in new_job_ids:
+                try:
+                    result = await update_job_detail(jid, adapter=adapter)
+                    if isinstance(result, Exception):
+                        detail_errors += 1
+                except Exception:
+                    detail_errors += 1
+                # 2-5秒间隔，避免触发反爬
+                await asyncio.sleep(random.uniform(2.0, 5.0))
             if detail_errors:
                 logger.info("Detail fetch completed: %d errors out of %d jobs", detail_errors, len(new_job_ids))
 
@@ -201,11 +213,12 @@ async def process_job_results(
     }
 
 
-async def update_job_detail(job_id: int) -> dict:
+async def update_job_detail(job_id: int, adapter: BossZhipinAdapter | None = None) -> dict:
     """Fetch and update job detail (description, address) from Boss API.
 
     Args:
         job_id: The internal Job record ID.
+        adapter: Optional shared BossZhipinAdapter instance (reuses session/cookies).
 
     Returns:
         {"success": True, "detail": {...}} or {"success": False, "error": "..."}
@@ -217,8 +230,9 @@ async def update_job_detail(job_id: int) -> dict:
         if not job:
             return {"success": False, "error": "Job not found"}
 
-        # Use the boss job_id (encryptId) as securityId for the detail API
-        adapter = BossZhipinAdapter()
+        # Reuse adapter if provided (shares session & cookies), else create new
+        if adapter is None:
+            adapter = BossZhipinAdapter()
         result = await adapter.crawl_detail(job.job_id)
 
         if not result.get("success"):
@@ -235,8 +249,17 @@ async def update_job_detail(job_id: int) -> dict:
         return {"success": True, "detail": detail}
 
 
-async def crawl_single_config(config_id: int) -> dict:
-    """Crawl a single JobSearchConfig and process results."""
+async def crawl_single_config(
+    config_id: int, adapter: "BossZhipinAdapter | None" = None
+) -> dict:
+    """Crawl a single JobSearchConfig and process results.
+
+    Args:
+        config_id: The JobSearchConfig ID to crawl.
+        adapter: Optional shared BossZhipinAdapter. When provided, reuses
+            the adapter's session and cookies across multiple configs to
+            avoid redundant cookie acquisition and browser tab churn.
+    """
     from app.platforms import BossZhipinAdapter
 
     async with AsyncSessionLocal() as db:
@@ -244,7 +267,8 @@ async def crawl_single_config(config_id: int) -> dict:
         if not config:
             return {"status": "error", "error": "Config not found"}
 
-    adapter = BossZhipinAdapter()
+    if adapter is None:
+        adapter = BossZhipinAdapter()
     result = await adapter.crawl(config.url)
 
     if result.get("success"):
@@ -252,6 +276,7 @@ async def crawl_single_config(config_id: int) -> dict:
             config_id=config_id,
             jobs=result["jobs"],
             total_scraped=result["count"],
+            adapter=adapter,
         )
         return {"status": "success", **stats}
     else:
@@ -272,7 +297,14 @@ async def crawl_single_config(config_id: int) -> dict:
 
 
 async def crawl_all_job_searches(source: str = "manual") -> dict:
-    """Crawl all active job search configs."""
+    """Crawl all active job search configs.
+
+    Shares a single BossZhipinAdapter across all configs so that cookie
+    acquisition (including any browser-tab refresh) happens at most once
+    instead of once per config.
+    """
+    from app.platforms import BossZhipinAdapter
+
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(JobSearchConfig).where(JobSearchConfig.active)
@@ -287,15 +319,16 @@ async def crawl_all_job_searches(source: str = "manual") -> dict:
     error_count = 0
     details = []
 
+    adapter = BossZhipinAdapter()
+
     for i, config in enumerate(configs):
-        result = await crawl_single_config(config.id)
+        result = await crawl_single_config(config.id, adapter=adapter)
         details.append({"config_id": config.id, **result})
         if result.get("status") == "success":
             success_count += 1
         else:
             error_count += 1
 
-        # Space out configs to avoid CDP exhaustion (new-tab refresh is ~5s)
         if i < len(configs) - 1:
             delay = random.uniform(3, 6)
             logger.debug("Waiting %.1fs before next config", delay)

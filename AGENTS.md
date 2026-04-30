@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-`backend/app/` contains the FastAPI backend: `main.py` for app startup, `routers/` for HTTP endpoints, `services/` for crawl and notification logic, `models/` and `schemas/` for persistence and validation, and `platforms/` for Taobao/JD/Amazon adapters. `backend/alembic/` and `backend/alembic.ini` hold database migrations. `frontend/` is the Vite + React client, with source under `frontend/src/`. Tests live in `backend/tests/`; screenshots and manual QA artifacts are stored under `backend/tests/screenshots/` and `backend/tests/*.md`.
+`backend/app/` contains the FastAPI backend: `main.py` for app startup, `routers/` for HTTP endpoints, `services/` for crawl and notification logic, `models/` and `schemas/` for persistence and validation, and `platforms/` for Taobao/JD/Amazon/Boss adapters. `backend/alembic/` and `backend/alembic.ini` hold database migrations. `frontend/` is the Vite + React client, with source under `frontend/src/`. Tests live in `backend/tests/`; screenshots and manual QA artifacts are stored under `backend/tests/screenshots/` and `backend/tests/*.md`.
 
 ## Build, Test, and Development Commands
 - `cd backend && uvicorn app.main:app` starts the backend locally. On Windows, do not use `--reload`.

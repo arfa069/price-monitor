@@ -66,8 +66,24 @@ export interface UserConfig {
   data_retention_days: number
   crawl_cron: string | null
   crawl_timezone: string | null
+  job_crawl_cron: string | null
   created_at: string | null
   updated_at: string | null
+}
+
+export interface SchedulerJobStatus {
+  registered: boolean
+  cron_expression: string | null
+  next_run_at: string | null
+}
+
+export interface SchedulerStatusResponse {
+  scheduler: string
+  timezone: string
+  jobs: {
+    product_crawl: SchedulerJobStatus
+    job_crawl: SchedulerJobStatus
+  }
 }
 
 export interface PriceHistoryRecord {

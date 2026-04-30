@@ -1,5 +1,5 @@
 import api from './client'
-import type { UserConfig } from '@/types'
+import type { SchedulerStatusResponse, UserConfig } from '@/types'
 
 export const configApi = {
   get: () => api.get<UserConfig>('/config'),
@@ -14,4 +14,6 @@ export const configApi = {
     api.put<{ job_crawl_cron: string | null }>('/config/job-crawl-cron', {
       job_crawl_cron,
     }),
+  getSchedulerStatus: () =>
+    api.get<SchedulerStatusResponse>('/scheduler/status'),
 }

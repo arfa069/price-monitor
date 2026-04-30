@@ -3,12 +3,14 @@ import {
   Alert,
   Button,
   Card,
+  Divider,
   Form,
   Input,
   InputNumber,
   Radio,
   Skeleton,
   Space,
+  Spin,
   message,
 } from 'antd'
 import { SaveOutlined } from '@ant-design/icons'
@@ -41,19 +43,12 @@ export default function ScheduleConfigPage() {
   const [productCron, setProductCron] = useState('')
   const [productTz, setProductTz] = useState('Asia/Shanghai')
   const [jobCron, setJobCron] = useState('')
-  // productCronSaving / jobCronSaving values unused until Task 4 JSX
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [productCronSaving, setProductCronSaving] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [jobCronSaving, setJobCronSaving] = useState(false)
 
   // Scheduler status
-  // schedulerJobs / schedulerLoading / schedulerError unused until Task 4 JSX
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [schedulerJobs, setSchedulerJobs] = useState<Record<string, SchedulerJobStatus>>({})
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [schedulerLoading, setSchedulerLoading] = useState(true)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [schedulerError, setSchedulerError] = useState(false)
 
   const fetchSchedulerStatus = async () => {
@@ -80,18 +75,16 @@ export default function ScheduleConfigPage() {
       crawl_frequency_hours: config.crawl_frequency_hours || 1,
       data_retention_days: config.data_retention_days || 365,
     })
-    /* eslint-disable react-hooks/set-state-in-effect -- syncing external config into local state */
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external config into local state
     setProductCron(config.crawl_cron || '')
     setProductTz(config.crawl_timezone || 'Asia/Shanghai')
     setJobCron(config.job_crawl_cron || '')
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [config, form])
 
   // Fetch scheduler status on mount
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- fetch on mount pattern */
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on mount
     fetchSchedulerStatus()
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [])
 
   const scheduleMode =
@@ -114,7 +107,6 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired in Task 4 JSX
   const handleSaveProductCron = async () => {
     if (cronValid !== true) {
       message.error('Cron 表达式不合法')
@@ -133,7 +125,6 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- wired in Task 4 JSX
   const handleSaveJobCron = async () => {
     const value = jobCron.trim() || null
     if (value && !isValidCronFormat(value)) {
@@ -151,6 +142,13 @@ export default function ScheduleConfigPage() {
     } finally {
       setJobCronSaving(false)
     }
+  }
+
+  const formatNextRun = (job: SchedulerJobStatus | undefined): string => {
+    if (schedulerError) return '调度器未启动'
+    if (!job?.registered) return '未注册'
+    if (!job.next_run_at) return '待定'
+    return new Date(job.next_run_at).toLocaleString('zh-CN')
   }
 
   return (
@@ -230,6 +228,100 @@ export default function ScheduleConfigPage() {
           </Card>
         )}
       </Form>
+
+      <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
+        {isLoading && !config ? (
+          <Skeleton active paragraph={{ rows: 4 }} />
+        ) : (
+          <>
+            <div>
+              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>商品爬取</h4>
+              <Space wrap>
+                <Input
+                  value={productCron}
+                  onChange={(e) => setProductCron(e.target.value)}
+                  placeholder="0 9 * * *"
+                  style={{ width: 200 }}
+                  autoComplete="off"
+                  name="product-cron"
+                />
+                <Input
+                  value={productTz}
+                  onChange={(e) => setProductTz(e.target.value)}
+                  placeholder="Asia/Shanghai"
+                  style={{ width: 160 }}
+                  autoComplete="off"
+                  name="product-timezone"
+                />
+                <Button
+                  type="primary"
+                  onClick={handleSaveProductCron}
+                  disabled={cronValid !== true}
+                  loading={productCronSaving}
+                >
+                  保存
+                </Button>
+              </Space>
+              {cronValid === false && (
+                <Alert
+                  message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）"
+                  type="error"
+                  showIcon
+                  style={{ marginTop: 8 }}
+                />
+              )}
+              <div style={{ marginTop: 8, color: '#888', fontSize: 12 }}>
+                下次执行:{' '}
+                {schedulerLoading ? (
+                  <Spin size="small" />
+                ) : (
+                  formatNextRun(schedulerJobs.product_crawl)
+                )}
+              </div>
+            </div>
+
+            <Divider style={{ margin: '16px 0' }} />
+
+            <div>
+              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位爬取</h4>
+              <Space wrap>
+                <Input
+                  value={jobCron}
+                  onChange={(e) => setJobCron(e.target.value)}
+                  placeholder="0 9 * * *"
+                  style={{ width: 200 }}
+                  autoComplete="off"
+                  name="job-cron"
+                />
+                <Button
+                  type="primary"
+                  onClick={handleSaveJobCron}
+                  disabled={jobCron.trim() !== '' && !isValidCronFormat(jobCron)}
+                  loading={jobCronSaving}
+                >
+                  保存
+                </Button>
+              </Space>
+              {jobCron.trim() !== '' && !isValidCronFormat(jobCron) && (
+                <Alert
+                  message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）"
+                  type="error"
+                  showIcon
+                  style={{ marginTop: 8 }}
+                />
+              )}
+              <div style={{ marginTop: 8, color: '#888', fontSize: 12 }}>
+                下次执行:{' '}
+                {schedulerLoading ? (
+                  <Spin size="small" />
+                ) : (
+                  formatNextRun(schedulerJobs.job_crawl)
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </Card>
 
       {isLoading && !config ? (
         <Card title="数据保留与其他配置" style={{ marginTop: 24 }}>

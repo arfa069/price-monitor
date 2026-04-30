@@ -11,6 +11,7 @@ import {
   Skeleton,
   Space,
   Spin,
+  Tag,
   message,
 } from 'antd'
 import { SaveOutlined } from '@ant-design/icons'
@@ -220,20 +221,14 @@ export default function ScheduleConfigPage() {
         )}
       </Form>
 
-      <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
+      <Card
+        title="Cron 定时配置"
+        extra={scheduleMode === 'cron' ? <Tag color="blue">Cron 模式已启用</Tag> : null}
+        style={{ marginTop: 24 }}>
         {isLoading && !config ? (
           <Skeleton active paragraph={{ rows: 4 }} />
         ) : (
           <>
-            {scheduleMode === 'cron' && (
-              <Alert
-                message="Cron 模式已启用"
-                description="可在本卡片中编辑商品和职位爬取的 Cron 表达式"
-                type="info"
-                showIcon
-                style={{ marginBottom: 16 }}
-              />
-            )}
             <div>
               <h4 style={{ marginBottom: 12, color: '#1f2937' }}>商品爬取</h4>
               <Space wrap>

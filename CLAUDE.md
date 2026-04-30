@@ -41,6 +41,11 @@ docker-compose up -d
 - `backend/app/main.py` — FastAPI 应用工厂，含 lifespan、路由注册、/health 检查
 - `backend/app/config.py` — Pydantic Settings，环境变量
 
+### 前端路由
+- `/jobs` — 职位管理（搜索配置 + 职位列表 + 全量/单配置爬取）
+- `/products` — 商品管理（商品列表 + 商品爬取 + 爬取记录）
+- `/schedule` — 定时配置（三卡片：频率模式选择、商品/职位 cron 编辑、数据保留设置）
+
 ### 平台适配器模式
 ```
 backend/app/platforms/base.py     — BasePlatformAdapter (ABC)：_init_browser、crawl、extract_price/title（抽象方法）

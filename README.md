@@ -74,7 +74,7 @@ JD_COOKIE=...
 | POST | /crawl/crawl-now | Crawl all active products |
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old price history and crawl logs |
-| GET | /scheduler/status | Scheduler status (started/not_started) |
+| GET | /scheduler/status | Scheduler status (both product and job crawl) |
 | GET/POST | /jobs/configs | List/Create job search configs |
 | GET/PATCH/DELETE | /jobs/configs/{id} | Manage a job search config |
 | GET | /jobs | List crawled jobs (paginated) |
@@ -111,21 +111,25 @@ Crawl tasks run **directly in FastAPI's async context** — no Celery or backgro
 
 ### Cron Scheduling (APScheduler)
 
-The system supports two scheduling modes:
+The system supports two independent cron jobs:
+
+**Product crawl** — two mutually exclusive modes:
 - **Interval mode**: Crawl every N hours (default: 1 hour)
 - **Cron mode**: Crawl on a cron schedule (e.g., `0 9 * * *` = daily at 9:00)
 
-Scheduler runs as an AsyncIOScheduler managed by FastAPI's lifespan. Configured via:
+Configured via `GET/POST/PATCH /config`:
 ```
-# Interval mode (POST /config)
+# Interval mode
 crawl_frequency_hours: 2
 
-# Cron mode (PATCH /config)
+# Cron mode
 crawl_cron: "0 9 * * *"
 crawl_timezone: "Asia/Shanghai"
 ```
 
-The two modes are mutually exclusive. Switching modes updates the scheduler job immediately (hot-reload).
+**Job crawl** — always cron mode (default `"0 9 * * *"`, configured via `GET/PUT /config/job-crawl-cron`).
+
+Both cron jobs are managed via the **Schedule page** (`/schedule`) in the frontend, which shows registration state, next run time, and provides independent save buttons.
 
 Concurrent crawl protection: both cron and manual crawls share a global `asyncio.Semaphore(1)` — only one crawl runs at a time. On cron failure, a CrawlLog entry is written and a Feishu notification is sent if configured.
 

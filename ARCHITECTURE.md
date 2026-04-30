@@ -50,16 +50,23 @@ Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or exte
 
 ### Cron Scheduling
 
-APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two mutually exclusive modes:
+APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two independent cron jobs, each triggered separately:
 
+**Product crawl (interval or cron mode)**:
 - **Interval mode**: `crawl_frequency_hours` drives periodic crawling (APScheduler IntervalTrigger)
 - **Cron mode**: `crawl_cron` (5-segment cron expression) + `crawl_timezone` drives scheduled crawling (CronTrigger.from_crontab)
+- Two modes are mutually exclusive. Switching modes hot-reloads the scheduler job.
 
-The scheduler reads config from DB on startup and hot-reloads when `PATCH /config` is called with new cron settings.
+**Job crawl (cron only)**:
+- Always uses cron mode via `job_crawl_cron` (default `"0 9 * * *"` = daily at 9:00)
+- Managed by a separate APScheduler job (`job_crawl_cron_job`)
+- Configured via `PUT /config/job-crawl-cron`
 
-**Concurrency protection**: A global `asyncio.Semaphore(1)` (shared between cron jobs and manual crawls) prevents overlapping executions. Both `crawl_all_products(source="cron")` and `crawl_all_products(source="manual")` use the same lock.
+**Concurrency protection**: A global `asyncio.Semaphore(1)` (shared between cron jobs and manual crawls) prevents overlapping executions.
 
 **Cron failure handling**: On failure, writes a `CrawlLog` entry with status `CRON_ERROR` and sends a Feishu notification if configured. On skip (no active products), writes `SKIPPED`. On success, writes `CRON_SUCCESS`.
+
+**Status endpoint**: `GET /scheduler/status` returns both jobs' registration state, cron expression, and next run time in a `jobs` object (`product_crawl` / `job_crawl`).
 
 ### Browser Modes
 

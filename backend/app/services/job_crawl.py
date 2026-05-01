@@ -194,13 +194,35 @@ async def process_job_results(
         # Fetch job details sequentially with rate limiting (no concurrency)
         if new_job_ids:
             detail_errors = 0
+            consecutive_cookie_failures = 0
             for jid in new_job_ids:
                 try:
                     result = await update_job_detail(jid, adapter=adapter)
                     if isinstance(result, Exception):
                         detail_errors += 1
+                    elif isinstance(result, dict) and not result.get("success"):
+                        detail_errors += 1
+                        err = result.get("error", "")
+                        if "code=37" in err or "code=36" in err or "Cookie expired" in err:
+                            consecutive_cookie_failures += 1
+                        else:
+                            consecutive_cookie_failures = 0
+                    else:
+                        consecutive_cookie_failures = 0
                 except Exception:
                     detail_errors += 1
+                    consecutive_cookie_failures += 1
+
+                # 连续 3 次 cookie 失败 → token 彻底失效，停止获取详情
+                if consecutive_cookie_failures >= 3:
+                    remaining = len(new_job_ids) - new_job_ids.index(jid) - 1
+                    logger.warning(
+                        "Bailing out of detail fetch: %d consecutive cookie failures, "
+                        "%d jobs remaining",
+                        consecutive_cookie_failures, remaining,
+                    )
+                    break
+
                 # 2-5秒间隔，避免触发反爬
                 await asyncio.sleep(random.uniform(2.0, 5.0))
             if detail_errors:

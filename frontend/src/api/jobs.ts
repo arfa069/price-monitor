@@ -43,8 +43,12 @@ export const jobsApi = {
   crawlAll: () =>
     api.post<{ status: string; total: number; success: number; errors: number }>(
       '/jobs/crawl-now',
+      undefined,
+      { timeout: 600000 },  // 10分钟，长爬取任务
     ),
 
   crawlSingle: (configId: number) =>
-    api.post<JobCrawlResult>(`/jobs/crawl-now/${configId}`),
+    api.post<JobCrawlResult>(`/jobs/crawl-now/${configId}`, undefined, {
+      timeout: 600000,
+    }),
 }

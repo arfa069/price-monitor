@@ -39,7 +39,19 @@ export default function JobList({
   const columns: ColumnsType<Job> = useMemo(
     () => [
       { title: 'ID', dataIndex: 'id', width: 80 },
-      { title: '职位', dataIndex: 'title', ellipsis: true },
+      {
+        title: '职位',
+        dataIndex: 'title',
+        ellipsis: true,
+        render: (title: string, record) =>
+          record.url ? (
+            <a href={record.url} target="_blank" rel="noopener noreferrer" title="在新标签页打开职位">
+              {title}
+            </a>
+          ) : (
+            title
+          ),
+      },
       { title: '公司', dataIndex: 'company', width: 200, ellipsis: true },
       { title: '薪资', dataIndex: 'salary', width: 120 },
       { title: '地点', dataIndex: 'location', width: 120, ellipsis: true },

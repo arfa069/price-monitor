@@ -1,5 +1,5 @@
 # CLAUDE.md
-
+强制用简体中文回复，强制思考过程也用简体中文!
 此文件为 Claude Code (claude.ai/code) 提供代码库操作指南。
 
 ## 项目概览

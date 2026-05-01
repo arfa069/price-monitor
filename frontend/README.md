@@ -30,9 +30,9 @@ npm run build
 ```
 src/
 ├── api/            # axios 实例与 API 函数
-├── components/     # 可复用组件（AppLayout, ProductFormModal, BatchImportModal）
+├── components/     # 可复用组件（AppLayout, ProductFormModal, BatchImportModal, JobList, JobDrawer, ConfigList）
 ├── hooks/          # React Query hooks
-├── pages/          # 页面组件（ProductsPage, ScheduleConfigPage）
+├── pages/          # 页面组件（ProductsPage, ScheduleConfigPage, JobsPage）
 ├── types/          # TypeScript 类型定义
 ├── App.tsx         # 路由与布局
 └── main.tsx        # 入口，QueryClientProvider
@@ -41,6 +41,7 @@ src/
 ## 功能
 
 - **商品管理页**: CRUD 操作、批量导入/删除/启停、分页（15条/页）、多条件筛选
+- **职位管理页**: 搜索配置管理、职位列表（含可点击链接跳转Boss详情页）、单配置/全量爬取
 - **定时配置页**: 爬取频率配置（直接调 PATCH /config）、Cron 表达式校验
 - **告警管理**: 商品级别价格告警设置，在编辑弹窗内集成
 - **爬取日志面板**: 实时查看爬取状态和历史记录

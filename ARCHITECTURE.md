@@ -159,7 +159,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
-| job_id | VARCHAR | Boss encryptId / securityId |
+| job_id | VARCHAR | Boss securityId (API调用); encryptJobId 用于拼详情页 URL |
 | search_config_id | BIGINT | FK to job_search_configs |
 | title | TEXT | Job title |
 | company | TEXT | Company name |
@@ -245,9 +245,11 @@ Each product adapter implements `extract_price()` and `extract_title()`. The bas
 Unlike product adapters, Boss does NOT use Playwright for crawling. Instead:
 
 - **curl_cffi** with `impersonate="chrome124"` calls the Boss search API directly (TLS-level Chrome fingerprint)
-- **Cookies** are acquired via a four-tier fallback: disk cache → CDP read → new-tab refresh → curl_cffi homepage
-- **Detail fetching** is sequential with 2-5s intervals (no `asyncio.gather`)
-- **Adapter sharing**: `crawl_all_job_searches` creates one adapter for all configs; `update_job_detail` reuses the passed adapter rather than creating new instances
+- **Cookies** acquired without search API test (test consumes token): CDP read → disk cache → background tab → homepage
+- **Token lifecycle**: `__zp_stoken__` lasts ~5-6 API calls then returns code=37. Automatically refreshed by opening a background tab to search page (~3s). Search/detail API responses only return `__zp_sseed__`, `__zp_sname__`, `__zp_sts__` — NOT new `__zp_stoken__`
+- **Cookie domain**: Must use `session.cookies.set(k,v,domain=".zhipin.com")` — `update()` without domain causes old/new token collision
+- **Detail fetching**: Sequential 2-5s intervals (no `asyncio.gather`). Retries once on code=37/36 after token refresh. 3 consecutive cookie failures triggers bailout
+- **Adapter sharing**: `crawl_all_job_searches` creates one adapter for all configs; `update_job_detail` reuses the passed adapter
 
 This avoids the Playwright CDP `about:blank` redirect that Boss's anti-bot script triggers on detection.
 

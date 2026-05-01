@@ -14,7 +14,13 @@ from app.schemas.job import (
     JobSearchConfigResponse,
     JobSearchConfigUpdate,
 )
-from app.services.job_crawl import crawl_all_job_searches, crawl_single_config
+from app.services.job_crawl import (
+    crawl_all_job_searches,
+    crawl_single_config,
+    crawl_single_config_background,
+    crawl_all_job_searches_background,
+)
+from app.services.scheduler_service import TaskStatus, get_task
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -210,20 +216,67 @@ async def get_job(job_id_str: str, db: AsyncSession = Depends(get_db)):
 
 @router.post("/crawl-now")
 async def crawl_now():
-    """Trigger crawling all active job search configs."""
-    result = await crawl_all_job_searches(source="manual")
+    """Trigger crawling all active job search configs (async)."""
+    task = await crawl_all_job_searches_background()
     return JSONResponse(content={
-        "status": result["status"],
-        "total": result["total"],
-        "success": result["success"],
-        "errors": result["errors"],
+        "status": "pending",
+        "task_id": task.task_id,
+        "message": f"爬取任务已启动，通过 /jobs/crawl/status/{task.task_id} 查询进度",
     })
 
 
-@router.post("/crawl-now/{config_id}", response_model=JobCrawlResult)
+@router.post("/crawl-now/{config_id}")
 async def crawl_single(config_id: int):
-    """Trigger crawling a single config."""
-    result = await crawl_single_config(config_id)
-    if result.get("status") == "error":
-        raise HTTPException(status_code=500, detail=result.get("error"))
-    return JobCrawlResult(**result)
+    """Trigger crawling a single config (async)."""
+    task = await crawl_single_config_background(config_id)
+    return JSONResponse(content={
+        "status": "pending",
+        "task_id": task.task_id,
+        "message": f"爬取任务已启动，通过 /jobs/crawl/status/{task.task_id} 查询进度",
+    })
+
+
+@router.get("/crawl/status/{task_id}")
+async def get_job_crawl_status(task_id: str):
+    """Get the status of a job crawl task."""
+    task = get_task(task_id)
+    if not task:
+        return JSONResponse(
+            content={"status": "error", "reason": "task_not_found"},
+            status_code=404,
+        )
+    return JSONResponse(content={
+        "task_id": task.task_id,
+        "status": task.status.value,
+        "total": task.total,
+        "success": task.success,
+        "errors": task.errors,
+    })
+
+
+@router.get("/crawl/result/{task_id}")
+async def get_job_crawl_result(task_id: str):
+    """Get the final result of a completed job crawl task."""
+    task = get_task(task_id)
+    if not task:
+        return JSONResponse(
+            content={"status": "error", "reason": "task_not_found"},
+            status_code=404,
+        )
+    if task.status in (TaskStatus.PENDING, TaskStatus.RUNNING):
+        return JSONResponse(
+            content={"status": task.status.value, "task_id": task.task_id},
+            status_code=202,
+        )
+    if task.status == TaskStatus.FAILED:
+        return JSONResponse(
+            content={"status": "error", "task_id": task.task_id, "reason": task.reason},
+            status_code=500,
+        )
+    return JSONResponse(content={
+        "status": "completed",
+        "task_id": task.task_id,
+        "total": task.total,
+        "success": task.success,
+        "errors": task.errors,
+    })

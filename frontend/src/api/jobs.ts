@@ -8,6 +8,23 @@ import type {
   JobSearchConfigUpdate,
 } from '@/types'
 
+export interface JobCrawlStatus {
+  task_id: string
+  status: 'pending' | 'running' | 'completed' | 'failed'
+  total: number
+  success: number
+  errors: number
+}
+
+export interface JobCrawlFinalResult {
+  status: string
+  task_id: string
+  total: number
+  success: number
+  errors: number
+  reason?: string
+}
+
 export const jobsApi = {
   getConfigs: (active?: boolean) =>
     api.get<JobSearchConfig[]>('/jobs/configs', {
@@ -41,14 +58,22 @@ export const jobsApi = {
   getJob: (jobId: string) => api.get<Job>(`/jobs/${jobId}`),
 
   crawlAll: () =>
-    api.post<{ status: string; total: number; success: number; errors: number }>(
+    api.post<{ status: string; task_id: string; message: string }>(
       '/jobs/crawl-now',
       undefined,
-      { timeout: 600000 },  // 10分钟，长爬取任务
+      { timeout: 10000 },
     ),
 
   crawlSingle: (configId: number) =>
-    api.post<JobCrawlResult>(`/jobs/crawl-now/${configId}`, undefined, {
-      timeout: 600000,
-    }),
+    api.post<{ status: string; task_id: string; message: string }>(
+      `/jobs/crawl-now/${configId}`,
+      undefined,
+      { timeout: 10000 },
+    ),
+
+  getCrawlStatus: (taskId: string) =>
+    api.get<JobCrawlStatus>(`/jobs/crawl/status/${taskId}`),
+
+  getCrawlResult: (taskId: string) =>
+    api.get<JobCrawlFinalResult>(`/jobs/crawl/result/${taskId}`),
 }

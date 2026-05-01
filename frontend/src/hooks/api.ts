@@ -276,10 +276,36 @@ export const useJob = (jobId: string) => {
 export const useCrawlAllJobs = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: jobsApi.crawlAll,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['jobs'] })
-      qc.invalidateQueries({ queryKey: ['job-configs'] })
+    mutationFn: async (): Promise<{
+      type: 'completed' | 'error'
+      total?: number
+      success?: number
+      errors?: number
+      reason?: string
+    }> => {
+      const response = await jobsApi.crawlAll()
+      const taskId = response.data.task_id
+
+      for (let attempt = 0; attempt < 60; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        try {
+          const statusRes = await jobsApi.getCrawlStatus(taskId)
+          const s = statusRes.data
+          if (s.status === 'completed') {
+            const resultRes = await jobsApi.getCrawlResult(taskId)
+            const r = resultRes.data
+            qc.invalidateQueries({ queryKey: ['jobs'] })
+            qc.invalidateQueries({ queryKey: ['job-configs'] })
+            return { type: 'completed', total: r.total, success: r.success, errors: r.errors }
+          }
+          if (s.status === 'failed') {
+            return { type: 'error', reason: 'crawl task failed' }
+          }
+        } catch (e) {
+          console.warn('Job crawl polling error:', e)
+        }
+      }
+      return { type: 'error', reason: 'timeout_polling' }
     },
   })
 }
@@ -287,10 +313,36 @@ export const useCrawlAllJobs = () => {
 export const useCrawlSingleJob = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: jobsApi.crawlSingle,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['jobs'] })
-      qc.invalidateQueries({ queryKey: ['job-configs'] })
+    mutationFn: async (configId: number): Promise<{
+      type: 'completed' | 'error'
+      total?: number
+      success?: number
+      errors?: number
+      reason?: string
+    }> => {
+      const response = await jobsApi.crawlSingle(configId)
+      const taskId = response.data.task_id
+
+      for (let attempt = 0; attempt < 60; attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        try {
+          const statusRes = await jobsApi.getCrawlStatus(taskId)
+          const s = statusRes.data
+          if (s.status === 'completed') {
+            const resultRes = await jobsApi.getCrawlResult(taskId)
+            const r = resultRes.data
+            qc.invalidateQueries({ queryKey: ['jobs'] })
+            qc.invalidateQueries({ queryKey: ['job-configs'] })
+            return { type: 'completed', total: r.total, success: r.success, errors: r.errors }
+          }
+          if (s.status === 'failed') {
+            return { type: 'error', reason: 'crawl task failed' }
+          }
+        } catch (e) {
+          console.warn('Job crawl polling error:', e)
+        }
+      }
+      return { type: 'error', reason: 'timeout_polling' }
     },
   })
 }

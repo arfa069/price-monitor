@@ -363,3 +363,49 @@ async def crawl_all_job_searches(source: str = "manual") -> dict:
         "errors": error_count,
         "details": details,
     }
+
+
+async def crawl_single_config_background(config_id: int) -> "CrawlTask":
+    """后台运行单配置爬取，立即返回 task 对象。"""
+    from app.services.scheduler_service import CrawlTask, TaskStatus, create_task
+
+    task = create_task("manual")
+    task.status = TaskStatus.RUNNING
+
+    async def _run():
+        try:
+            result = await crawl_single_config(config_id)
+            ok = result.get("status") != "error"
+            task.status = TaskStatus.COMPLETED if ok else TaskStatus.FAILED
+            task.total = sum(v for k, v in result.items() if k in ("new_count", "updated_count", "deactivated_count"))
+            task.success = result.get("new_count", 0)
+            task.errors = 0 if ok else 1
+        except Exception as e:
+            task.status = TaskStatus.FAILED
+            task.reason = str(e)
+
+    asyncio.create_task(_run())
+    return task
+
+
+async def crawl_all_job_searches_background() -> "CrawlTask":
+    """后台运行全量爬取，立即返回 task 对象。"""
+    from app.services.scheduler_service import CrawlTask, TaskStatus, create_task
+
+    task = create_task("manual")
+    task.status = TaskStatus.RUNNING
+
+    async def _run():
+        try:
+            result = await crawl_all_job_searches(source="manual")
+            ok = result.get("status") != "error"
+            task.status = TaskStatus.COMPLETED if ok else TaskStatus.FAILED
+            task.total = result.get("total", 0)
+            task.success = result.get("success", 0)
+            task.errors = result.get("errors", 0)
+        except Exception as e:
+            task.status = TaskStatus.FAILED
+            task.reason = str(e)
+
+    asyncio.create_task(_run())
+    return task

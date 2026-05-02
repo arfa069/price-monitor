@@ -47,8 +47,9 @@ export default function ScheduleConfigPage() {
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
 
-  // Data retention state
+  // Data retention & other config state
   const [retentionDays, setRetentionDays] = useState(365)
+  const [feishuWebhookUrl, setFeishuWebhookUrl] = useState('')
 
   // Product platform cron management
   const [platformConfigs, setPlatformConfigs] = useState<ProductPlatformCron[]>([])
@@ -234,6 +235,7 @@ export default function ScheduleConfigPage() {
   useEffect(() => {
     if (config) {
       setRetentionDays(config.data_retention_days || 365)
+      setFeishuWebhookUrl(config.feishu_webhook_url || '')
     }
   }, [config])
 
@@ -245,7 +247,10 @@ export default function ScheduleConfigPage() {
 
   const handleSaveRetention = async () => {
     try {
-      await updateMutation.mutateAsync({ data_retention_days: retentionDays })
+      await updateMutation.mutateAsync({
+        data_retention_days: retentionDays,
+        feishu_webhook_url: feishuWebhookUrl || '',
+      })
       message.success('配置已保存')
       refetch()
     } catch {
@@ -421,15 +426,27 @@ export default function ScheduleConfigPage() {
       </Card>
 
       <Card title="数据保留与其他配置" style={{ marginTop: 24 }}>
-        <Space.Compact style={{ width: '100%', maxWidth: 300 }}>
-          <InputNumber
-            min={1}
-            max={3650}
-            value={retentionDays}
-            onChange={(v) => setRetentionDays(v ?? 365)}
-            addonAfter="天"
-            style={{ width: '100%' }}
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ marginBottom: 4, color: '#666' }}>飞书 Webhook URL</div>
+          <Input
+            value={feishuWebhookUrl}
+            onChange={(e) => setFeishuWebhookUrl(e.target.value)}
+            placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
+            style={{ maxWidth: 500 }}
           />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: '#666', whiteSpace: 'nowrap' }}>数据保留天数</span>
+          <Space.Compact style={{ maxWidth: 300 }}>
+            <InputNumber
+              min={1}
+              max={3650}
+              value={retentionDays}
+              onChange={(v) => setRetentionDays(v ?? 365)}
+              addonAfter="天"
+              style={{ width: '100%' }}
+            />
+          </Space.Compact>
           <Button
             type="primary"
             icon={<SaveOutlined />}
@@ -438,7 +455,7 @@ export default function ScheduleConfigPage() {
           >
             保存配置
           </Button>
-        </Space.Compact>
+        </div>
       </Card>
 
       <Modal

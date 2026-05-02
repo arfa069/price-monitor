@@ -355,6 +355,11 @@ export default function ScheduleConfigPage() {
         return new Date(schedule.next_run_at).toLocaleString('zh-CN')
       },
     },
+    {
+      title: '',
+      key: 'spacer',
+      width: 80,
+    },
   ]
 
   return (

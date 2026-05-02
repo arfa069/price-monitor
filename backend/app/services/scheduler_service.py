@@ -231,6 +231,34 @@ async def _run_crawl_in_lock(task: CrawlTask, crawl_lock: asyncio.Semaphore) -> 
         await _cleanup_all_shared_browsers()
 
 
+async def crawl_products_by_platform(platform: str) -> None:
+    """Crawl all active products for a specific platform.
+
+    Called by ProductCronScheduler cron jobs. Respects concurrency
+    limits and logs results.
+    """
+    from app.services.crawl import get_active_products
+    from app.routers.crawl import _crawl_one
+
+    semaphore = asyncio.Semaphore(CONCURRENCY_LIMIT)
+    products = await get_active_products()
+    platform_products = [p for p in products if p.platform == platform]
+
+    if not platform_products:
+        logger.info("No active %s products to crawl", platform)
+        return
+
+    tasks = [
+        _crawl_one_with_semaphore(p.id, semaphore, False)
+        for p in platform_products
+    ]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    success = sum(1 for r in results if isinstance(r, dict) and r.get("status") == "success")
+    errors = sum(1 for r in results if isinstance(r, Exception) or (isinstance(r, dict) and r.get("status") == "error"))
+    logger.info("Crawl %s: %d products, %d success, %d errors", platform, len(platform_products), success, errors)
+
+
 async def _cleanup_all_shared_browsers() -> None:
     """Close all shared browser instances after crawl task."""
     from app.platforms import AmazonAdapter, JDAdapter, TaobaoAdapter

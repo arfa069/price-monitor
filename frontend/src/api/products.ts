@@ -7,6 +7,9 @@ import type {
   BatchCreateItem,
   BatchOperationResult,
   PriceHistoryRecord,
+  ProductPlatformCron,
+  ProductPlatformCronUpdate,
+  ProductPlatformCronSchedule,
 } from '@/types'
 
 export const productsApi = {
@@ -40,4 +43,16 @@ export const productsApi = {
     api.get<PriceHistoryRecord[]>(`/products/${id}/history`, {
       params: { days, limit },
     }),
+
+  // Per-platform cron configs
+  getCronConfigs: () =>
+    api.get<ProductPlatformCron[]>('/products/cron-configs'),
+
+  updateCronConfig: (platform: string, data: ProductPlatformCronUpdate) =>
+    api.patch<ProductPlatformCron>(`/products/cron-configs/${platform}`, data),
+
+  getCronSchedules: () =>
+    api.get<{ platforms: Record<string, ProductPlatformCronSchedule> }>(
+      '/products/cron-schedules',
+    ),
 }

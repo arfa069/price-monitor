@@ -82,6 +82,7 @@ export interface SchedulerStatusResponse {
   timezone: string
   jobs: {
     product_crawl: SchedulerJobStatus
+    product_platforms: Record<string, ProductPlatformCronSchedule>
     job_configs: Record<string, JobConfigScheduleInfo>
   }
 }
@@ -92,6 +93,26 @@ export interface JobConfigCronUpdate {
 }
 
 export interface JobConfigScheduleInfo {
+  cron_expression: string | null
+  next_run_at: string | null
+}
+
+export interface ProductPlatformCron {
+  id: number
+  user_id: number
+  platform: string
+  cron_expression: string | null
+  cron_timezone: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductPlatformCronUpdate {
+  cron_expression: string | null
+  cron_timezone?: string | null
+}
+
+export interface ProductPlatformCronSchedule {
   cron_expression: string | null
   next_run_at: string | null
 }

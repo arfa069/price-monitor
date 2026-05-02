@@ -102,3 +102,28 @@ class ProductBatchUpdate(BaseModel):
 class ProductBatchDelete(BaseModel):
     """Batch delete products."""
     ids: list[int] = Field(..., max_length=100)
+
+
+class ProductPlatformCronResponse(BaseModel):
+    """Per-platform cron config for product crawling."""
+    id: int
+    user_id: int
+    platform: str
+    cron_expression: str | None
+    cron_timezone: str | None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ProductPlatformCronUpdate(BaseModel):
+    """Update per-platform cron expression."""
+    cron_expression: str | None = Field(
+        default=None, max_length=100,
+        description="5段 crontab 表达式，设为 null 取消定时",
+    )
+    cron_timezone: str | None = Field(
+        default=None, max_length=50,
+        description="时区，默认 Asia/Shanghai",
+    )

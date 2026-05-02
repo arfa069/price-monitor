@@ -85,10 +85,15 @@ async def _start_scheduler(app: FastAPI) -> None:
             logger.info("No crawl_cron configured, skipping scheduler registration")
 
     # 职位爬取使用 per-config 独立 cron 调度
-    from app.services.scheduler_job import JobConfigScheduler
+    from app.services.scheduler_job import JobConfigScheduler, ProductCronScheduler
     job_config_scheduler = JobConfigScheduler(scheduler)
     app.state.job_config_scheduler = job_config_scheduler
     await job_config_scheduler.sync_all()
+
+    # 商品爬取使用 per-platform 独立 cron 调度
+    product_cron_scheduler = ProductCronScheduler(scheduler)
+    app.state.product_cron_scheduler = product_cron_scheduler
+    await product_cron_scheduler.sync_all()
 
     scheduler.start()
     logger.info("APScheduler started")
@@ -157,14 +162,16 @@ async def get_scheduler_status():
             "next_run_at": job.next_run_time.isoformat() if (job and job.next_run_time) else None,
         }
 
-    from app.services.scheduler_job import JobConfigScheduler
+    from app.services.scheduler_job import JobConfigScheduler, ProductCronScheduler
     job_config_scheduler: JobConfigScheduler = getattr(app.state, "job_config_scheduler", None)
+    product_cron_scheduler: ProductCronScheduler = getattr(app.state, "product_cron_scheduler", None)
 
     return JSONResponse(content={
         "scheduler": "running",
         "timezone": user.crawl_timezone if user else "Asia/Shanghai",
         "jobs": {
             "product_crawl": _job_info("crawl_cron_job", "crawl_cron"),
+            "product_platforms": product_cron_scheduler.get_next_run_times() if product_cron_scheduler else {},
             "job_configs": job_config_scheduler.get_next_run_times() if job_config_scheduler else {},
         },
     })

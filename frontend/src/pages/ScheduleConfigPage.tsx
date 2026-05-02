@@ -1,16 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Alert,
   Button,
   Card,
   Divider,
-  Form,
   Input,
   InputNumber,
-  Radio,
   Skeleton,
   Space,
-  Spin,
   Table,
   Tag,
   message,
@@ -20,9 +17,14 @@ import { SaveOutlined } from '@ant-design/icons'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
 import { jobsApi } from '@/api/jobs'
-import type { JobConfigScheduleInfo, JobSearchConfig, SchedulerJobStatus } from '@/types'
-
-type ScheduleMode = 'hours' | 'cron'
+import { productsApi } from '@/api/products'
+import type {
+  JobConfigScheduleInfo,
+  JobSearchConfig,
+  ProductPlatformCron,
+  ProductPlatformCronSchedule,
+  SchedulerJobStatus,
+} from '@/types'
 
 const CRON_SEGMENT_RE = /^(\*|[0-9]+(?:-[0-9]+)?(?:\/[0-9]+)?)$/
 
@@ -32,22 +34,29 @@ const isValidCronFormat = (value: string): boolean => {
   return parts.every((part) => CRON_SEGMENT_RE.test(part))
 }
 
-type ScheduleFormValues = {
-  schedule_mode: ScheduleMode
-  crawl_frequency_hours?: number
-  data_retention_days?: number
+const PLATFORM_LABELS: Record<string, string> = {
+  taobao: '淘宝',
+  jd: '京东',
+  amazon: '亚马逊',
 }
 
 export default function ScheduleConfigPage() {
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
-  const [form] = Form.useForm<ScheduleFormValues>()
 
-  // Cron card state
-  const [productCron, setProductCron] = useState('')
-  const [productCronSaving, setProductCronSaving] = useState(false)
+  // Data retention state
+  const [retentionDays, setRetentionDays] = useState(365)
 
-  // Per-config cron management
+  // Product platform cron management
+  const [platformConfigs, setPlatformConfigs] = useState<ProductPlatformCron[]>([])
+  const [platformSchedules, setPlatformSchedules] = useState<
+    Record<string, ProductPlatformCronSchedule>
+  >({})
+  const [platformLoading, setPlatformLoading] = useState(false)
+  const [platformCronInputs, setPlatformCronInputs] = useState<Record<string, string>>({})
+  const [platformSaving, setPlatformSaving] = useState<Record<string, boolean>>({})
+
+  // Job per-config cron management
   const [configList, setConfigList] = useState<JobSearchConfig[]>([])
   const [configSchedules, setConfigSchedules] = useState<Record<number, JobConfigScheduleInfo>>({})
   const [configLoading, setConfigLoading] = useState(false)
@@ -59,7 +68,7 @@ export default function ScheduleConfigPage() {
   const [schedulerLoading, setSchedulerLoading] = useState(true)
   const [schedulerError, setSchedulerError] = useState(false)
 
-  const fetchSchedulerStatus = async () => {
+  const fetchSchedulerStatus = useCallback(async () => {
     setSchedulerLoading(true)
     setSchedulerError(false)
     try {
@@ -73,20 +82,53 @@ export default function ScheduleConfigPage() {
     } finally {
       setSchedulerLoading(false)
     }
+  }, [])
+
+  // Load product platform cron configs
+  const loadPlatformData = useCallback(async () => {
+    setPlatformLoading(true)
+    try {
+      const [configsRes, schedulesRes] = await Promise.all([
+        productsApi.getCronConfigs(),
+        productsApi.getCronSchedules(),
+      ])
+      const configs = configsRes.data
+      setPlatformConfigs(configs)
+      setPlatformSchedules(schedulesRes.data.platforms)
+      const inputs: Record<string, string> = {}
+      for (const c of configs) {
+        inputs[c.platform] = c.cron_expression || ''
+      }
+      setPlatformCronInputs(inputs)
+    } catch {
+      message.error('加载商品定时配置失败')
+    } finally {
+      setPlatformLoading(false)
+    }
+  }, [])
+
+  const handleSavePlatformCron = async (platform: string) => {
+    const value = platformCronInputs[platform]?.trim() || null
+    if (value && !isValidCronFormat(value)) {
+      message.error('Cron 表达式不合法')
+      return
+    }
+    setPlatformSaving((prev) => ({ ...prev, [platform]: true }))
+    try {
+      await productsApi.updateCronConfig(platform, {
+        cron_expression: value,
+        cron_timezone: 'Asia/Shanghai',
+      })
+      message.success('已保存')
+      loadPlatformData()
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setPlatformSaving((prev) => ({ ...prev, [platform]: false }))
+    }
   }
 
-  // Populate form and cron inputs from config
-  useEffect(() => {
-    if (!config) return
-    form.setFieldsValue({
-      schedule_mode: config.crawl_cron ? 'cron' : 'hours',
-      crawl_frequency_hours: config.crawl_frequency_hours || 1,
-      data_retention_days: config.data_retention_days || 365,
-    })
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external config into local state
-    setProductCron(config.crawl_cron || '')
-  }, [config, form])
-
+  // Load job config cron data
   const loadConfigData = useCallback(async () => {
     setConfigLoading(true)
     try {
@@ -101,7 +143,6 @@ export default function ScheduleConfigPage() {
         scheduleMap[s.config_id] = s
       }
       setConfigSchedules(scheduleMap)
-      // Init cron inputs from loaded configs
       const inputs: Record<number, string> = {}
       for (const c of configs) {
         inputs[c.id] = c.cron_expression || ''
@@ -135,26 +176,22 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  // Fetch scheduler status and configs on mount
+  // Init retention from config and fetch all data on mount
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on mount
+    if (config) {
+      setRetentionDays(config.data_retention_days || 365)
+    }
+  }, [config])
+
+  useEffect(() => {
     fetchSchedulerStatus()
+    loadPlatformData()
     loadConfigData()
-  }, [fetchSchedulerStatus, loadConfigData])
+  }, [fetchSchedulerStatus, loadPlatformData, loadConfigData])
 
-  const scheduleMode =
-    Form.useWatch('schedule_mode', form) ?? (config?.crawl_cron ? 'cron' : 'hours')
-  const cronValid = useMemo(
-    () => (productCron.trim() ? isValidCronFormat(productCron) : null),
-    [productCron],
-  )
-
-  const handleSaveHours = async (values: ScheduleFormValues) => {
+  const handleSaveRetention = async () => {
     try {
-      await updateMutation.mutateAsync({
-        crawl_frequency_hours: values.crawl_frequency_hours,
-        data_retention_days: values.data_retention_days,
-      })
+      await updateMutation.mutateAsync({ data_retention_days: retentionDays })
       message.success('配置已保存')
       refetch()
     } catch {
@@ -162,24 +199,52 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  const handleSaveProductCron = async () => {
-    if (cronValid !== true) {
-      message.error('Cron 表达式不合法')
-      return
-    }
-    setProductCronSaving(true)
-    try {
-      await configApi.update({ crawl_cron: productCron.trim(), crawl_timezone: 'Asia/Shanghai' })
-      message.success('商品爬取 Cron 已保存')
-      refetch()
-      fetchSchedulerStatus()
-    } catch {
-      message.error('保存失败')
-    } finally {
-      setProductCronSaving(false)
-    }
-  }
+  // Product platform cron columns
+  const platformColumns: ColumnsType<ProductPlatformCron> = [
+    {
+      title: '平台',
+      dataIndex: 'platform',
+      key: 'platform',
+      width: 120,
+      render: (p: string) => PLATFORM_LABELS[p] || p,
+    },
+    {
+      title: 'Cron 表达式',
+      key: 'cron',
+      width: 340,
+      render: (_, record) => (
+        <Space.Compact style={{ width: '100%' }}>
+          <Input
+            value={platformCronInputs[record.platform] ?? ''}
+            onChange={(e) =>
+              setPlatformCronInputs((prev) => ({ ...prev, [record.platform]: e.target.value }))
+            }
+            placeholder="0 9 * * *（空=不定时）"
+            style={{ width: 220 }}
+          />
+          <Button
+            type="primary"
+            onClick={() => handleSavePlatformCron(record.platform)}
+            loading={platformSaving[record.platform]}
+          >
+            保存
+          </Button>
+        </Space.Compact>
+      ),
+    },
+    {
+      title: '下次执行',
+      key: 'next_run',
+      width: 200,
+      render: (_, record) => {
+        const schedule = platformSchedules[record.platform]
+        if (!schedule?.next_run_at) return <Tag>未调度</Tag>
+        return new Date(schedule.next_run_at).toLocaleString('zh-CN')
+      },
+    },
+  ]
 
+  // Job config cron columns
   const configColumns: ColumnsType<JobSearchConfig> = [
     {
       title: '配置名称',
@@ -223,13 +288,6 @@ export default function ScheduleConfigPage() {
     },
   ]
 
-  const formatNextRun = (job: SchedulerJobStatus | undefined): string => {
-    if (schedulerError) return '调度器未启动'
-    if (!job?.registered) return '未注册'
-    if (!job.next_run_at) return '待定'
-    return new Date(job.next_run_at).toLocaleString('zh-CN')
-  }
-
   return (
     <div>
       <h1
@@ -257,144 +315,52 @@ export default function ScheduleConfigPage() {
         />
       )}
 
-      <Form form={form} layout="vertical" onFinish={handleSaveHours}>
-        {isLoading && !config ? (
-          <Card title="抓取频率配置">
-            <Skeleton active paragraph={{ rows: 4 }} />
-          </Card>
-        ) : (
-          <Card title="抓取频率配置">
-            <Form.Item name="schedule_mode" label="调度模式" style={{ marginBottom: 16 }}>
-              <Radio.Group>
-                <Radio.Button value="hours">间隔模式</Radio.Button>
-                <Radio.Button value="cron">Cron 模式</Radio.Button>
-              </Radio.Group>
-            </Form.Item>
+      <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
+        <h4 style={{ marginBottom: 12, color: '#1f2937' }}>商品爬取定时配置</h4>
+        <Table
+          dataSource={platformConfigs}
+          columns={platformColumns}
+          rowKey="platform"
+          loading={platformLoading}
+          pagination={false}
+          size="small"
+          locale={{ emptyText: '加载中...' }}
+        />
 
-            {scheduleMode === 'hours' && (
-              <>
-                <Form.Item
-                  name="crawl_frequency_hours"
-                  label="每隔几小时执行一次"
-                  rules={[{ required: true, message: '请输入小时数' }]}
-                >
-                  <Space.Compact style={{ width: '100%' }}>
-                    <InputNumber min={1} max={168} style={{ width: '100%' }} />
-                    <Input value="小时" disabled style={{ width: 60 }} />
-                  </Space.Compact>
-                </Form.Item>
-                <Form.Item>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    htmlType="submit"
-                    loading={updateMutation.isPending}
-                  >
-                    保存配置
-                  </Button>
-                </Form.Item>
-              </>
-            )}
+        <Divider style={{ margin: '16px 0' }} />
 
-            {scheduleMode === 'cron' && null}
-          </Card>
-        )}
-      </Form>
-
-      <Card
-        title="Cron 定时配置"
-        extra={scheduleMode === 'cron' ? <Tag color="blue">Cron 模式已启用</Tag> : null}
-        style={{ marginTop: 24 }}>
-        {isLoading && !config ? (
-          <Skeleton active paragraph={{ rows: 4 }} />
-        ) : (
-          <>
-            <div>
-              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>商品爬取</h4>
-              <Space wrap>
-                <Input
-                  value={productCron}
-                  onChange={(e) => setProductCron(e.target.value)}
-                  placeholder="0 9 * * *"
-                  style={{ width: 200 }}
-                  autoComplete="off"
-                  name="product-cron"
-                />
-                <Button
-                  type="primary"
-                  onClick={handleSaveProductCron}
-                  disabled={cronValid !== true}
-                  loading={productCronSaving}
-                >
-                  保存
-                </Button>
-              </Space>
-              {cronValid === false && (
-                <Alert
-                  message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）"
-                  type="error"
-                  showIcon
-                  style={{ marginTop: 8 }}
-                />
-              )}
-              <div style={{ marginTop: 8, color: '#888', fontSize: 12 }}>
-                下次执行:{' '}
-                {schedulerLoading ? (
-                  <Spin size="small" />
-                ) : (
-                  formatNextRun(schedulerJobs.product_crawl)
-                )}
-              </div>
-            </div>
-
-            <Divider style={{ margin: '16px 0' }} />
-
-            <div>
-              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位爬取定时配置</h4>
-              <Table
-                dataSource={configList}
-                columns={configColumns}
-                rowKey="id"
-                loading={configLoading}
-                pagination={false}
-                size="small"
-                locale={{ emptyText: '暂无搜索配置' }}
-              />
-            </div>
-          </>
-        )}
+        <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位爬取定时配置</h4>
+        <Table
+          dataSource={configList}
+          columns={configColumns}
+          rowKey="id"
+          loading={configLoading}
+          pagination={false}
+          size="small"
+          locale={{ emptyText: '暂无搜索配置' }}
+        />
       </Card>
 
-      {isLoading && !config ? (
-        <Card title="数据保留与其他配置" style={{ marginTop: 24 }}>
-          <Skeleton active paragraph={{ rows: 2 }} />
-        </Card>
-      ) : (
-        <Card title="数据保留与其他配置" style={{ marginTop: 24 }}>
-          <Form form={form} layout="vertical" onFinish={handleSaveHours}>
-            <Form.Item
-              name="data_retention_days"
-              label="数据保留天数"
-              rules={[{ required: true, message: '请输入天数' }]}
-            >
-              <Space.Compact style={{ width: '100%' }}>
-                <InputNumber min={1} max={3650} style={{ width: '100%' }} />
-                <Input value="天" disabled style={{ width: 60 }} />
-              </Space.Compact>
-            </Form.Item>
-            <Form.Item>
-              <Button
-                type="primary"
-                icon={<SaveOutlined />}
-                htmlType="submit"
-                loading={updateMutation.isPending}
-              >
-                保存配置
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
-      )}
+      <Card title="数据保留与其他配置" style={{ marginTop: 24 }}>
+        <Space.Compact style={{ width: '100%', maxWidth: 300 }}>
+          <InputNumber
+            min={1}
+            max={3650}
+            value={retentionDays}
+            onChange={(v) => setRetentionDays(v ?? 365)}
+            addonAfter="天"
+            style={{ width: '100%' }}
+          />
+          <Button
+            type="primary"
+            icon={<SaveOutlined />}
+            onClick={handleSaveRetention}
+            loading={updateMutation.isPending}
+          >
+            保存配置
+          </Button>
+        </Space.Compact>
+      </Card>
     </div>
   )
 }

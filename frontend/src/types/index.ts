@@ -62,11 +62,7 @@ export interface UserConfig {
   id: number
   username: string
   feishu_webhook_url: string
-  crawl_frequency_hours: number
   data_retention_days: number
-  crawl_cron: string | null
-  crawl_timezone: string | null
-  job_crawl_cron: string | null
   created_at: string | null
   updated_at: string | null
 }

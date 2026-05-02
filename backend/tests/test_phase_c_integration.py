@@ -272,11 +272,7 @@ class TestScheduleConfigRealReadWrite:
         mock_user.id = 1
         mock_user.username = "default"
         mock_user.feishu_webhook_url = ""
-        mock_user.crawl_frequency_hours = 1
         mock_user.data_retention_days = 365
-        mock_user.crawl_cron = "0 9 * * *"
-        mock_user.crawl_timezone = "Asia/Shanghai"
-        mock_user.job_crawl_cron = None
         mock_user.created_at = None
         mock_user.updated_at = None
 
@@ -296,8 +292,7 @@ class TestScheduleConfigRealReadWrite:
                 response = await client.get("/config")
             assert response.status_code == 200
             data = response.json()
-            assert data["crawl_cron"] == "0 9 * * *"
-            assert data["crawl_timezone"] == "Asia/Shanghai"
+            assert data["data_retention_days"] == 365
             print("[C-05a] PASS: GET /config returns backend value")
         finally:
             app.dependency_overrides.clear()
@@ -311,11 +306,7 @@ class TestScheduleConfigRealReadWrite:
         mock_user.id = 1
         mock_user.username = "default"
         mock_user.feishu_webhook_url = ""
-        mock_user.crawl_frequency_hours = 1
         mock_user.data_retention_days = 365
-        mock_user.crawl_cron = None
-        mock_user.crawl_timezone = "Asia/Shanghai"
-        mock_user.job_crawl_cron = None
         mock_user.created_at = None
         mock_user.updated_at = None
 
@@ -327,10 +318,6 @@ class TestScheduleConfigRealReadWrite:
         mock_session.commit = AsyncMock()
         mock_session.refresh = AsyncMock()
 
-        mock_scheduler = MagicMock()
-        mock_scheduler.get_job.return_value = None
-        mock_scheduler.add_job = MagicMock()
-
         async def _override():
             yield mock_session
 
@@ -339,12 +326,11 @@ class TestScheduleConfigRealReadWrite:
             transport = ASGITransport(app=app)
             async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.patch("/config", json={
-                    "crawl_cron": "0 10 * * *",
-                    "crawl_timezone": "Asia/Shanghai",
+                    "feishu_webhook_url": "https://new-webhook",
                 })
             assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
             data = response.json()
-            assert data["crawl_cron"] == "0 10 * * *"
+            assert data["feishu_webhook_url"] == "https://new-webhook"
             print("[C-05b] PASS: PATCH /config updates config")
         finally:
             app.dependency_overrides.clear()
@@ -662,59 +648,7 @@ class TestBatchPartialFailure:
 # =============================================================================
 # C-E06: 非法 cron 保存返回 422
 # =============================================================================
-class TestInvalidCronBlocksSave:
-    """C-E06: 非法 cron 后端返回 422，前端阻止提交"""
-
-    @pytest.mark.asyncio
-    async def test_ce06_invalid_cron_returns_422(self):
-        """C-E06a: 后端非法 cron 返回 422"""
-        from app.database import get_db
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
-
-        mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=mock_result)
-
-        async def _override():
-            yield mock_session
-
-        app.dependency_overrides[get_db] = _override
-        try:
-            transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
-                # 3段 cron（非法）
-                response = await client.patch("/config", json={"crawl_cron": "0 9 *"})
-            assert response.status_code == 422, f"Expected 422, got {response.status_code}"
-            data = response.json()
-            assert "detail" in data
-            print("[C-E06a] PASS: invalid 3-segment cron returns 422")
-        finally:
-            app.dependency_overrides.clear()
-
-    @pytest.mark.asyncio
-    async def test_ce06_non_numeric_cron_returns_422(self):
-        """C-E06b: 非数字 cron 表达式返回 422"""
-        from app.database import get_db
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
-
-        mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=mock_result)
-
-        async def _override():
-            yield mock_session
-
-        app.dependency_overrides[get_db] = _override
-        try:
-            transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
-                response = await client.patch("/config", json={"crawl_cron": "abc def ghi jkl mno"})
-            assert response.status_code == 422, f"Expected 422, got {response.status_code}"
-            print("[C-E06b] PASS: non-numeric cron returns 422")
-        finally:
-            app.dependency_overrides.clear()
+# （已移除：crawl_cron 字段已从 API 中删除）
 
 
 # =============================================================================
@@ -745,8 +679,7 @@ class TestConfigMissingDefaults:
             assert response.status_code == 200
             data = response.json()
             assert data["id"] == 0  # default user
-            assert data["crawl_timezone"] == "Asia/Shanghai"
-            # crawl_cron 可能是 None 或 默认值
+            assert data["data_retention_days"] == 365
             print(f"[C-E07a] PASS: GET /config no user returns defaults, id={data['id']}")
         finally:
             app.dependency_overrides.clear()
@@ -773,11 +706,11 @@ class TestConfigMissingDefaults:
             transport = ASGITransport(app=app)
             async with AsyncClient(transport=transport, base_url="http://test") as client:
                 response = await client.patch("/config", json={
-                    "crawl_cron": "0 9 * * *"
+                    "data_retention_days": 180,
                 })
             assert response.status_code == 200
             data = response.json()
-            assert data["crawl_cron"] == "0 9 * * *"
+            assert data["data_retention_days"] == 180
             print("[C-E07b] PASS: PATCH /config creates default config")
         finally:
             app.dependency_overrides.clear()

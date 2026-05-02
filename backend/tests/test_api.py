@@ -9,8 +9,8 @@ from app.main import app
 # --- Config Tests ---
 
 @pytest.mark.asyncio
-async def test_get_config_returns_crawl_cron_and_timezone():
-    """GET /config returns crawl_cron and crawl_timezone fields."""
+async def test_get_config_returns_user_config():
+    """GET /config returns user configuration."""
     from app.database import get_db
     from app.models.user import User
 
@@ -18,11 +18,7 @@ async def test_get_config_returns_crawl_cron_and_timezone():
     mock_user.id = 1
     mock_user.username = "default"
     mock_user.feishu_webhook_url = "https://test"
-    mock_user.crawl_frequency_hours = 1
     mock_user.data_retention_days = 365
-    mock_user.crawl_cron = "0 9 * * *"
-    mock_user.crawl_timezone = "Asia/Shanghai"
-    mock_user.job_crawl_cron = None
     mock_user.created_at = None
     mock_user.updated_at = None
 
@@ -42,112 +38,8 @@ async def test_get_config_returns_crawl_cron_and_timezone():
             response = await client.get("/config")
         assert response.status_code == 200
         data = response.json()
-        assert data["crawl_cron"] == "0 9 * * *"
-        assert data["crawl_timezone"] == "Asia/Shanghai"
-    finally:
-        app.dependency_overrides.clear()
-
-
-@pytest.mark.asyncio
-async def test_patch_config_invalid_cron_returns_422():
-    """PATCH /config with invalid cron expression returns 422."""
-    from app.database import get_db
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
-
-    mock_session = AsyncMock()
-    mock_session.execute = AsyncMock(return_value=mock_result)
-
-    async def _override_get_db():
-        yield mock_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    try:
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.patch("/config", json={"crawl_cron": "not-a-cron"})
-        assert response.status_code == 422
-    finally:
-        app.dependency_overrides.clear()
-
-
-@pytest.mark.asyncio
-async def test_patch_config_invalid_timezone_returns_422():
-    """PATCH /config with invalid timezone returns 422."""
-    from app.database import get_db
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
-
-    mock_session = AsyncMock()
-    mock_session.execute = AsyncMock(return_value=mock_result)
-
-    async def _override_get_db():
-        yield mock_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    try:
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.patch(
-                "/config",
-                json={"crawl_cron": "0 9 * * *", "crawl_timezone": "Invalid/Zone"},
-            )
-        assert response.status_code == 422
-    finally:
-        app.dependency_overrides.clear()
-
-
-@pytest.mark.asyncio
-async def test_patch_config_valid_cron_rebuilds_scheduler_job():
-    """PATCH /config with valid cron rebuilds the scheduler job."""
-    from app.database import get_db
-    from app.models.user import User
-
-    mock_user = MagicMock(spec=User)
-    mock_user.id = 1
-    mock_user.username = "default"
-    mock_user.feishu_webhook_url = ""
-    mock_user.crawl_frequency_hours = 1
-    mock_user.data_retention_days = 365
-    mock_user.crawl_cron = None
-    mock_user.crawl_timezone = "Asia/Shanghai"
-    mock_user.job_crawl_cron = None
-    mock_user.created_at = None
-    mock_user.updated_at = None
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = mock_user
-
-    mock_session = AsyncMock()
-    mock_session.execute = AsyncMock(return_value=mock_result)
-    mock_session.commit = AsyncMock()
-    mock_session.refresh = AsyncMock()
-
-    mock_scheduler = MagicMock()
-    mock_scheduler.get_job.return_value = None
-    mock_scheduler.add_job = MagicMock()
-
-    async def _override_get_db():
-        yield mock_session
-
-    app.dependency_overrides[get_db] = _override_get_db
-    try:
-        with patch("app.routers.config._get_scheduler", return_value=mock_scheduler):
-            transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
-                response = await client.patch(
-                    "/config",
-                    json={"crawl_cron": "0 9 * * *", "crawl_timezone": "Asia/Shanghai"},
-                )
-        assert response.status_code == 200
-        data = response.json()
-        assert data["crawl_cron"] == "0 9 * * *"
-        mock_scheduler.add_job.assert_called_once()
-        call_kwargs = mock_scheduler.add_job.call_args.kwargs
-        assert call_kwargs["id"] == "crawl_cron_job"
-        assert call_kwargs["max_instances"] == 1
+        assert data["feishu_webhook_url"] == "https://test"
+        assert data["data_retention_days"] == 365
     finally:
         app.dependency_overrides.clear()
 

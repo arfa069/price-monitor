@@ -65,7 +65,6 @@ def test_user_feishu_webhook_nullable():
         id=1,
         username="default",
         feishu_webhook_url=None,
-        crawl_frequency_hours=1,
         data_retention_days=365,
     )
     assert user.feishu_webhook_url is None

@@ -142,7 +142,7 @@ async def get_scheduler_status():
 
     return JSONResponse(content={
         "scheduler": "running",
-        "timezone": user.crawl_timezone if user else "Asia/Shanghai",
+        "timezone": "Asia/Shanghai",
         "jobs": {
             "product_platforms": product_cron_scheduler.get_next_run_times() if product_cron_scheduler else {},
             "job_configs": job_config_scheduler.get_next_run_times() if job_config_scheduler else {},

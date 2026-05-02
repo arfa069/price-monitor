@@ -35,18 +35,12 @@ async def create_or_update_config(
             id=1,
             username="default",
             feishu_webhook_url=config_data.feishu_webhook_url,
-            crawl_frequency_hours=config_data.crawl_frequency_hours,
             data_retention_days=config_data.data_retention_days,
-            crawl_cron=config_data.crawl_cron,
-            crawl_timezone=config_data.crawl_timezone or _DEFAULT_CONFIG.crawl_timezone,
         )
         db.add(user)
     else:
         user.feishu_webhook_url = config_data.feishu_webhook_url
-        user.crawl_frequency_hours = config_data.crawl_frequency_hours
         user.data_retention_days = config_data.data_retention_days
-        user.crawl_cron = config_data.crawl_cron
-        user.crawl_timezone = config_data.crawl_timezone or _DEFAULT_CONFIG.crawl_timezone
 
     await db.commit()
     await db.refresh(user)
@@ -65,10 +59,7 @@ async def get_config(db: AsyncSession = Depends(get_db)):
             id=0,
             username="default",
             feishu_webhook_url="",
-            crawl_frequency_hours=_DEFAULT_CONFIG.crawl_frequency_hours,
             data_retention_days=_DEFAULT_CONFIG.data_retention_days,
-            crawl_cron=_DEFAULT_CONFIG.crawl_cron,
-            crawl_timezone=_DEFAULT_CONFIG.crawl_timezone,
         )
 
     return user
@@ -83,24 +74,19 @@ async def update_config_partial(
     result = await db.execute(select(User).where(User.id == 1))
     user = result.scalar_one_or_none()
 
-    old_cron = user.crawl_cron if user else None
-
     if user is None:
         user = User(
             id=1,
             username="default",
             feishu_webhook_url="",
-            crawl_frequency_hours=_DEFAULT_CONFIG.crawl_frequency_hours,
             data_retention_days=_DEFAULT_CONFIG.data_retention_days,
-            crawl_cron=config_data.crawl_cron,
-            crawl_timezone=config_data.crawl_timezone or _DEFAULT_CONFIG.crawl_timezone,
         )
         db.add(user)
-    else:
-        update_data = config_data.model_dump(exclude_unset=True)
-        if update_data:
-            for field, value in update_data.items():
-                setattr(user, field, value)
+
+    update_data = config_data.model_dump(exclude_unset=True)
+    if update_data:
+        for field, value in update_data.items():
+            setattr(user, field, value)
 
     await db.commit()
     await db.refresh(user)

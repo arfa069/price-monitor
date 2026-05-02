@@ -60,27 +60,27 @@ class TestConfigApiRealDb:
         print(f"[Config-01] PASS: GET /config returns user id={data['id']}")
 
     @pytest.mark.asyncio
-    async def test_update_crawl_cron_saves_to_db(self):
-        """PATCH /config 更新 cron 并持久化"""
-        new_cron = "0 10 * * *"
+    async def test_update_retention_days_saves_to_db(self):
+        """PATCH /config 更新保留天数并持久化"""
+        new_days = 180
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.patch("/config", json={"crawl_cron": new_cron})
+            response = await client.patch("/config", json={"data_retention_days": new_days})
 
         assert response.status_code == 200
         data = response.json()
-        assert data["crawl_cron"] == new_cron
+        assert data["data_retention_days"] == new_days
 
         # 验证数据库实际已更新
         async def _verify(session):
             result = await session.execute(select(User).where(User.id == 1))
             user = result.scalar_one()
-            return user.crawl_cron
+            return user.data_retention_days
 
-        saved_cron = await run_in_session(_verify)
-        assert saved_cron == new_cron
-        print(f"[Config-02] PASS: cron update persisted: {new_cron}")
+        saved_days = await run_in_session(_verify)
+        assert saved_days == new_days
+        print(f"[Config-02] PASS: retention update persisted: {new_days}")
 
 
 # =============================================================================

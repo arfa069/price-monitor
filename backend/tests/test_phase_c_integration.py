@@ -336,17 +336,16 @@ class TestScheduleConfigRealReadWrite:
 
         app.dependency_overrides[get_db] = _override
         try:
-            with patch("app.routers.config._get_scheduler", return_value=mock_scheduler):
-                transport = ASGITransport(app=app)
-                async with AsyncClient(transport=transport, base_url="http://test") as client:
-                    response = await client.patch("/config", json={
-                        "crawl_cron": "0 10 * * *",
-                        "crawl_timezone": "Asia/Shanghai",
-                    })
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.patch("/config", json={
+                    "crawl_cron": "0 10 * * *",
+                    "crawl_timezone": "Asia/Shanghai",
+                })
             assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
             data = response.json()
             assert data["crawl_cron"] == "0 10 * * *"
-            print("[C-05b] PASS: PATCH /config updates and syncs")
+            print("[C-05b] PASS: PATCH /config updates config")
         finally:
             app.dependency_overrides.clear()
 
@@ -372,62 +371,6 @@ class TestSchedulerTriggerAndHotUpdate:
             data = response.json()
             assert "scheduler" in data
             print(f"[C-06/C-07] PASS: /scheduler/status endpoint exists, returns {response.status_code}")
-
-    @pytest.mark.asyncio
-    async def test_c06_c07_scheduler_job_rebuild_on_cron_update(self):
-        """C-06/C-07: 更新 cron 后 scheduler job 被替换"""
-        from app.database import get_db
-
-        mock_user = MagicMock()
-        mock_user.id = 1
-        mock_user.username = "default"
-        mock_user.feishu_webhook_url = ""
-        mock_user.crawl_frequency_hours = 1
-        mock_user.data_retention_days = 365
-        mock_user.crawl_cron = "0 9 * * *"  # 旧 cron
-        mock_user.crawl_timezone = "Asia/Shanghai"
-        mock_user.job_crawl_cron = None
-        mock_user.created_at = None
-        mock_user.updated_at = None
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_user
-
-        mock_session = AsyncMock()
-        mock_session.execute = AsyncMock(return_value=mock_result)
-        mock_session.commit = AsyncMock()
-        mock_session.refresh = AsyncMock()
-
-        # Mock existing job
-        mock_existing_job = MagicMock()
-        mock_existing_job.next_run_time = None
-
-        mock_scheduler = MagicMock()
-        mock_scheduler.get_job.return_value = mock_existing_job
-        mock_scheduler.remove_job = MagicMock()
-        mock_scheduler.add_job = MagicMock()
-
-        async def _override():
-            yield mock_session
-
-        app.dependency_overrides[get_db] = _override
-        try:
-            with patch("app.routers.config._get_scheduler", return_value=mock_scheduler):
-                transport = ASGITransport(app=app)
-                async with AsyncClient(transport=transport, base_url="http://test") as client:
-                    response = await client.patch("/config", json={
-                        "crawl_cron": "0 12 * * *",  # 新 cron
-                    })
-            assert response.status_code == 200
-            # Verify job was removed and re-added
-            mock_scheduler.remove_job.assert_called_once_with("crawl_cron_job")
-            mock_scheduler.add_job.assert_called_once()
-            call_kwargs = mock_scheduler.add_job.call_args.kwargs
-            assert call_kwargs["id"] == "crawl_cron_job"
-            assert call_kwargs["max_instances"] == 1
-            print("[C-06/C-07] PASS: scheduler job rebuilt on cron update")
-        finally:
-            app.dependency_overrides.clear()
 
 
 # =============================================================================
@@ -827,12 +770,11 @@ class TestConfigMissingDefaults:
 
         app.dependency_overrides[get_db] = _override
         try:
-            with patch("app.routers.config._get_scheduler", return_value=MagicMock()):
-                transport = ASGITransport(app=app)
-                async with AsyncClient(transport=transport, base_url="http://test") as client:
-                    response = await client.patch("/config", json={
-                        "crawl_cron": "0 9 * * *"
-                    })
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.patch("/config", json={
+                    "crawl_cron": "0 9 * * *"
+                })
             assert response.status_code == 200
             data = response.json()
             assert data["crawl_cron"] == "0 9 * * *"

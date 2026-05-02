@@ -318,7 +318,8 @@ export default function ScheduleConfigPage() {
       title: '配置名称',
       dataIndex: 'name',
       key: 'name',
-      width: 200,
+      width: 120,
+      ellipsis: true,
     },
     {
       title: 'Cron 表达式',

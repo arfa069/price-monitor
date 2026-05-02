@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import (
-    JobCrawlCronUpdate,
     UserConfigCreate,
     UserConfigDefaults,
     UserConfigResponse,
@@ -51,8 +50,6 @@ def _rebuild_scheduler_job(cron_expr: str, timezone_str: str) -> None:
     Removes existing job (if any) and adds a new one with the updated schedule.
     Gracefully handles the case where APScheduler is not yet initialized.
     """
-    from app.services.scheduler_job import trigger_job_crawl
-
     scheduler = _get_scheduler()
     if scheduler is None:
         logger.info("Scheduler not initialized, skipping job rebuild")
@@ -70,7 +67,7 @@ def _rebuild_scheduler_job(cron_expr: str, timezone_str: str) -> None:
         from apscheduler.triggers.cron import CronTrigger
         tz = zoneinfo.ZoneInfo(timezone_str)
         scheduler.add_job(
-            trigger_job_crawl,
+            _trigger_crawl_all,
             trigger=CronTrigger.from_crontab(cron_expr, timezone=tz),
             id=job_id,
             name="Crawl all active products",
@@ -83,38 +80,6 @@ def _rebuild_scheduler_job(cron_expr: str, timezone_str: str) -> None:
         )
     except Exception:
         logger.exception("Failed to rebuild scheduler job")
-        raise
-
-
-def _rebuild_job_crawl_scheduler_job(cron_expr: str, timezone_str: str) -> None:
-    """Hot-reload the job_crawl_cron APScheduler job. Used by PATCH /config and PUT /job-crawl-cron."""
-    from app.services.scheduler_job import trigger_job_crawl
-
-    scheduler = _get_scheduler()
-    if scheduler is None:
-        logger.info("Scheduler not initialized, skipping job_crawl job rebuild")
-        return
-    job_id = "job_crawl_cron_job"
-    try:
-        existing = scheduler.get_job(job_id)
-        if existing:
-            scheduler.remove_job(job_id)
-            logger.info("Removed existing job_crawl_cron job")
-        if cron_expr:
-            import zoneinfo
-            from apscheduler.triggers.cron import CronTrigger
-            tz = zoneinfo.ZoneInfo(timezone_str)
-            scheduler.add_job(
-                trigger_job_crawl,
-                trigger=CronTrigger.from_crontab(cron_expr, timezone=tz),
-                id=job_id,
-                name="Crawl all active job searches",
-                replace_existing=True,
-                max_instances=1,
-            )
-            logger.info("Registered job_crawl_cron_job with schedule '%s' (tz=%s)", cron_expr, timezone_str)
-    except Exception:
-        logger.exception("Failed to rebuild job_crawl_cron job")
         raise
 
 
@@ -219,57 +184,9 @@ async def get_config(db: AsyncSession = Depends(get_db)):
             data_retention_days=_DEFAULT_CONFIG.data_retention_days,
             crawl_cron=_DEFAULT_CONFIG.crawl_cron,
             crawl_timezone=_DEFAULT_CONFIG.crawl_timezone,
-            job_crawl_cron=_DEFAULT_CONFIG.job_crawl_cron,
         )
 
     return user
-
-
-@router.get("/job-crawl-cron")
-async def get_job_crawl_cron(db: AsyncSession = Depends(get_db)):
-    """Get current job crawl cron expression."""
-    result = await db.execute(select(User).where(User.id == 1))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {
-        "job_crawl_cron": user.job_crawl_cron,
-        "default": "0 9 * * *",
-        "timezone": user.crawl_timezone or "Asia/Shanghai",
-    }
-
-
-@router.put("/job-crawl-cron", response_model=JobCrawlCronUpdate)
-async def update_job_crawl_cron(
-    data: JobCrawlCronUpdate,
-    db: AsyncSession = Depends(get_db),
-):
-    """Update job crawl cron expression and reschedule the APScheduler job."""
-    result = await db.execute(select(User).where(User.id == 1))
-    user = result.scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    cron_expr = data.job_crawl_cron or ""
-    if cron_expr.strip():
-        from apscheduler.triggers.cron import CronTrigger
-        try:
-            import zoneinfo
-            tz = zoneinfo.ZoneInfo(user.crawl_timezone or "Asia/Shanghai")
-            CronTrigger.from_crontab(cron_expr, timezone=tz)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid cron expression")
-
-    user.job_crawl_cron = cron_expr.strip() or None
-    await db.commit()
-
-    # Reschedule
-    _rebuild_job_crawl_scheduler_job(
-        user.job_crawl_cron or "0 9 * * *",
-        user.crawl_timezone or "Asia/Shanghai",
-    )
-
-    return JobCrawlCronUpdate(job_crawl_cron=user.job_crawl_cron)
 
 
 @router.patch("", response_model=UserConfigResponse)

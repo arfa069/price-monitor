@@ -40,6 +40,14 @@ class JobSearchConfig(Base, TimestampMixin):
         Integer, nullable=False, default=3,
         comment="Consecutive crawl misses before marking a job inactive",
     )
+    cron_expression = Column(
+        String(100), nullable=True,
+        comment="5-segment crontab expression for per-config scheduling. Null means no scheduled crawl.",
+    )
+    cron_timezone = Column(
+        String(50), nullable=True, default="Asia/Shanghai",
+        comment="Timezone for this config's cron expression",
+    )
 
     # Relationships
     jobs = relationship(

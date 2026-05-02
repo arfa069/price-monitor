@@ -44,7 +44,7 @@ docker-compose up -d
 ### 前端路由
 - `/jobs` — 职位管理（搜索配置 + 职位列表 + 全量/单配置爬取）
 - `/products` — 商品管理（商品列表 + 商品爬取 + 爬取记录）
-- `/schedule` — 定时配置（三卡片：频率模式选择、商品/职位 cron 编辑、数据保留设置）
+- `/schedule` — 定时配置（Cron 定时配置：商品 per-platform 表格 + 职位 per-config 表格；数据保留 + 飞书 Webhook 设置）
 
 ### 平台适配器模式
 ```

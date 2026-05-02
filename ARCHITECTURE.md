@@ -50,23 +50,27 @@ Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or exte
 
 ### Cron Scheduling
 
-APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two independent cron jobs, each triggered separately:
+APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two scheduler managers handle per-entity cron jobs:
 
-**Product crawl (interval or cron mode)**:
-- **Interval mode**: `crawl_frequency_hours` drives periodic crawling (APScheduler IntervalTrigger)
-- **Cron mode**: `crawl_cron` (5-segment cron expression) + `crawl_timezone` drives scheduled crawling (CronTrigger.from_crontab)
-- Two modes are mutually exclusive. Switching modes hot-reloads the scheduler job.
+**Product crawl (per-platform)** — `ProductCronScheduler`:
+- Each platform (taobao/jd/amazon) gets its own cron expression stored in `product_platform_crons` table
+- APScheduler job ID format: `product_cron_{platform}`
+- When triggered, calls `crawl_products_by_platform(platform)` — only crawls products of that platform
+- API: `GET/POST /products/cron-configs`, `PATCH/DELETE /products/cron-configs/{platform}`
+- Frontend: `/schedule` page shows a table with 3 platform rows, add/delete via modal
 
-**Job crawl (cron only)**:
-- Always uses cron mode via `job_crawl_cron` (default `"0 9 * * *"` = daily at 9:00)
-- Managed by a separate APScheduler job (`job_crawl_cron_job`)
-- Configured via `PUT /config/job-crawl-cron`
+**Job crawl (per-config)** — `JobConfigScheduler`:
+- Each `JobSearchConfig` gets its own cron expression stored in `cron_expression` / `cron_timezone` fields on `job_search_configs`
+- APScheduler job ID format: `job_config_cron_{config_id}`
+- When triggered, calls `crawl_single_config(config_id)` — only crawls that specific config
+- API: `PATCH /jobs/configs/{id}/cron`, `GET /jobs/scheduler/job-configs`
+- Frontend: `/schedule` page shows a table of all configs with cron inputs
+
+**Registration**: Both managers are initialized in `main.py:_start_scheduler()`. On startup, `sync_all()` reads the DB and registers jobs for all entities with non-null `cron_expression`.
 
 **Concurrency protection**: A global `asyncio.Semaphore(1)` (shared between cron jobs and manual crawls) prevents overlapping executions.
 
-**Cron failure handling**: On failure, writes a `CrawlLog` entry with status `CRON_ERROR` and sends a Feishu notification if configured. On skip (no active products), writes `SKIPPED`. On success, writes `CRON_SUCCESS`.
-
-**Status endpoint**: `GET /scheduler/status` returns both jobs' registration state, cron expression, and next run time in a `jobs` object (`product_crawl` / `job_crawl`).
+**Status endpoint**: `GET /scheduler/status` returns all registered jobs in `product_platforms` and `job_configs` objects.
 
 ### Browser Modes
 
@@ -94,11 +98,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
 | feishu_webhook_url | TEXT | Feishu webhook URL |
-| crawl_frequency_hours | SMALLINT | Crawl interval in hours (default: 1) |
 | data_retention_days | SMALLINT | History retention (default: 365) |
-| crawl_cron | VARCHAR | Cron expression for scheduled crawling (nullable) |
-| crawl_timezone | VARCHAR | Timezone for cron (default: Asia/Shanghai) |
-| job_crawl_cron | VARCHAR | Job crawl cron expression (nullable, default: "0 9 * * *") |
 | created_at | TIMESTAMPTZ | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Last update timestamp |
 
@@ -142,6 +142,17 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | timestamp | TIMESTAMPTZ | Crawl timestamp |
 | error_message | TEXT | Error details or summary if failed/skipped |
 
+### product_platform_crons
+| Column | Type | Description |
+|--------|------|-------------|
+| id | BIGSERIAL | Primary key |
+| user_id | BIGINT | FK to users |
+| platform | VARCHAR(20) | 'taobao', 'jd', 'amazon' (unique) |
+| cron_expression | VARCHAR | 5-segment crontab (nullable) |
+| cron_timezone | VARCHAR | Timezone (default: Asia/Shanghai) |
+| created_at | TIMESTAMPTZ | Creation timestamp |
+| updated_at | TIMESTAMPTZ | Last update timestamp |
+
 ### job_search_configs
 | Column | Type | Description |
 |--------|------|-------------|
@@ -152,6 +163,8 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | active | BOOLEAN | Whether monitoring is active |
 | notify_on_new | BOOLEAN | Send notification for new jobs |
 | deactivation_threshold | SMALLINT | Consecutive misses before deactivation (default: 3) |
+| cron_expression | VARCHAR | Per-config 5-segment crontab (nullable) |
+| cron_timezone | VARCHAR | Timezone (default: Asia/Shanghai) |
 | created_at | TIMESTAMPTZ | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Last update timestamp |
 
@@ -186,7 +199,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | GET | /health | Health check (database + Redis + scheduler) |
 | GET | /config | Get current configuration |
 | POST | /config | Create or update full configuration |
-| PATCH | /config | Partial update (cron hot-reload) |
+| PATCH | /config | Partial update (feishu url, retention days) |
 | POST | /products | Add a product to track |
 | GET | /products | List products (paginated) |
 | GET | /products/{id} | Get product details |
@@ -194,6 +207,11 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | POST | /products/batch-create | Batch import products |
 | POST | /products/batch-delete | Batch delete products |
 | POST | /products/batch-update | Batch enable/disable products |
+| GET | /products/cron-configs | List per-platform cron configs |
+| POST | /products/cron-configs | Create per-platform cron config |
+| PATCH | /products/cron-configs/{platform} | Update platform cron |
+| DELETE | /products/cron-configs/{platform} | Delete platform cron |
+| GET | /products/cron-schedules | Next run times for product cron |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
 | POST | /crawl/crawl-now | Crawl all active products |
@@ -204,13 +222,13 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | POST | /jobs/configs | Create job search config |
 | GET | /jobs/configs/{id} | Get job search config |
 | PATCH | /jobs/configs/{id} | Update job search config |
+| PATCH | /jobs/configs/{id}/cron | Update per-config cron |
 | DELETE | /jobs/configs/{id} | Delete job search config |
+| GET | /jobs/scheduler/job-configs | Next run times for job cron |
 | GET | /jobs | List crawled jobs (paginated) |
 | GET | /jobs/{id} | Get job details |
 | POST | /jobs/crawl-now | Crawl all active job configs |
 | POST | /jobs/crawl-now/{id} | Crawl single job config |
-| GET | /config/job-crawl-cron | Get job crawl cron expression |
-| PUT | /config/job-crawl-cron | Update job crawl cron |
 
 ## Notification System
 
@@ -283,6 +301,5 @@ All settings via environment variables in `.env` (loaded via Pydantic Settings):
 | CDP_URL | CDP endpoint for existing browser | `http://127.0.0.1:9222` |
 | CRAWL_PROXY_ENABLED | Enable proxy for crawling | `false` |
 | CRAWL_PROXY_URL | Proxy URL | |
-| CRAWL_FREQUENCY_HOURS | Hours between crawls (interval mode) | `1` |
 | DATA_RETENTION_DAYS | Days to retain price history | `365` |
 | JD_COOKIE | JD cookie string for login session | |

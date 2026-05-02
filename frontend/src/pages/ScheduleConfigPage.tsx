@@ -253,48 +253,39 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  const cronExpressionColumn: ColumnsType<any>[number] = {
-    title: 'Cron 表达式',
-    key: 'cron',
-    render: (_: any, record: any) => {
-      const platform = record.platform as string | undefined
-      const id = record.id as number | undefined
-      const inputValue = platform ? platformCronInputs[platform] ?? '' : cronInputs[id ?? 0] ?? ''
-      const onChange = platform
-        ? (e: React.ChangeEvent<HTMLInputElement>) =>
-            setPlatformCronInputs((prev) => ({ ...prev, [platform]: e.target.value }))
-        : (e: React.ChangeEvent<HTMLInputElement>) =>
-            setCronInputs((prev) => ({ ...prev, [id ?? 0]: e.target.value }))
-      const onSave = platform
-        ? () => handleSavePlatformCron(platform)
-        : () => handleSaveConfigCron(id ?? 0)
-      const saving = platform ? platformSaving[platform] : savingCron[id ?? 0]
-      return (
-        <Space.Compact style={{ width: '100%' }}>
-          <Input
-            value={inputValue}
-            onChange={onChange}
-            placeholder="0 9 * * *（空=不定时）"
-            style={{ flex: 1, minWidth: 0 }}
-          />
-          <Button type="primary" onClick={onSave} loading={saving}>
-            保存
-          </Button>
-        </Space.Compact>
-      )
-    },
-  }
-
   // Product platform cron columns
   const platformColumns: ColumnsType<ProductPlatformCron> = [
     {
       title: '平台',
       dataIndex: 'platform',
       key: 'platform',
-      width: 100,
+      width: 120,
       render: (p: string) => PLATFORM_LABELS[p] || p,
     },
-    cronExpressionColumn,
+    {
+      title: 'Cron 表达式',
+      key: 'cron',
+      width: 340,
+      render: (_, record) => (
+        <Space.Compact style={{ width: '100%' }}>
+          <Input
+            value={platformCronInputs[record.platform] ?? ''}
+            onChange={(e) =>
+              setPlatformCronInputs((prev) => ({ ...prev, [record.platform]: e.target.value }))
+            }
+            placeholder="0 9 * * *（空=不定时）"
+            style={{ width: 220 }}
+          />
+          <Button
+            type="primary"
+            onClick={() => handleSavePlatformCron(record.platform)}
+            loading={platformSaving[record.platform]}
+          >
+            保存
+          </Button>
+        </Space.Compact>
+      ),
+    },
     {
       title: '下次执行',
       key: 'next_run',
@@ -327,9 +318,32 @@ export default function ScheduleConfigPage() {
       title: '配置名称',
       dataIndex: 'name',
       key: 'name',
-      width: 150,
+      width: 200,
     },
-    cronExpressionColumn,
+    {
+      title: 'Cron 表达式',
+      key: 'cron',
+      width: 340,
+      render: (_, record) => (
+        <Space.Compact style={{ width: '100%' }}>
+          <Input
+            value={cronInputs[record.id] ?? ''}
+            onChange={(e) =>
+              setCronInputs((prev) => ({ ...prev, [record.id]: e.target.value }))
+            }
+            placeholder="0 9 * * *（空=不定时）"
+            style={{ width: 220 }}
+          />
+          <Button
+            type="primary"
+            onClick={() => handleSaveConfigCron(record.id)}
+            loading={savingCron[record.id]}
+          >
+            保存
+          </Button>
+        </Space.Compact>
+      ),
+    },
     {
       title: '下次执行',
       key: 'next_run',

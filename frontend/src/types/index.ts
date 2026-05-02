@@ -82,8 +82,18 @@ export interface SchedulerStatusResponse {
   timezone: string
   jobs: {
     product_crawl: SchedulerJobStatus
-    job_crawl: SchedulerJobStatus
+    job_configs: Record<string, JobConfigScheduleInfo>
   }
+}
+
+export interface JobConfigCronUpdate {
+  cron_expression: string | null
+  cron_timezone?: string | null
+}
+
+export interface JobConfigScheduleInfo {
+  cron_expression: string | null
+  next_run_at: string | null
 }
 
 export interface PriceHistoryRecord {
@@ -140,6 +150,8 @@ export interface JobSearchConfig {
   url: string
   active: boolean
   notify_on_new: boolean
+  cron_expression: string | null
+  cron_timezone: string | null
   created_at: string
   updated_at: string
 }
@@ -155,6 +167,8 @@ export interface JobSearchConfigCreate {
   url: string
   active?: boolean
   notify_on_new?: boolean
+  cron_expression?: string | null
+  cron_timezone?: string | null
 }
 
 export interface JobSearchConfigUpdate {
@@ -168,6 +182,8 @@ export interface JobSearchConfigUpdate {
   url?: string
   active?: boolean
   notify_on_new?: boolean
+  cron_expression?: string | null
+  cron_timezone?: string | null
 }
 
 export interface Job {

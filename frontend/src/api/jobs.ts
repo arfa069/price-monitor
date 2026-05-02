@@ -1,7 +1,8 @@
 import api from './client'
 import type {
   Job,
-  JobCrawlResult,
+  JobConfigCronUpdate,
+  JobConfigScheduleInfo,
   JobListResponse,
   JobSearchConfig,
   JobSearchConfigCreate,
@@ -40,6 +41,14 @@ export const jobsApi = {
     api.patch<JobSearchConfig>(`/jobs/configs/${id}`, data),
 
   deleteConfig: (id: number) => api.delete(`/jobs/configs/${id}`),
+
+  updateConfigCron: (id: number, data: JobConfigCronUpdate) =>
+    api.patch<JobSearchConfig>(`/jobs/configs/${id}/cron`, data),
+
+  getJobConfigSchedules: () =>
+    api.get<{ configs: (JobConfigScheduleInfo & { config_id: number })[] }>(
+      '/jobs/scheduler/job-configs',
+    ),
 
   getJobs: (params?: {
     search_config_id?: number

@@ -136,6 +136,65 @@ async def list_products(
     )
 
 
+# ── Per-Platform Cron Management (must be before /{product_id} routes) ──
+
+@router.get("/cron-configs", response_model=list[ProductPlatformCronResponse])
+async def list_product_cron_configs(db: AsyncSession = Depends(get_db)):
+    """List all per-platform cron configs for product crawling."""
+    result = await db.execute(
+        select(ProductPlatformCron).where(ProductPlatformCron.user_id == 1)
+    )
+    return result.scalars().all()
+
+
+@router.patch("/cron-configs/{platform}", response_model=ProductPlatformCronResponse)
+async def update_product_cron_config(
+    platform: str,
+    data: ProductPlatformCronUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update cron expression for a product platform."""
+    if platform not in ("taobao", "jd", "amazon"):
+        raise HTTPException(status_code=400, detail="Invalid platform")
+
+    result = await db.execute(
+        select(ProductPlatformCron).where(
+            ProductPlatformCron.platform == platform,
+            ProductPlatformCron.user_id == 1,
+        )
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Platform cron config not found")
+
+    config.cron_expression = data.cron_expression
+    config.cron_timezone = data.cron_timezone or "Asia/Shanghai"
+    await db.commit()
+    await db.refresh(config)
+
+    # Sync scheduler
+    from app.services.scheduler_job import ProductCronScheduler
+    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+    if scheduler:
+        if config.cron_expression:
+            scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
+        else:
+            scheduler.remove_job(config.platform)
+
+    return config
+
+
+@router.get("/cron-schedules")
+async def get_product_cron_schedules(request: Request):
+    """Get next run times for all per-platform product crawl schedules."""
+    from app.services.scheduler_job import ProductCronScheduler
+    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+    if not scheduler:
+        return {"platforms": {}}
+    return {"platforms": scheduler.get_next_run_times()}
+
+
 @router.get("/{product_id}", response_model=ProductResponse)
 async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
     """Get product details."""
@@ -372,62 +431,3 @@ async def get_product_history(
         .limit(limit)
     )
     return result.scalars().all()
-
-
-# ── Per-Platform Cron Management ──────────────────────────
-
-@router.get("/cron-configs", response_model=list[ProductPlatformCronResponse])
-async def list_product_cron_configs(db: AsyncSession = Depends(get_db)):
-    """List all per-platform cron configs for product crawling."""
-    result = await db.execute(
-        select(ProductPlatformCron).where(ProductPlatformCron.user_id == 1)
-    )
-    return result.scalars().all()
-
-
-@router.patch("/cron-configs/{platform}", response_model=ProductPlatformCronResponse)
-async def update_product_cron_config(
-    platform: str,
-    data: ProductPlatformCronUpdate,
-    request: Request,
-    db: AsyncSession = Depends(get_db),
-):
-    """Update cron expression for a product platform."""
-    if platform not in ("taobao", "jd", "amazon"):
-        raise HTTPException(status_code=400, detail="Invalid platform")
-
-    result = await db.execute(
-        select(ProductPlatformCron).where(
-            ProductPlatformCron.platform == platform,
-            ProductPlatformCron.user_id == 1,
-        )
-    )
-    config = result.scalar_one_or_none()
-    if not config:
-        raise HTTPException(status_code=404, detail="Platform cron config not found")
-
-    config.cron_expression = data.cron_expression
-    config.cron_timezone = data.cron_timezone or "Asia/Shanghai"
-    await db.commit()
-    await db.refresh(config)
-
-    # Sync scheduler
-    from app.services.scheduler_job import ProductCronScheduler
-    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
-    if scheduler:
-        if config.cron_expression:
-            scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
-        else:
-            scheduler.remove_job(config.platform)
-
-    return config
-
-
-@router.get("/cron-schedules")
-async def get_product_cron_schedules(request: Request):
-    """Get next run times for all per-platform product crawl schedules."""
-    from app.services.scheduler_job import ProductCronScheduler
-    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
-    if not scheduler:
-        return {"platforms": {}}
-    return {"platforms": scheduler.get_next_run_times()}

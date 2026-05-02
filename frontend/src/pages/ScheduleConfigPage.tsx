@@ -6,6 +6,8 @@ import {
   Divider,
   Input,
   InputNumber,
+  Modal,
+  Select,
   Skeleton,
   Space,
   Table,
@@ -22,6 +24,7 @@ import type {
   JobConfigScheduleInfo,
   JobSearchConfig,
   ProductPlatformCron,
+  ProductPlatformCronCreate,
   ProductPlatformCronSchedule,
   SchedulerJobStatus,
 } from '@/types'
@@ -55,6 +58,57 @@ export default function ScheduleConfigPage() {
   const [platformLoading, setPlatformLoading] = useState(false)
   const [platformCronInputs, setPlatformCronInputs] = useState<Record<string, string>>({})
   const [platformSaving, setPlatformSaving] = useState<Record<string, boolean>>({})
+
+  // Add platform cron modal
+  const [addModalOpen, setAddModalOpen] = useState(false)
+  const [addPlatform, setAddPlatform] = useState<string | undefined>(undefined)
+  const [addCron, setAddCron] = useState('')
+  const [addSaving, setAddSaving] = useState(false)
+
+  const handleAddPlatformCron = async () => {
+    if (!addPlatform) {
+      message.error('请选择平台')
+      return
+    }
+    const value = addCron.trim() || null
+    if (value && !isValidCronFormat(value)) {
+      message.error('Cron 表达式不合法')
+      return
+    }
+    setAddSaving(true)
+    try {
+      await productsApi.createCronConfig({
+        platform: addPlatform,
+        cron_expression: value,
+        cron_timezone: 'Asia/Shanghai',
+      })
+      message.success('已添加')
+      setAddModalOpen(false)
+      setAddPlatform(undefined)
+      setAddCron('')
+      loadPlatformData()
+    } catch {
+      message.error('添加失败')
+    } finally {
+      setAddSaving(false)
+    }
+  }
+
+  const handleDeletePlatformCron = async (platform: string) => {
+    Modal.confirm({
+      title: '删除定时配置',
+      content: `确定删除 ${PLATFORM_LABELS[platform] || platform} 的定时配置？`,
+      onOk: async () => {
+        try {
+          await productsApi.deleteCronConfig(platform)
+          message.success('已删除')
+          loadPlatformData()
+        } catch {
+          message.error('删除失败')
+        }
+      },
+    })
+  }
 
   // Job per-config cron management
   const [configList, setConfigList] = useState<JobSearchConfig[]>([])
@@ -242,6 +296,20 @@ export default function ScheduleConfigPage() {
         return new Date(schedule.next_run_at).toLocaleString('zh-CN')
       },
     },
+    {
+      title: '操作',
+      key: 'action',
+      width: 80,
+      render: (_, record) => (
+        <Button
+          danger
+          size="small"
+          onClick={() => handleDeletePlatformCron(record.platform)}
+        >
+          删除
+        </Button>
+      ),
+    },
   ]
 
   // Job config cron columns
@@ -316,7 +384,12 @@ export default function ScheduleConfigPage() {
       )}
 
       <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
-        <h4 style={{ marginBottom: 12, color: '#1f2937' }}>商品爬取定时配置</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+          <h4 style={{ margin: 0, color: '#1f2937' }}>商品爬取定时配置</h4>
+          <Button type="primary" size="small" onClick={() => setAddModalOpen(true)}>
+            + 添加定时器
+          </Button>
+        </div>
         <Table
           dataSource={platformConfigs}
           columns={platformColumns}
@@ -324,7 +397,7 @@ export default function ScheduleConfigPage() {
           loading={platformLoading}
           pagination={false}
           size="small"
-          locale={{ emptyText: '加载中...' }}
+          locale={{ emptyText: '暂无商品定时配置' }}
         />
 
         <Divider style={{ margin: '16px 0' }} />
@@ -361,6 +434,44 @@ export default function ScheduleConfigPage() {
           </Button>
         </Space.Compact>
       </Card>
+
+      <Modal
+        title="添加商品爬取定时器"
+        open={addModalOpen}
+        onOk={handleAddPlatformCron}
+        onCancel={() => {
+          setAddModalOpen(false)
+          setAddPlatform(undefined)
+          setAddCron('')
+        }}
+        confirmLoading={addSaving}
+        okText="添加"
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
+          <div>
+            <div style={{ marginBottom: 4, color: '#666' }}>平台</div>
+            <Select
+              value={addPlatform}
+              onChange={setAddPlatform}
+              placeholder="选择平台"
+              style={{ width: '100%' }}
+              options={[
+                { value: 'taobao', label: '淘宝' },
+                { value: 'jd', label: '京东' },
+                { value: 'amazon', label: '亚马逊' },
+              ]}
+            />
+          </div>
+          <div>
+            <div style={{ marginBottom: 4, color: '#666' }}>Cron 表达式</div>
+            <Input
+              value={addCron}
+              onChange={(e) => setAddCron(e.target.value)}
+              placeholder="0 9 * * *（空=不定时）"
+            />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

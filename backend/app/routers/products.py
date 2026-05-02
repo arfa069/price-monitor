@@ -15,6 +15,7 @@ from app.schemas.product import (
     ProductBatchCreate,
     ProductBatchCreateItem,
     ProductBatchDelete,
+    ProductPlatformCronCreate,
     ProductBatchUpdate,
     ProductCreate,
     ProductListResponse,
@@ -145,6 +146,77 @@ async def list_product_cron_configs(db: AsyncSession = Depends(get_db)):
         select(ProductPlatformCron).where(ProductPlatformCron.user_id == 1)
     )
     return result.scalars().all()
+
+
+@router.post("/cron-configs", response_model=ProductPlatformCronResponse, status_code=201)
+async def create_product_cron_config(
+    data: ProductPlatformCronCreate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a new per-platform cron config for product crawling."""
+    if data.platform not in ("taobao", "jd", "amazon"):
+        raise HTTPException(status_code=400, detail="Invalid platform")
+
+    # Check if already exists
+    existing = await db.execute(
+        select(ProductPlatformCron).where(
+            ProductPlatformCron.platform == data.platform,
+            ProductPlatformCron.user_id == 1,
+        )
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(status_code=409, detail="Platform cron config already exists")
+
+    config = ProductPlatformCron(
+        user_id=1,
+        platform=data.platform,
+        cron_expression=data.cron_expression,
+        cron_timezone=data.cron_timezone or "Asia/Shanghai",
+    )
+    db.add(config)
+    await db.commit()
+    await db.refresh(config)
+
+    # Sync scheduler
+    if config.cron_expression:
+        from app.services.scheduler_job import ProductCronScheduler
+        scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+        if scheduler:
+            scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
+
+    return config
+
+
+@router.delete("/cron-configs/{platform}")
+async def delete_product_cron_config(
+    platform: str,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a per-platform cron config for product crawling."""
+    if platform not in ("taobao", "jd", "amazon"):
+        raise HTTPException(status_code=400, detail="Invalid platform")
+
+    result = await db.execute(
+        select(ProductPlatformCron).where(
+            ProductPlatformCron.platform == platform,
+            ProductPlatformCron.user_id == 1,
+        )
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Platform cron config not found")
+
+    # Remove scheduler job
+    from app.services.scheduler_job import ProductCronScheduler
+    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+    if scheduler:
+        scheduler.remove_job(platform)
+
+    await db.delete(config)
+    await db.commit()
+    return {"message": "Platform cron config deleted"}
 
 
 @router.patch("/cron-configs/{platform}", response_model=ProductPlatformCronResponse)

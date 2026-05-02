@@ -155,29 +155,12 @@ class ProductCronScheduler:
             logger.info("Removed cron job %s", job_id)
 
     async def sync_all(self) -> None:
-        """Ensure 3 platform rows exist and register cron jobs."""
+        """Register cron jobs for all existing product platform cron configs."""
         from sqlalchemy import select
         from app.database import AsyncSessionLocal
         from app.models.product import ProductPlatformCron
 
         async with AsyncSessionLocal() as db:
-            # Ensure rows exist for all 3 platforms
-            for plat in ("taobao", "jd", "amazon"):
-                result = await db.execute(
-                    select(ProductPlatformCron).where(
-                        ProductPlatformCron.platform == plat,
-                        ProductPlatformCron.user_id == 1,
-                    )
-                )
-                config = result.scalar_one_or_none()
-                if not config:
-                    db.add(ProductPlatformCron(
-                        user_id=1, platform=plat,
-                        cron_expression=None, cron_timezone="Asia/Shanghai",
-                    ))
-            await db.commit()
-
-            # Read all and register
             result = await db.execute(
                 select(ProductPlatformCron).where(
                     ProductPlatformCron.cron_expression.isnot(None),

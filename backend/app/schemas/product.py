@@ -117,6 +117,18 @@ class ProductPlatformCronResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ProductPlatformCronCreate(BaseModel):
+    """Create per-platform cron config."""
+    platform: str = Field(..., pattern="^(taobao|jd|amazon)$", description="平台")
+    cron_expression: str | None = Field(
+        default=None, max_length=100,
+        description="5段 crontab 表达式，null 表示不定时",
+    )
+    cron_timezone: str | None = Field(
+        default=None, max_length=50, description="时区",
+    )
+
+
 class ProductPlatformCronUpdate(BaseModel):
     """Update per-platform cron expression."""
     cron_expression: str | None = Field(

@@ -107,6 +107,12 @@ export interface ProductPlatformCron {
   updated_at: string
 }
 
+export interface ProductPlatformCronCreate {
+  platform: string
+  cron_expression?: string | null
+  cron_timezone?: string | null
+}
+
 export interface ProductPlatformCronUpdate {
   cron_expression: string | null
   cron_timezone?: string | null

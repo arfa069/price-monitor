@@ -8,6 +8,7 @@ import type {
   BatchOperationResult,
   PriceHistoryRecord,
   ProductPlatformCron,
+  ProductPlatformCronCreate,
   ProductPlatformCronUpdate,
   ProductPlatformCronSchedule,
 } from '@/types'
@@ -48,8 +49,14 @@ export const productsApi = {
   getCronConfigs: () =>
     api.get<ProductPlatformCron[]>('/products/cron-configs'),
 
+  createCronConfig: (data: ProductPlatformCronCreate) =>
+    api.post<ProductPlatformCron>('/products/cron-configs', data),
+
   updateCronConfig: (platform: string, data: ProductPlatformCronUpdate) =>
     api.patch<ProductPlatformCron>(`/products/cron-configs/${platform}`, data),
+
+  deleteCronConfig: (platform: string) =>
+    api.delete(`/products/cron-configs/${platform}`),
 
   getCronSchedules: () =>
     api.get<{ platforms: Record<string, ProductPlatformCronSchedule> }>(

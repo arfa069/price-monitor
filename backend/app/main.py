@@ -84,29 +84,11 @@ async def _start_scheduler(app: FastAPI) -> None:
         else:
             logger.info("No crawl_cron configured, skipping scheduler registration")
 
-    # 职位爬取定时任务（使用模块级函数避免循环依赖）
-    from app.services.scheduler_job import trigger_job_crawl
-
-    # 注册职位爬取定时任务
-    job_crawl_job_id = "job_crawl_cron_job"
-    try:
-        tz = zoneinfo.ZoneInfo(user.crawl_timezone or "Asia/Shanghai") if user else zoneinfo.ZoneInfo("Asia/Shanghai")
-        # 职位爬取使用独立的 job_crawl_cron，默认为每天早上 9 点
-        job_cron = user.job_crawl_cron or "0 9 * * *" if user else "0 9 * * *"
-        scheduler.add_job(
-            trigger_job_crawl,
-            trigger=CronTrigger.from_crontab(job_cron, timezone=tz),
-            id=job_crawl_job_id,
-            name="Crawl all active job searches",
-            replace_existing=True,
-            max_instances=1,
-        )
-        logger.info(
-            "Registered job_crawl_cron_job with schedule '%s' (tz=%s)",
-            job_cron, tz,
-        )
-    except Exception:
-        logger.exception("Failed to register job_crawl_cron job")
+    # 职位爬取使用 per-config 独立 cron 调度
+    from app.services.scheduler_job import JobConfigScheduler
+    job_config_scheduler = JobConfigScheduler(scheduler)
+    app.state.job_config_scheduler = job_config_scheduler
+    await job_config_scheduler.sync_all()
 
     scheduler.start()
     logger.info("APScheduler started")
@@ -175,12 +157,15 @@ async def get_scheduler_status():
             "next_run_at": job.next_run_time.isoformat() if (job and job.next_run_time) else None,
         }
 
+    from app.services.scheduler_job import JobConfigScheduler
+    job_config_scheduler: JobConfigScheduler = getattr(app.state, "job_config_scheduler", None)
+
     return JSONResponse(content={
         "scheduler": "running",
         "timezone": user.crawl_timezone if user else "Asia/Shanghai",
         "jobs": {
             "product_crawl": _job_info("crawl_cron_job", "crawl_cron"),
-            "job_crawl": _job_info("job_crawl_cron_job", "job_crawl_cron", "0 9 * * *"),
+            "job_configs": job_config_scheduler.get_next_run_times() if job_config_scheduler else {},
         },
     })
 

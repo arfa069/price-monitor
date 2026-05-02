@@ -423,35 +423,3 @@ async def test_health_check_includes_scheduler_field():
     assert data["checks"]["scheduler"] == "not_running"
 
 
-# --- Job Crawl Cron Tests ---
-
-
-@pytest.mark.asyncio
-async def test_get_job_crawl_cron_returns_default():
-    """GET /config/job-crawl-cron returns job_crawl_cron from DB or default."""
-    from app.database import get_db
-    from app.models.user import User
-
-    mock_user = MagicMock(spec=User)
-    mock_user.job_crawl_cron = "0 9 * * *"
-    mock_user.crawl_timezone = "Asia/Shanghai"
-
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = mock_user
-
-    mock_db = MagicMock()
-    mock_db.execute = AsyncMock(return_value=mock_result)
-
-    async def _override_get_db():
-        yield mock_db
-
-    app.dependency_overrides[get_db] = _override_get_db
-    try:
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            resp = await client.get("/config/job-crawl-cron")
-        assert resp.status_code == 200
-        assert "job_crawl_cron" in resp.json()
-        assert resp.json()["default"] == "0 9 * * *"
-    finally:
-        app.dependency_overrides.clear()

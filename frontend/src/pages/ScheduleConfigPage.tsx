@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Alert,
   Button,
@@ -11,13 +11,16 @@ import {
   Skeleton,
   Space,
   Spin,
+  Table,
   Tag,
   message,
 } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { SaveOutlined } from '@ant-design/icons'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
-import type { SchedulerJobStatus } from '@/types'
+import { jobsApi } from '@/api/jobs'
+import type { JobConfigScheduleInfo, JobSearchConfig, SchedulerJobStatus } from '@/types'
 
 type ScheduleMode = 'hours' | 'cron'
 
@@ -42,9 +45,14 @@ export default function ScheduleConfigPage() {
 
   // Cron card state
   const [productCron, setProductCron] = useState('')
-  const [jobCron, setJobCron] = useState('')
   const [productCronSaving, setProductCronSaving] = useState(false)
-  const [jobCronSaving, setJobCronSaving] = useState(false)
+
+  // Per-config cron management
+  const [configList, setConfigList] = useState<JobSearchConfig[]>([])
+  const [configSchedules, setConfigSchedules] = useState<Record<number, JobConfigScheduleInfo>>({})
+  const [configLoading, setConfigLoading] = useState(false)
+  const [cronInputs, setCronInputs] = useState<Record<number, string>>({})
+  const [savingCron, setSavingCron] = useState<Record<number, boolean>>({})
 
   // Scheduler status
   const [schedulerJobs, setSchedulerJobs] = useState<Record<string, SchedulerJobStatus>>({})
@@ -77,14 +85,62 @@ export default function ScheduleConfigPage() {
     })
     // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing external config into local state
     setProductCron(config.crawl_cron || '')
-    setJobCron(config.job_crawl_cron || '')
   }, [config, form])
 
-  // Fetch scheduler status on mount
+  const loadConfigData = useCallback(async () => {
+    setConfigLoading(true)
+    try {
+      const [configsRes, schedulesRes] = await Promise.all([
+        jobsApi.getConfigs(),
+        jobsApi.getJobConfigSchedules(),
+      ])
+      const configs = configsRes.data
+      setConfigList(configs)
+      const scheduleMap: Record<number, JobConfigScheduleInfo> = {}
+      for (const s of schedulesRes.data.configs) {
+        scheduleMap[s.config_id] = s
+      }
+      setConfigSchedules(scheduleMap)
+      // Init cron inputs from loaded configs
+      const inputs: Record<number, string> = {}
+      for (const c of configs) {
+        inputs[c.id] = c.cron_expression || ''
+      }
+      setCronInputs(inputs)
+    } catch {
+      message.error('加载职位配置列表失败')
+    } finally {
+      setConfigLoading(false)
+    }
+  }, [])
+
+  const handleSaveConfigCron = async (configId: number) => {
+    const value = cronInputs[configId]?.trim() || null
+    if (value && !isValidCronFormat(value)) {
+      message.error('Cron 表达式不合法')
+      return
+    }
+    setSavingCron((prev) => ({ ...prev, [configId]: true }))
+    try {
+      await jobsApi.updateConfigCron(configId, {
+        cron_expression: value,
+        cron_timezone: 'Asia/Shanghai',
+      })
+      message.success('已保存')
+      loadConfigData()
+    } catch {
+      message.error('保存失败')
+    } finally {
+      setSavingCron((prev) => ({ ...prev, [configId]: false }))
+    }
+  }
+
+  // Fetch scheduler status and configs on mount
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch on mount
     fetchSchedulerStatus()
-  }, [])
+    loadConfigData()
+  }, [fetchSchedulerStatus, loadConfigData])
 
   const scheduleMode =
     Form.useWatch('schedule_mode', form) ?? (config?.crawl_cron ? 'cron' : 'hours')
@@ -124,24 +180,48 @@ export default function ScheduleConfigPage() {
     }
   }
 
-  const handleSaveJobCron = async () => {
-    const value = jobCron.trim() || null
-    if (value && !isValidCronFormat(value)) {
-      message.error('Cron 表达式不合法')
-      return
-    }
-    setJobCronSaving(true)
-    try {
-      await configApi.updateJobCrawlCron(value)
-      message.success('职位爬取 Cron 已保存')
-      refetch()
-      fetchSchedulerStatus()
-    } catch {
-      message.error('保存失败')
-    } finally {
-      setJobCronSaving(false)
-    }
-  }
+  const configColumns: ColumnsType<JobSearchConfig> = [
+    {
+      title: '配置名称',
+      dataIndex: 'name',
+      key: 'name',
+      width: 200,
+    },
+    {
+      title: 'Cron 表达式',
+      key: 'cron',
+      width: 340,
+      render: (_, record) => (
+        <Space.Compact style={{ width: '100%' }}>
+          <Input
+            value={cronInputs[record.id] ?? ''}
+            onChange={(e) =>
+              setCronInputs((prev) => ({ ...prev, [record.id]: e.target.value }))
+            }
+            placeholder="0 9 * * *（空=不定时）"
+            style={{ width: 220 }}
+          />
+          <Button
+            type="primary"
+            onClick={() => handleSaveConfigCron(record.id)}
+            loading={savingCron[record.id]}
+          >
+            保存
+          </Button>
+        </Space.Compact>
+      ),
+    },
+    {
+      title: '下次执行',
+      key: 'next_run',
+      width: 200,
+      render: (_, record) => {
+        const schedule = configSchedules[record.id]
+        if (!schedule?.next_run_at) return <Tag>未调度</Tag>
+        return new Date(schedule.next_run_at).toLocaleString('zh-CN')
+      },
+    },
+  ]
 
   const formatNextRun = (job: SchedulerJobStatus | undefined): string => {
     if (schedulerError) return '调度器未启动'
@@ -270,41 +350,16 @@ export default function ScheduleConfigPage() {
             <Divider style={{ margin: '16px 0' }} />
 
             <div>
-              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位爬取</h4>
-              <Space wrap>
-                <Input
-                  value={jobCron}
-                  onChange={(e) => setJobCron(e.target.value)}
-                  placeholder="0 9 * * *"
-                  style={{ width: 200 }}
-                  autoComplete="off"
-                  name="job-cron"
-                />
-                <Button
-                  type="primary"
-                  onClick={handleSaveJobCron}
-                  disabled={jobCron.trim() !== '' && !isValidCronFormat(jobCron)}
-                  loading={jobCronSaving}
-                >
-                  保存
-                </Button>
-              </Space>
-              {jobCron.trim() !== '' && !isValidCronFormat(jobCron) && (
-                <Alert
-                  message="Cron 表达式不合法，请使用 5 段格式（分 时 日 月 周）"
-                  type="error"
-                  showIcon
-                  style={{ marginTop: 8 }}
-                />
-              )}
-              <div style={{ marginTop: 8, color: '#888', fontSize: 12 }}>
-                下次执行:{' '}
-                {schedulerLoading ? (
-                  <Spin size="small" />
-                ) : (
-                  formatNextRun(schedulerJobs.job_crawl)
-                )}
-              </div>
+              <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位爬取定时配置</h4>
+              <Table
+                dataSource={configList}
+                columns={configColumns}
+                rowKey="id"
+                loading={configLoading}
+                pagination={false}
+                size="small"
+                locale={{ emptyText: '暂无搜索配置' }}
+              />
             </div>
           </>
         )}

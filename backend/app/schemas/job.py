@@ -17,6 +17,12 @@ class JobSearchConfigCreate(BaseModel):
     active: bool = Field(default=True, description="是否启用定时爬取")
     notify_on_new: bool = Field(default=True, description="新职位是否发送通知")
     deactivation_threshold: int = Field(default=3, ge=1, description="连续漏抓次数阈值，超过后标记职位下架")
+    cron_expression: str | None = Field(
+        default=None, max_length=100, description="5段 crontab 表达式，null 表示不定时",
+    )
+    cron_timezone: str | None = Field(
+        default=None, max_length=50, description="时区，默认 Asia/Shanghai",
+    )
 
 
 class JobSearchConfigUpdate(BaseModel):
@@ -32,6 +38,8 @@ class JobSearchConfigUpdate(BaseModel):
     active: bool | None = None
     notify_on_new: bool | None = None
     deactivation_threshold: int | None = Field(default=None, ge=1, description="连续漏抓次数阈值")
+    cron_expression: str | None = Field(default=None, max_length=100)
+    cron_timezone: str | None = Field(default=None, max_length=50)
 
 
 class JobSearchConfigResponse(BaseModel):
@@ -49,10 +57,24 @@ class JobSearchConfigResponse(BaseModel):
     active: bool
     notify_on_new: bool
     deactivation_threshold: int
+    cron_expression: str | None
+    cron_timezone: str | None
     created_at: datetime
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class JobConfigCronUpdate(BaseModel):
+    """Schema for updating only the cron settings of a job search config."""
+    cron_expression: str | None = Field(
+        default=None, max_length=100,
+        description="5段 crontab 表达式，设为 null 取消定时",
+    )
+    cron_timezone: str | None = Field(
+        default=None, max_length=50,
+        description="时区，默认 Asia/Shanghai",
+    )
 
 
 class JobResponse(BaseModel):

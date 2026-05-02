@@ -1,5 +1,5 @@
 """Job search API router."""
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
 from app.schemas.job import (
-    JobCrawlResult,
+    JobConfigCronUpdate,
     JobListResponse,
     JobResponse,
     JobSearchConfigCreate,
@@ -15,11 +15,10 @@ from app.schemas.job import (
     JobSearchConfigUpdate,
 )
 from app.services.job_crawl import (
-    crawl_all_job_searches,
-    crawl_single_config,
-    crawl_single_config_background,
     crawl_all_job_searches_background,
+    crawl_single_config_background,
 )
+from app.services.scheduler_job import JobConfigScheduler
 from app.services.scheduler_service import TaskStatus, get_task
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -44,6 +43,7 @@ async def list_configs(
 @router.post("/configs", response_model=JobSearchConfigResponse, status_code=201)
 async def create_config(
     data: JobSearchConfigCreate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new job search config."""
@@ -54,6 +54,13 @@ async def create_config(
     db.add(config)
     await db.commit()
     await db.refresh(config)
+
+    # Sync scheduler if cron is set
+    if config.cron_expression:
+        scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
+        if scheduler:
+            scheduler.add_job(config.id, config.cron_expression, config.cron_timezone or "Asia/Shanghai")
+
     return config
 
 
@@ -76,6 +83,7 @@ async def get_config(config_id: int, db: AsyncSession = Depends(get_db)):
 async def update_config(
     config_id: int,
     data: JobSearchConfigUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
 ):
     """Update a config."""
@@ -95,11 +103,25 @@ async def update_config(
 
     await db.commit()
     await db.refresh(config)
+
+    # Sync scheduler if cron changed
+    if "cron_expression" in update_data:
+        scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
+        if scheduler:
+            if config.cron_expression:
+                scheduler.add_job(config.id, config.cron_expression, config.cron_timezone or "Asia/Shanghai")
+            else:
+                scheduler.remove_job(config.id)
+
     return config
 
 
 @router.delete("/configs/{config_id}")
-async def delete_config(config_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_config(
+    config_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
     """Delete a config (cascades to jobs)."""
     result = await db.execute(
         select(JobSearchConfig).where(
@@ -110,6 +132,11 @@ async def delete_config(config_id: int, db: AsyncSession = Depends(get_db)):
     config = result.scalar_one_or_none()
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
+
+    # Remove scheduler job before deletion
+    scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
+    if scheduler:
+        scheduler.remove_job(config_id)
 
     await db.delete(config)
     await db.commit()
@@ -280,3 +307,55 @@ async def get_job_crawl_result(task_id: str):
         "success": task.success,
         "errors": task.errors,
     })
+
+
+# ── Per-Config Cron Management ──────────────────────────────
+
+@router.patch("/configs/{config_id}/cron", response_model=JobSearchConfigResponse)
+async def update_config_cron(
+    config_id: int,
+    data: JobConfigCronUpdate,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    """Update only the cron settings for a job search config.
+
+    Null cron_expression disables scheduled crawling for this config.
+    """
+    result = await db.execute(
+        select(JobSearchConfig).where(
+            JobSearchConfig.id == config_id,
+            JobSearchConfig.user_id == 1,
+        )
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="Config not found")
+
+    config.cron_expression = data.cron_expression
+    config.cron_timezone = data.cron_timezone or "Asia/Shanghai"
+
+    await db.commit()
+    await db.refresh(config)
+
+    # Sync scheduler
+    scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
+    if scheduler:
+        if config.cron_expression:
+            scheduler.add_job(config.id, config.cron_expression, config.cron_timezone)
+        else:
+            scheduler.remove_job(config.id)
+
+    return config
+
+
+@router.get("/scheduler/job-configs")
+async def get_job_config_schedules(request: Request):
+    """Get next run times for all per-config job crawl schedules."""
+    scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
+    if not scheduler:
+        return {"configs": []}
+    schedules = scheduler.get_next_run_times()
+    return {"configs": [
+        {"config_id": cid, **info} for cid, info in schedules.items()
+    ]}

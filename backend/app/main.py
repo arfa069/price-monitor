@@ -58,32 +58,6 @@ async def _start_scheduler(app: FastAPI) -> None:
     scheduler = AsyncIOScheduler(timezone="UTC", job_defaults={"coalesce": True, "max_instances": 1})
     app.state.scheduler = scheduler
 
-    if user and user.crawl_cron:
-        job_id = "crawl_cron_job"
-        try:
-            tz = zoneinfo.ZoneInfo(user.crawl_timezone or "Asia/Shanghai")
-            # Import the trigger function lazily to avoid circular dependency
-            from app.routers.config import _trigger_crawl_all
-            scheduler.add_job(
-                _trigger_crawl_all,
-                trigger=CronTrigger.from_crontab(user.crawl_cron, timezone=tz),
-                id=job_id,
-                name="Crawl all active products",
-                replace_existing=True,
-                max_instances=1,
-            )
-            logger.info(
-                "Registered cron job %s with schedule '%s' (tz=%s)",
-                job_id, user.crawl_cron, user.crawl_timezone or "Asia/Shanghai",
-            )
-        except Exception:
-            logger.exception("Failed to register initial cron job from DB config")
-    else:
-        if user is None:
-            logger.info("No user config found, skipping scheduler registration")
-        else:
-            logger.info("No crawl_cron configured, skipping scheduler registration")
-
     # 职位爬取使用 per-config 独立 cron 调度
     from app.services.scheduler_job import JobConfigScheduler, ProductCronScheduler
     job_config_scheduler = JobConfigScheduler(scheduler)
@@ -170,7 +144,6 @@ async def get_scheduler_status():
         "scheduler": "running",
         "timezone": user.crawl_timezone if user else "Asia/Shanghai",
         "jobs": {
-            "product_crawl": _job_info("crawl_cron_job", "crawl_cron"),
             "product_platforms": product_cron_scheduler.get_next_run_times() if product_cron_scheduler else {},
             "job_configs": job_config_scheduler.get_next_run_times() if job_config_scheduler else {},
         },

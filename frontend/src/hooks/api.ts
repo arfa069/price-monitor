@@ -2,9 +2,17 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { alertsApi } from '@/api/alerts'
 import { configApi } from '@/api/config'
 import { crawlApi } from '@/api/crawl'
+import { jobMatchApi } from '@/api/job_match'
 import { jobsApi } from '@/api/jobs'
 import { productsApi } from '@/api/products'
-import type { AlertUpdateRequest, CrawlLog, JobSearchConfigUpdate } from '@/types'
+import type {
+  AlertUpdateRequest,
+  CrawlLog,
+  JobSearchConfigUpdate,
+  MatchAnalyzeRequest,
+  UserResumeCreateRequest,
+  UserResumeUpdateRequest,
+} from '@/types'
 
 export type CrawlNowMutationResult =
   | { type: 'skipped'; reason?: string }
@@ -23,14 +31,12 @@ export const useProducts = (params: {
   keyword?: string
   page?: number
   size?: number
-}) => {
-  const { platform, active, keyword, page, size } = params
-  return useQuery({
-    queryKey: ['products', platform ?? '', active ?? '', keyword ?? '', page ?? 1, size ?? 15],
+}) =>
+  useQuery({
+    queryKey: ['products', params.platform ?? '', params.active ?? '', params.keyword ?? '', params.page ?? 1, params.size ?? 15],
     queryFn: () => productsApi.list(params).then((res) => res.data),
     staleTime: 10_000,
   })
-}
 
 export const useCreateProduct = () => {
   const qc = useQueryClient()
@@ -43,13 +49,8 @@ export const useCreateProduct = () => {
 export const useUpdateProduct = () => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: number
-      data: Parameters<typeof productsApi.update>[1]
-    }) => productsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Parameters<typeof productsApi.update>[1] }) =>
+      productsApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['products'] }),
   })
 }
@@ -87,12 +88,11 @@ export const useBatchUpdate = () => {
   })
 }
 
-export const useConfig = () => {
-  return useQuery({
+export const useConfig = () =>
+  useQuery({
     queryKey: ['config'],
     queryFn: () => configApi.get().then((res) => res.data),
   })
-}
 
 export const useUpdateConfig = () => {
   const qc = useQueryClient()
@@ -102,13 +102,12 @@ export const useUpdateConfig = () => {
   })
 }
 
-export const useProductHistory = (id: number, days = 30) => {
-  return useQuery({
+export const useProductHistory = (id: number, days = 30) =>
+  useQuery({
     queryKey: ['product-history', id, days],
     queryFn: () => productsApi.history(id, days).then((res) => res.data),
     enabled: !!id,
   })
-}
 
 export const useCrawlNow = () => {
   const qc = useQueryClient()
@@ -116,17 +115,12 @@ export const useCrawlNow = () => {
     mutationFn: async (): Promise<CrawlNowMutationResult> => {
       const response = await crawlApi.crawlNow()
       const data = response.data
-
       if (data.status === 'skipped') return { type: 'skipped', reason: data.reason }
       if (data.status === 'error') return { type: 'error', reason: data.reason }
 
       const taskId = data.task_id!
-      let attempts = 0
-      const maxAttempts = 60
-
-      while (attempts < maxAttempts) {
+      for (let attempts = 0; attempts < 60; attempts += 1) {
         await new Promise((resolve) => setTimeout(resolve, 3000))
-        attempts += 1
         try {
           const statusRes = await crawlApi.getStatus(taskId)
           const status = statusRes.data
@@ -142,9 +136,7 @@ export const useCrawlNow = () => {
               details: result.details ?? [],
             }
           }
-          if (status.status === 'failed') {
-            return { type: 'error', reason: status.reason }
-          }
+          if (status.status === 'failed') return { type: 'error', reason: status.reason }
         } catch (e) {
           console.warn('Polling error:', e)
         }
@@ -154,8 +146,8 @@ export const useCrawlNow = () => {
   })
 }
 
-export const useAlerts = (productId?: number) => {
-  return useQuery({
+export const useAlerts = (productId?: number) =>
+  useQuery({
     queryKey: ['alerts', productId],
     queryFn: () =>
       alertsApi
@@ -163,14 +155,12 @@ export const useAlerts = (productId?: number) => {
         .then((res) => res.data),
     enabled: productId !== undefined,
   })
-}
 
-export const useAllAlerts = () => {
-  return useQuery({
+export const useAllAlerts = () =>
+  useQuery({
     queryKey: ['alerts', 'all'],
     queryFn: () => alertsApi.list().then((res) => res.data),
   })
-}
 
 export const useCreateAlert = () => {
   const qc = useQueryClient()
@@ -197,28 +187,25 @@ export const useDeleteAlert = () => {
   })
 }
 
-export const useCrawlLogs = (params?: { product_id?: number; hours?: number; limit?: number }) => {
-  return useQuery<CrawlLog[]>({
+export const useCrawlLogs = (params?: { product_id?: number; hours?: number; limit?: number }) =>
+  useQuery<CrawlLog[]>({
     queryKey: ['crawl-logs', params],
     queryFn: () => crawlApi.getLogs(params).then((res) => res.data),
     refetchInterval: 60_000,
   })
-}
 
-export const useJobConfigs = (active?: boolean) => {
-  return useQuery({
+export const useJobConfigs = (active?: boolean) =>
+  useQuery({
     queryKey: ['job-configs', active],
     queryFn: () => jobsApi.getConfigs(active).then((res) => res.data),
   })
-}
 
-export const useJobConfig = (id: number) => {
-  return useQuery({
+export const useJobConfig = (id: number) =>
+  useQuery({
     queryKey: ['job-config', id],
     queryFn: () => jobsApi.getConfig(id).then((res) => res.data),
     enabled: !!id,
   })
-}
 
 export const useCreateJobConfig = () => {
   const qc = useQueryClient()
@@ -257,21 +244,19 @@ export const useJobs = (params?: {
   sort_order?: string
   page?: number
   page_size?: number
-}) => {
-  return useQuery({
+}) =>
+  useQuery({
     queryKey: ['jobs', params],
     queryFn: () => jobsApi.getJobs(params).then((res) => res.data),
     staleTime: 30_000,
   })
-}
 
-export const useJob = (jobId: string) => {
-  return useQuery({
+export const useJob = (jobId: string) =>
+  useQuery({
     queryKey: ['job', jobId],
     queryFn: () => jobsApi.getJob(jobId).then((res) => res.data),
     enabled: !!jobId,
   })
-}
 
 export const useCrawlAllJobs = () => {
   const qc = useQueryClient()
@@ -285,8 +270,7 @@ export const useCrawlAllJobs = () => {
     }> => {
       const response = await jobsApi.crawlAll()
       const taskId = response.data.task_id
-
-      for (let attempt = 0; attempt < 60; attempt++) {
+      for (let attempt = 0; attempt < 60; attempt += 1) {
         await new Promise((resolve) => setTimeout(resolve, 3000))
         try {
           const statusRes = await jobsApi.getCrawlStatus(taskId)
@@ -298,9 +282,7 @@ export const useCrawlAllJobs = () => {
             qc.invalidateQueries({ queryKey: ['job-configs'] })
             return { type: 'completed', total: r.total, success: r.success, errors: r.errors }
           }
-          if (s.status === 'failed') {
-            return { type: 'error', reason: 'crawl task failed' }
-          }
+          if (s.status === 'failed') return { type: 'error', reason: 'crawl task failed' }
         } catch (e) {
           console.warn('Job crawl polling error:', e)
         }
@@ -322,8 +304,7 @@ export const useCrawlSingleJob = () => {
     }> => {
       const response = await jobsApi.crawlSingle(configId)
       const taskId = response.data.task_id
-
-      for (let attempt = 0; attempt < 60; attempt++) {
+      for (let attempt = 0; attempt < 60; attempt += 1) {
         await new Promise((resolve) => setTimeout(resolve, 3000))
         try {
           const statusRes = await jobsApi.getCrawlStatus(taskId)
@@ -335,14 +316,66 @@ export const useCrawlSingleJob = () => {
             qc.invalidateQueries({ queryKey: ['job-configs'] })
             return { type: 'completed', total: r.total, success: r.success, errors: r.errors }
           }
-          if (s.status === 'failed') {
-            return { type: 'error', reason: 'crawl task failed' }
-          }
+          if (s.status === 'failed') return { type: 'error', reason: 'crawl task failed' }
         } catch (e) {
           console.warn('Job crawl polling error:', e)
         }
       }
       return { type: 'error', reason: 'timeout_polling' }
+    },
+  })
+}
+
+export const useResumes = () =>
+  useQuery({
+    queryKey: ['resumes'],
+    queryFn: () => jobMatchApi.listResumes().then((res) => res.data),
+  })
+
+export const useCreateResume = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: UserResumeCreateRequest) => jobMatchApi.createResume(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['resumes'] }),
+  })
+}
+
+export const useUpdateResume = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UserResumeUpdateRequest }) =>
+      jobMatchApi.updateResume(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['resumes'] }),
+  })
+}
+
+export const useDeleteResume = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) => jobMatchApi.deleteResume(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['resumes'] }),
+  })
+}
+
+export const useMatchResults = (params?: {
+  resume_id?: number
+  job_id?: number
+  min_score?: number
+  page?: number
+  page_size?: number
+}) =>
+  useQuery({
+    queryKey: ['match-results', params],
+    queryFn: () => jobMatchApi.listMatchResults(params).then((res) => res.data),
+  })
+
+export const useTriggerMatch = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (data: MatchAnalyzeRequest) => jobMatchApi.triggerMatch(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['match-results'] })
+      qc.invalidateQueries({ queryKey: ['jobs'] })
     },
   })
 }

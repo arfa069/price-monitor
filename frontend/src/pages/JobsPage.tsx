@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Card } from 'antd'
+import { useMemo, useState } from 'react'
+import { Card, Tabs } from 'antd'
 import {
   useCrawlAllJobs,
   useCrawlSingleJob,
@@ -7,11 +7,14 @@ import {
   useDeleteJobConfig,
   useJobConfigs,
   useJobs,
+  useMatchResults,
   useUpdateJobConfig,
 } from '@/hooks/api'
 import JobConfigList from '@/components/JobConfigList'
 import JobDrawer from '@/components/JobDrawer'
 import JobList from '@/components/JobList'
+import MatchResultList from '@/components/MatchResultList'
+import ResumeManager from '@/components/ResumeManager'
 import type { Job, JobSearchConfigCreate } from '@/types'
 
 export default function JobsPage() {
@@ -21,6 +24,7 @@ export default function JobsPage() {
   const [isActive, setIsActive] = useState<boolean | undefined>(undefined)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [activeTab, setActiveTab] = useState('configs')
 
   const { data: configs, isLoading: configsLoading, refetch: refetchConfigs } = useJobConfigs()
   const createConfig = useCreateJobConfig()
@@ -33,9 +37,18 @@ export default function JobsPage() {
     page,
     page_size: pageSize,
   })
+  const { data: allMatches } = useMatchResults({ page: 1, page_size: 100 })
 
   const crawlAll = useCrawlAllJobs()
   const crawlSingle = useCrawlSingleJob()
+
+  const matchScores = useMemo(() => {
+    const map: Record<number, number> = {}
+    allMatches?.items.forEach((item) => {
+      map[item.job_id] = Math.max(map[item.job_id] ?? 0, item.match_score)
+    })
+    return map
+  }, [allMatches])
 
   const handleCreateConfig = async (data: JobSearchConfigCreate) => {
     await createConfig.mutateAsync(data)
@@ -75,48 +88,59 @@ export default function JobsPage() {
     setIsActive(filters.is_active)
   }
 
+  const items = [
+    {
+      key: 'configs',
+      label: '搜索配置',
+      children: (
+        <>
+          <Card size="small">
+            <JobConfigList
+              configs={configs}
+              isLoading={configsLoading}
+              onCreate={handleCreateConfig}
+              onUpdate={handleUpdateConfig}
+              onDelete={handleDeleteConfig}
+              onCrawl={handleCrawlSingle}
+              createLoading={createConfig.isPending}
+              updateLoading={updateConfig.isPending}
+              crawlLoading={crawlSingle.isPending}
+            />
+          </Card>
+
+          <JobList
+            jobs={jobsResp?.items || []}
+            total={jobsResp?.total || 0}
+            isLoading={jobsLoading}
+            onViewDetail={handleViewDetail}
+            onCrawlAll={handleCrawlAll}
+            crawlAllLoading={crawlAll.isPending}
+            filters={{ keyword, is_active: isActive }}
+            onFilterChange={handleFilterChange}
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            matchScores={matchScores}
+          />
+        </>
+      ),
+    },
+    {
+      key: 'resume',
+      label: '简历管理',
+      children: <ResumeManager />,
+    },
+    {
+      key: 'matches',
+      label: '匹配结果',
+      children: <MatchResultList />,
+    },
+  ]
+
   return (
     <div>
-      <h1
-        style={{
-          fontSize: 24,
-          color: '#1f2937',
-          marginBottom: 24,
-          fontWeight: 500,
-        }}
-      >
-        职位管理
-      </h1>
-
-
-      <Card size="small">
-        <JobConfigList
-          configs={configs}
-          isLoading={configsLoading}
-          onCreate={handleCreateConfig}
-          onUpdate={handleUpdateConfig}
-          onDelete={handleDeleteConfig}
-          onCrawl={handleCrawlSingle}
-          createLoading={createConfig.isPending}
-          updateLoading={updateConfig.isPending}
-          crawlLoading={crawlSingle.isPending}
-        />
-      </Card>
-
-      <JobList
-        jobs={jobsResp?.items || []}
-        total={jobsResp?.total || 0}
-        isLoading={jobsLoading}
-        onViewDetail={handleViewDetail}
-        onCrawlAll={handleCrawlAll}
-        crawlAllLoading={crawlAll.isPending}
-        filters={{ keyword, is_active: isActive }}
-        onFilterChange={handleFilterChange}
-        page={page}
-        pageSize={pageSize}
-        onPageChange={setPage}
-      />
-
+      <h1 style={{ fontSize: 24, color: '#1f2937', marginBottom: 24, fontWeight: 500 }}>职位管理</h1>
+      <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} />
       <JobDrawer open={drawerOpen} job={selectedJob} onClose={() => setDrawerOpen(false)} />
     </div>
   )

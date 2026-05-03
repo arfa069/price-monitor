@@ -69,9 +69,7 @@ export default function ProductFormModal({
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (record) return
     const detected = detectPlatform(e.target.value)
-    if (detected) {
-      form.setFieldValue('platform', detected)
-    }
+    if (detected) form.setFieldValue('platform', detected)
   }
 
   const handleOk = () =>
@@ -96,13 +94,8 @@ export default function ProductFormModal({
       confirmLoading={confirmLoading}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-        <Form.Item
-          name="platform"
-          label="平台"
-          rules={[{ required: true, message: '请选择平台' }]}
-        >
+        <Form.Item name="platform" label="平台" rules={[{ required: true, message: '请选择平台' }]}>
           <Select
-            name="platform"
             options={[
               { label: '淘宝', value: 'taobao' },
               { label: '京东', value: 'jd' },
@@ -118,10 +111,10 @@ export default function ProductFormModal({
             { type: 'url', message: 'URL 格式不正确' },
           ]}
         >
-          <Input placeholder="https://…" onChange={handleUrlChange} autoComplete="off" name="url" />
+          <Input placeholder="https://..." onChange={handleUrlChange} autoComplete="off" />
         </Form.Item>
         <Form.Item name="title" label="标题">
-          <Input placeholder="留空时自动抓取" autoComplete="off" name="title" />
+          <Input placeholder="留空时自动抓取" autoComplete="off" />
         </Form.Item>
         <Form.Item name="active" label="启用" valuePropName="checked">
           <Switch />

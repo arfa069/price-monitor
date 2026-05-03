@@ -73,6 +73,16 @@ export interface SchedulerJobStatus {
   next_run_at: string | null
 }
 
+export interface ProductPlatformCronSchedule {
+  cron_expression: string | null
+  next_run_at: string | null
+}
+
+export interface JobConfigScheduleInfo {
+  cron_expression: string | null
+  next_run_at: string | null
+}
+
 export interface SchedulerStatusResponse {
   scheduler: string
   timezone: string
@@ -86,11 +96,6 @@ export interface SchedulerStatusResponse {
 export interface JobConfigCronUpdate {
   cron_expression: string | null
   cron_timezone?: string | null
-}
-
-export interface JobConfigScheduleInfo {
-  cron_expression: string | null
-  next_run_at: string | null
 }
 
 export interface ProductPlatformCron {
@@ -112,11 +117,6 @@ export interface ProductPlatformCronCreate {
 export interface ProductPlatformCronUpdate {
   cron_expression: string | null
   cron_timezone?: string | null
-}
-
-export interface ProductPlatformCronSchedule {
-  cron_expression: string | null
-  next_run_at: string | null
 }
 
 export interface PriceHistoryRecord {
@@ -173,8 +173,10 @@ export interface JobSearchConfig {
   url: string
   active: boolean
   notify_on_new: boolean
+  deactivation_threshold: number
   cron_expression: string | null
   cron_timezone: string | null
+  enable_match_analysis: boolean
   created_at: string
   updated_at: string
 }
@@ -190,8 +192,10 @@ export interface JobSearchConfigCreate {
   url: string
   active?: boolean
   notify_on_new?: boolean
+  deactivation_threshold?: number
   cron_expression?: string | null
   cron_timezone?: string | null
+  enable_match_analysis?: boolean
 }
 
 export interface JobSearchConfigUpdate {
@@ -205,8 +209,10 @@ export interface JobSearchConfigUpdate {
   url?: string
   active?: boolean
   notify_on_new?: boolean
+  deactivation_threshold?: number
   cron_expression?: string | null
   cron_timezone?: string | null
+  enable_match_analysis?: boolean
 }
 
 export interface Job {
@@ -240,4 +246,62 @@ export interface JobCrawlResult {
   new_count: number
   updated_count: number
   deactivated_count: number
+}
+
+export interface UserResume {
+  id: number
+  user_id: number
+  name: string
+  resume_text: string
+  created_at: string
+  updated_at: string
+}
+
+export interface UserResumeCreateRequest {
+  name: string
+  resume_text: string
+}
+
+export interface UserResumeUpdateRequest {
+  name?: string
+  resume_text?: string
+}
+
+export interface MatchResultWithJob {
+  id: number
+  user_id: number
+  resume_id: number
+  job_id: number
+  match_score: number
+  match_reason: string | null
+  apply_recommendation: string | null
+  llm_model_used: string | null
+  created_at: string
+  updated_at: string
+  job_title: string | null
+  job_company: string | null
+  job_salary: string | null
+  job_location: string | null
+  job_url: string | null
+  job_description: string | null
+}
+
+export interface MatchResultListResponse {
+  items: MatchResultWithJob[]
+  total: number
+  page: number
+  page_size: number
+}
+
+export interface MatchAnalyzeRequest {
+  resume_id: number
+  job_ids?: number[] | null
+}
+
+export interface MatchAnalyzeResponse {
+  processed: number
+  created: number
+  updated: number
+  skipped: number
+  items: MatchResultWithJob[]
 }

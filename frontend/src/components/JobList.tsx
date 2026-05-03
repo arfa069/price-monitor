@@ -16,6 +16,7 @@ interface JobListProps {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  matchScores?: Record<number, number>
 }
 
 type StatusFilterValue = 'all' | 'active' | 'inactive'
@@ -32,6 +33,7 @@ export default function JobList({
   page,
   pageSize,
   onPageChange,
+  matchScores,
 }: JobListProps) {
   const statusValue: StatusFilterValue =
     filters.is_active === undefined ? 'all' : filters.is_active ? 'active' : 'inactive'
@@ -39,6 +41,20 @@ export default function JobList({
   const columns: ColumnsType<Job> = useMemo(
     () => [
       { title: 'ID', dataIndex: 'id', width: 80 },
+      {
+        title: '匹配',
+        key: 'match_score',
+        width: 90,
+        render: (_, record) => {
+          const score = matchScores?.[record.id]
+          if (!score) return null
+          return (
+            <Tag color={score >= 80 ? 'green' : score >= 60 ? 'orange' : 'default'}>
+              {score}
+            </Tag>
+          )
+        },
+      },
       {
         title: '职位',
         dataIndex: 'title',
@@ -74,13 +90,13 @@ export default function JobList({
         key: 'action',
         width: 100,
         render: (_, record) => (
-          <Button size="small" onClick={(e) => { e.stopPropagation(); onViewDetail(record); }}>
+          <Button size="small" onClick={(e) => { e.stopPropagation(); onViewDetail(record) }}>
             查看
           </Button>
         ),
       },
     ],
-    [onViewDetail],
+    [matchScores, onViewDetail],
   )
 
   return (
@@ -110,7 +126,7 @@ export default function JobList({
           ]}
         />
         <Button icon={<ReloadOutlined />} loading={crawlAllLoading} onClick={onCrawlAll}>
-          全量爬取
+          全量抓取
         </Button>
       </Space>
 

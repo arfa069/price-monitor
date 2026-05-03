@@ -1,9 +1,6 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { Form, Input, InputNumber, Modal, Switch } from 'antd'
-import type {
-  JobSearchConfig,
-  JobSearchConfigCreate,
-} from '@/types'
+import type { JobSearchConfig, JobSearchConfigCreate } from '@/types'
 
 interface JobConfigFormProps {
   open: boolean
@@ -21,31 +18,21 @@ export default function JobConfigForm({
   confirmLoading,
 }: JobConfigFormProps) {
   const [form] = Form.useForm()
-  const recordRef = useRef(record)
-  recordRef.current = record
 
   useEffect(() => {
     if (!open) return
-    if (recordRef.current) {
-      setTimeout(() => {
-        form.setFieldsValue(recordRef.current!)
-        // 自动从 URL 解析 keyword（编辑已有配置时补充显示）
-        try {
-          const parsed = new URL(recordRef.current.url)
-          const query = parsed.searchParams.get('query')
-          if (query) form.setFieldsValue({ keyword: query })
-        } catch {
-          // ignore
-        }
-      }, 0)
+    if (record) {
+      form.setFieldsValue(record)
       return
     }
     form.resetFields()
     form.setFieldsValue({
       active: true,
       notify_on_new: true,
+      enable_match_analysis: false,
+      deactivation_threshold: 3,
     })
-  }, [open, form])
+  }, [open, record, form])
 
   const handleCancel = () => {
     form.resetFields()
@@ -53,14 +40,14 @@ export default function JobConfigForm({
   }
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (recordRef.current) return
+    if (record) return
     const url = e.target.value
     try {
       const parsed = new URL(url)
       const query = parsed.searchParams.get('query')
       if (query) form.setFieldsValue({ keyword: query })
     } catch {
-      // invalid URL, ignore
+      // ignore malformed URL while typing
     }
   }
 
@@ -79,42 +66,51 @@ export default function JobConfigForm({
       confirmLoading={confirmLoading}
     >
       <Form form={form} layout="vertical">
-        <Form.Item
-          name="name"
-          label="配置名称"
-          rules={[{ required: true, message: '请输入配置名称' }]}
-        >
-          <Input placeholder="例如：上海前端岗位" autoComplete="off" name="name" />
+        <Form.Item name="name" label="配置名称" rules={[{ required: true, message: '请输入配置名称' }]}>
+          <Input placeholder="例如：上海前端岗位" autoComplete="off" />
         </Form.Item>
         <Form.Item
           name="url"
           label="Boss 搜索 URL"
-          rules={[{ required: true, message: '请输入 URL' }, { type: 'url', message: 'URL 格式不正确' }]}
+          rules={[
+            { required: true, message: '请输入 URL' },
+            { type: 'url', message: 'URL 格式不正确' },
+          ]}
         >
-<Input placeholder="https://www.zhipin.com/web/geek/job?query=…" autoComplete="off" name="url" onChange={handleUrlChange} />
+          <Input
+            placeholder="https://www.zhipin.com/web/geek/job?query=frontend"
+            autoComplete="off"
+            onChange={handleUrlChange}
+          />
         </Form.Item>
         <Form.Item name="keyword" label="关键词">
-          <Input placeholder="例如：React" autoComplete="off" name="keyword" />
+          <Input placeholder="例如：React" autoComplete="off" />
         </Form.Item>
         <Form.Item name="city_code" label="城市代码">
-          <Input placeholder="例如：101020100" autoComplete="off" name="city_code" />
+          <Input placeholder="例如：101020100" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="salary_min" label="最低薪资(K)">
-          <InputNumber min={0} style={{ width: '100%' }} autoComplete="off" name="salary_min" />
+        <Form.Item name="salary_min" label="最低薪资 (K)">
+          <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item name="salary_max" label="最高薪资(K)">
-          <InputNumber min={0} style={{ width: '100%' }} autoComplete="off" name="salary_max" />
+        <Form.Item name="salary_max" label="最高薪资 (K)">
+          <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item name="experience" label="经验要求">
-          <Input placeholder="例如：3-5年" autoComplete="off" name="experience" />
+          <Input placeholder="例如：3-5年" autoComplete="off" />
         </Form.Item>
         <Form.Item name="education" label="学历要求">
-          <Input placeholder="例如：本科" autoComplete="off" name="education" />
+          <Input placeholder="例如：本科" autoComplete="off" />
+        </Form.Item>
+        <Form.Item name="deactivation_threshold" label="失活阈值">
+          <InputNumber min={1} style={{ width: '100%' }} />
         </Form.Item>
         <Form.Item name="active" label="启用配置" valuePropName="checked">
           <Switch />
         </Form.Item>
-        <Form.Item name="notify_on_new" label="新岗位通知" valuePropName="checked">
+        <Form.Item name="notify_on_new" label="新职位通知" valuePropName="checked">
+          <Switch />
+        </Form.Item>
+        <Form.Item name="enable_match_analysis" label="抓取后自动匹配" valuePropName="checked">
           <Switch />
         </Form.Item>
       </Form>

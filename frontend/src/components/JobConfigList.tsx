@@ -6,6 +6,7 @@ import {
   Popconfirm,
   Space,
   Spin,
+  Switch,
   Tag,
   Typography,
   message,
@@ -46,9 +47,7 @@ export default function JobConfigList({
   const [editRecord, setEditRecord] = useState<JobSearchConfig | null>(null)
 
   const handleCreate = async (data: Partial<JobSearchConfigCreate>) => {
-    if (!data.name || !data.url) {
-      throw new Error('missing required fields')
-    }
+    if (!data.name || !data.url) throw new Error('missing required fields')
     await onCreate(data as JobSearchConfigCreate)
     setCreateOpen(false)
     message.success('配置创建成功')
@@ -59,6 +58,11 @@ export default function JobConfigList({
     await onUpdate(editRecord.id, data)
     setEditRecord(null)
     message.success('配置更新成功')
+  }
+
+  const handleToggleMatch = async (config: JobSearchConfig, checked: boolean) => {
+    await onUpdate(config.id, { enable_match_analysis: checked })
+    message.success(checked ? '已开启自动匹配' : '已关闭自动匹配')
   }
 
   return (
@@ -91,8 +95,15 @@ export default function JobConfigList({
                     {config.active ? '启用' : '停用'}
                   </Tag>
                   <Tag color={config.notify_on_new ? 'processing' : 'default'}>
-                    {config.notify_on_new ? '通知开启' : '通知关闭'}
+                    {config.notify_on_new ? '新职位通知' : '通知关闭'}
                   </Tag>
+                  <Switch
+                    size="small"
+                    checked={config.enable_match_analysis}
+                    checkedChildren="自动匹配"
+                    unCheckedChildren="自动匹配"
+                    onChange={(checked) => void handleToggleMatch(config, checked)}
+                  />
                 </Space>
               }
             >
@@ -105,12 +116,12 @@ export default function JobConfigList({
                   loading={crawlLoading}
                   onClick={() => onCrawl(config.id)}
                 >
-                  爬取
+                  抓取
                 </Button>
                 <Button icon={<EditOutlined />} onClick={() => setEditRecord(config)}>
                   编辑
                 </Button>
-                <Popconfirm title="确认删除该配置？" onConfirm={() => onDelete(config.id)}>
+                <Popconfirm title="确认删除这条配置吗？" onConfirm={() => onDelete(config.id)}>
                   <Button danger icon={<DeleteOutlined />}>
                     删除
                   </Button>

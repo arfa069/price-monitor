@@ -45,6 +45,26 @@ export const jobsApi = {
   updateConfigCron: (id: number, data: JobConfigCronUpdate) =>
     api.patch<JobSearchConfig>(`/jobs/configs/${id}/cron`, data),
 
+  getResumes: () => api.get('/jobs/resumes'),
+
+  createResume: (data: { name: string; resume_text: string }) => api.post('/jobs/resumes', data),
+
+  updateResume: (id: number, data: { name?: string; resume_text?: string }) =>
+    api.patch(`/jobs/resumes/${id}`, data),
+
+  deleteResume: (id: number) => api.delete(`/jobs/resumes/${id}`),
+
+  getMatchResults: (params?: {
+    resume_id?: number
+    job_id?: number
+    min_score?: number
+    page?: number
+    page_size?: number
+  }) => api.get('/jobs/match-results', { params }),
+
+  triggerMatch: (data: { resume_id: number; job_ids?: number[] | null }) =>
+    api.post('/jobs/match-results/analyze', data),
+
   getJobConfigSchedules: () =>
     api.get<{ configs: (JobConfigScheduleInfo & { config_id: number })[] }>(
       '/jobs/scheduler/job-configs',

@@ -1,6 +1,15 @@
 """API schemas."""
 from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
 from app.schemas.crawl_log import CrawlLogResponse
+from app.schemas.job_match import (
+    MatchAnalyzeRequest,
+    MatchAnalyzeResponse,
+    MatchResultListResponse,
+    MatchResultResponse,
+    UserResumeCreate,
+    UserResumeResponse,
+    UserResumeUpdate,
+)
 from app.schemas.price_history import PriceHistoryResponse, PriceHistorySummary
 from app.schemas.product import (
     ProductCreate,
@@ -24,4 +33,11 @@ __all__ = [
     "PriceHistoryResponse",
     "PriceHistorySummary",
     "CrawlLogResponse",
+    "UserResumeCreate",
+    "UserResumeUpdate",
+    "UserResumeResponse",
+    "MatchAnalyzeRequest",
+    "MatchAnalyzeResponse",
+    "MatchResultResponse",
+    "MatchResultListResponse",
 ]

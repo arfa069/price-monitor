@@ -17,6 +17,8 @@ from sqlalchemy import select
 from app.database import AsyncSessionLocal
 from app.models.crawl_log import CrawlLog
 from app.models.job import Job, JobSearchConfig
+from app.models.job_match import UserResume
+from app.services.job_match import analyze_resume_vs_jobs
 from app.services.notification import send_new_job_notification
 
 logger = logging.getLogger(__name__)
@@ -227,6 +229,17 @@ async def process_job_results(
                 await asyncio.sleep(random.uniform(2.0, 5.0))
             if detail_errors:
                 logger.info("Detail fetch completed: %d errors out of %d jobs", detail_errors, len(new_job_ids))
+
+        if new_job_ids and config.enable_match_analysis:
+            resume_result = await db.execute(
+                select(UserResume).where(UserResume.user_id == config.user_id)
+            )
+            resumes = list(resume_result.scalars().all())
+            for resume in resumes:
+                try:
+                    await analyze_resume_vs_jobs(resume.id, new_job_ids)
+                except Exception:
+                    logger.exception("Failed to run match analysis for resume %s", resume.id)
 
     return {
         "new_count": new_count,

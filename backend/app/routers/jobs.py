@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
+from app.models.job_match import MatchResult, UserResume
 from app.schemas.job import (
     JobConfigCronUpdate,
     JobListResponse,
@@ -14,14 +15,46 @@ from app.schemas.job import (
     JobSearchConfigResponse,
     JobSearchConfigUpdate,
 )
+from app.schemas.job_match import (
+    MatchAnalyzeRequest,
+    MatchAnalyzeResponse,
+    MatchResultListResponse,
+    MatchResultResponse,
+    UserResumeCreate,
+    UserResumeResponse,
+    UserResumeUpdate,
+)
 from app.services.job_crawl import (
     crawl_all_job_searches_background,
     crawl_single_config_background,
 )
+from app.services.job_match import analyze_resume_vs_jobs
 from app.services.scheduler_job import JobConfigScheduler
 from app.services.scheduler_service import TaskStatus, get_task
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+
+def _serialize_match_result(item: MatchResult) -> MatchResultResponse:
+    job = item.job
+    return MatchResultResponse(
+        id=item.id,
+        user_id=item.user_id,
+        resume_id=item.resume_id,
+        job_id=item.job_id,
+        match_score=item.match_score,
+        match_reason=item.match_reason,
+        apply_recommendation=item.apply_recommendation,
+        llm_model_used=item.llm_model_used,
+        created_at=item.created_at,
+        updated_at=item.updated_at,
+        job_title=job.title if job else None,
+        job_company=job.company if job else None,
+        job_salary=job.salary if job else None,
+        job_location=job.location if job else None,
+        job_url=job.url if job else None,
+        job_description=job.description if job else None,
+    )
 
 
 # ── JobSearchConfig CRUD ──────────────────────────────────────────
@@ -62,6 +95,121 @@ async def create_config(
             scheduler.add_job(config.id, config.cron_expression, config.cron_timezone or "Asia/Shanghai")
 
     return config
+
+
+@router.get("/resumes", response_model=list[UserResumeResponse])
+async def list_resumes(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(UserResume).where(UserResume.user_id == 1).order_by(desc(UserResume.created_at))
+    )
+    return result.scalars().all()
+
+
+@router.post("/resumes", response_model=UserResumeResponse, status_code=201)
+async def create_resume(data: UserResumeCreate, db: AsyncSession = Depends(get_db)):
+    resume = UserResume(user_id=1, **data.model_dump())
+    db.add(resume)
+    await db.commit()
+    await db.refresh(resume)
+    return resume
+
+
+@router.patch("/resumes/{resume_id}", response_model=UserResumeResponse)
+async def update_resume(
+    resume_id: int,
+    data: UserResumeUpdate,
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(
+        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == 1)
+    )
+    resume = result.scalar_one_or_none()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(resume, field, value)
+    await db.commit()
+    await db.refresh(resume)
+    return resume
+
+
+@router.delete("/resumes/{resume_id}")
+async def delete_resume(resume_id: int, db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == 1)
+    )
+    resume = result.scalar_one_or_none()
+    if not resume:
+        raise HTTPException(status_code=404, detail="Resume not found")
+    await db.delete(resume)
+    await db.commit()
+    return {"message": "Resume deleted"}
+
+
+@router.get("/match-results", response_model=MatchResultListResponse)
+async def list_match_results(
+    resume_id: int | None = None,
+    job_id: int | None = None,
+    min_score: int | None = Query(default=None, ge=0, le=100),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
+    db: AsyncSession = Depends(get_db),
+):
+    query = (
+        select(MatchResult)
+        .join(UserResume, MatchResult.resume_id == UserResume.id)
+        .join(Job, MatchResult.job_id == Job.id)
+        .where(UserResume.user_id == 1)
+        .order_by(desc(MatchResult.match_score), desc(MatchResult.updated_at))
+    )
+    count_query = (
+        select(func.count())
+        .select_from(MatchResult)
+        .join(UserResume, MatchResult.resume_id == UserResume.id)
+        .where(UserResume.user_id == 1)
+    )
+
+    if resume_id is not None:
+        query = query.where(MatchResult.resume_id == resume_id)
+        count_query = count_query.where(MatchResult.resume_id == resume_id)
+    if job_id is not None:
+        query = query.where(MatchResult.job_id == job_id)
+        count_query = count_query.where(MatchResult.job_id == job_id)
+    if min_score is not None:
+        query = query.where(MatchResult.match_score >= min_score)
+        count_query = count_query.where(MatchResult.match_score >= min_score)
+
+    total = (await db.execute(count_query)).scalar() or 0
+    result = await db.execute(query.offset((page - 1) * page_size).limit(page_size))
+    items = result.scalars().all()
+    for item in items:
+        await db.refresh(item, attribute_names=["job"])
+
+    return MatchResultListResponse(
+        items=[_serialize_match_result(item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.post("/match-results/analyze", response_model=MatchAnalyzeResponse)
+async def trigger_match_analysis(
+    data: MatchAnalyzeRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    resume = await db.get(UserResume, data.resume_id)
+    if not resume or resume.user_id != 1:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    result = await analyze_resume_vs_jobs(data.resume_id, data.job_ids)
+    return MatchAnalyzeResponse(
+        processed=result["processed"],
+        created=result["created"],
+        updated=result["updated"],
+        skipped=result["skipped"],
+        items=[_serialize_match_result(item) for item in result["items"]],
+    )
 
 
 @router.get("/configs/{config_id}", response_model=JobSearchConfigResponse)

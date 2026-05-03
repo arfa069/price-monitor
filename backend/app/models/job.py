@@ -48,6 +48,10 @@ class JobSearchConfig(Base, TimestampMixin):
         String(50), nullable=True, default="Asia/Shanghai",
         comment="Timezone for this config's cron expression",
     )
+    enable_match_analysis = Column(
+        Boolean, nullable=False, default=False,
+        comment="Whether to run resume-job match analysis after crawl",
+    )
 
     # Relationships
     jobs = relationship(
@@ -102,3 +106,4 @@ class Job(Base):
 
     # Relationships
     search_config = relationship("JobSearchConfig", back_populates="jobs")
+    match_results = relationship("MatchResult", back_populates="job", cascade="all, delete-orphan")

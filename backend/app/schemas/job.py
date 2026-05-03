@@ -1,4 +1,5 @@
 """Pydantic schemas for job-related API endpoints."""
+
 from datetime import datetime
 
 from pydantic import BaseModel, Field
@@ -6,27 +7,26 @@ from pydantic import BaseModel, Field
 
 class JobSearchConfigCreate(BaseModel):
     """Schema for creating a job search config."""
-    name: str = Field(..., max_length=100, description="配置名称，如'北京 Python 职位'")
-    keyword: str | None = Field(default=None, max_length=200, description="搜索关键词")
-    city_code: str | None = Field(default=None, max_length=20, description="boss 直聘城市代码")
-    salary_min: int | None = Field(default=None, ge=0, description="最低薪资（K）")
-    salary_max: int | None = Field(default=None, ge=0, description="最高薪资（K）")
-    experience: str | None = Field(default=None, max_length=50, description="经验要求")
-    education: str | None = Field(default=None, max_length=50, description="学历要求")
-    url: str = Field(..., description="boss 直聘搜索页完整 URL")
-    active: bool = Field(default=True, description="是否启用定时爬取")
-    notify_on_new: bool = Field(default=True, description="新职位是否发送通知")
-    deactivation_threshold: int = Field(default=3, ge=1, description="连续漏抓次数阈值，超过后标记职位下架")
-    cron_expression: str | None = Field(
-        default=None, max_length=100, description="5段 crontab 表达式，null 表示不定时",
-    )
-    cron_timezone: str | None = Field(
-        default=None, max_length=50, description="时区，默认 Asia/Shanghai",
-    )
+
+    name: str = Field(..., max_length=100)
+    keyword: str | None = Field(default=None, max_length=200)
+    city_code: str | None = Field(default=None, max_length=20)
+    salary_min: int | None = Field(default=None, ge=0)
+    salary_max: int | None = Field(default=None, ge=0)
+    experience: str | None = Field(default=None, max_length=50)
+    education: str | None = Field(default=None, max_length=50)
+    url: str
+    active: bool = True
+    notify_on_new: bool = True
+    deactivation_threshold: int = Field(default=3, ge=1)
+    cron_expression: str | None = Field(default=None, max_length=100)
+    cron_timezone: str | None = Field(default=None, max_length=50)
+    enable_match_analysis: bool = False
 
 
 class JobSearchConfigUpdate(BaseModel):
     """Schema for updating a job search config."""
+
     name: str | None = Field(default=None, max_length=100)
     keyword: str | None = Field(default=None, max_length=200)
     city_code: str | None = Field(default=None, max_length=20)
@@ -37,13 +37,15 @@ class JobSearchConfigUpdate(BaseModel):
     url: str | None = None
     active: bool | None = None
     notify_on_new: bool | None = None
-    deactivation_threshold: int | None = Field(default=None, ge=1, description="连续漏抓次数阈值")
+    deactivation_threshold: int | None = Field(default=None, ge=1)
     cron_expression: str | None = Field(default=None, max_length=100)
     cron_timezone: str | None = Field(default=None, max_length=50)
+    enable_match_analysis: bool | None = None
 
 
 class JobSearchConfigResponse(BaseModel):
     """Schema for job search config response."""
+
     id: int
     user_id: int
     name: str
@@ -59,6 +61,7 @@ class JobSearchConfigResponse(BaseModel):
     deactivation_threshold: int
     cron_expression: str | None
     cron_timezone: str | None
+    enable_match_analysis: bool
     created_at: datetime
     updated_at: datetime
 
@@ -67,18 +70,14 @@ class JobSearchConfigResponse(BaseModel):
 
 class JobConfigCronUpdate(BaseModel):
     """Schema for updating only the cron settings of a job search config."""
-    cron_expression: str | None = Field(
-        default=None, max_length=100,
-        description="5段 crontab 表达式，设为 null 取消定时",
-    )
-    cron_timezone: str | None = Field(
-        default=None, max_length=50,
-        description="时区，默认 Asia/Shanghai",
-    )
+
+    cron_expression: str | None = Field(default=None, max_length=100)
+    cron_timezone: str | None = Field(default=None, max_length=50)
 
 
 class JobResponse(BaseModel):
     """Schema for job response."""
+
     id: int
     job_id: str
     search_config_id: int
@@ -102,6 +101,7 @@ class JobResponse(BaseModel):
 
 class JobCrawlResult(BaseModel):
     """Schema for job crawl result."""
+
     new_count: int
     updated_count: int
     deactivated_count: int = 0
@@ -109,6 +109,7 @@ class JobCrawlResult(BaseModel):
 
 class JobListResponse(BaseModel):
     """Paginated job list response."""
+
     items: list[JobResponse]
     total: int
     page: int

@@ -52,6 +52,17 @@ class Settings(BaseSettings):
     app_name: str = "Price Monitor"
     debug: bool = False
 
+    # LLM job match settings
+    job_match_provider: str = "minimax"
+    job_match_model: str = "MiniMax-M2.7"
+    minimax_api_key: str = ""
+    minimax_base_url: str = "https://api.minimaxi.com/anthropic"
+    # Backward-compatible aliases for older configs.
+    anthropic_api_key: str = ""
+    anthropic_base_url: str = ""
+    openai_api_key: str = ""
+    ollama_base_url: str = "http://127.0.0.1:11434"
+
     @property
     def redis_url_with_password(self) -> str:
         """Build Redis URL with password if redis_password is set."""

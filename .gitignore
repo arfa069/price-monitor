@@ -43,3 +43,5 @@ app/AGENTS.md
 tests/AGENTS.md
 .gstack/
 .worktrees/
+/docs/superpowers
+/.playwright-cli

@@ -1,5 +1,6 @@
-"""API schemas."""
+"""Pydantic schemas."""
 from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
+from app.schemas.auth import MessageResponse, TokenResponse, UserLogin, UserRegister, UserResponse
 from app.schemas.crawl_log import CrawlLogResponse
 from app.schemas.job_match import (
     MatchAnalyzeRequest,
@@ -20,24 +21,29 @@ from app.schemas.product import (
 from app.schemas.user import UserConfigCreate, UserConfigResponse, UserConfigUpdate
 
 __all__ = [
-    "UserConfigCreate",
-    "UserConfigUpdate",
-    "UserConfigResponse",
-    "ProductCreate",
-    "ProductUpdate",
-    "ProductResponse",
-    "ProductDetail",
     "AlertCreate",
     "AlertUpdate",
     "AlertResponse",
-    "PriceHistoryResponse",
-    "PriceHistorySummary",
     "CrawlLogResponse",
-    "UserResumeCreate",
-    "UserResumeUpdate",
-    "UserResumeResponse",
     "MatchAnalyzeRequest",
     "MatchAnalyzeResponse",
     "MatchResultResponse",
     "MatchResultListResponse",
+    "PriceHistoryResponse",
+    "PriceHistorySummary",
+    "ProductCreate",
+    "ProductUpdate",
+    "ProductResponse",
+    "ProductDetail",
+    "UserConfigCreate",
+    "UserConfigUpdate",
+    "UserConfigResponse",
+    "UserResumeCreate",
+    "UserResumeUpdate",
+    "UserResumeResponse",
+    "UserLogin",
+    "UserRegister",
+    "UserResponse",
+    "TokenResponse",
+    "MessageResponse",
 ]

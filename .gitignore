@@ -45,3 +45,6 @@ tests/AGENTS.md
 .worktrees/
 /docs/superpowers
 /.playwright-cli
+.claude/settings.local.json
+scripts/install-codex-rtk-wrapper.ps1
+backend/.coverage

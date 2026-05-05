@@ -1,4 +1,6 @@
 """Job search API router."""
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import asc, desc, func, select
@@ -28,7 +30,11 @@ from app.services.job_crawl import (
     crawl_all_job_searches_background,
     crawl_single_config_background,
 )
-from app.services.job_match import analyze_resume_vs_jobs
+from app.services.job_match import (
+    _get_jobs_needing_analysis,
+    analyze_resume_vs_jobs,
+    run_match_analysis_task,
+)
 from app.services.scheduler_job import JobConfigScheduler
 from app.services.scheduler_service import TaskStatus, get_task
 
@@ -210,6 +216,91 @@ async def trigger_match_analysis(
         skipped=result["skipped"],
         items=[_serialize_match_result(item) for item in result["items"]],
     )
+
+
+@router.post("/match-results/analyze-async")
+async def trigger_match_analysis_async(
+    data: MatchAnalyzeRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    """Trigger async match analysis, returning task_id for polling.
+
+    The analysis runs in background, updating task progress.
+    Poll GET /jobs/tasks/{task_id} for status.
+    """
+    import asyncio
+
+    from app.services.scheduler_service import create_task
+
+    resume = await db.get(UserResume, data.resume_id)
+    if not resume or resume.user_id != 1:
+        raise HTTPException(status_code=404, detail="Resume not found")
+
+    # Build job_ids list
+    job_ids = data.job_ids
+    if job_ids is None:
+        # Get all active jobs for user
+        query = select(Job.id).join(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+        result = await db.execute(query)
+        job_ids = [r for r in result.scalars().all()]
+
+    # Check which jobs actually need analysis
+    jobs_to_analyze = await _get_jobs_needing_analysis(db, data.resume_id, job_ids)
+    if not jobs_to_analyze:
+        return JSONResponse(content={
+            "status": "completed",
+            "task_id": None,
+            "total": 0,
+            "reason": "all_up_to_date",
+            "message": "所有职位已是最新，无需分析",
+        })
+
+    # Create background task with actual count
+    task = create_task(source="manual")
+    task.total = len(jobs_to_analyze)
+
+    # Start analysis in background (pass job ids that need analysis)
+    asyncio.create_task(
+        run_match_analysis_task(task, data.resume_id, [j.id for j in jobs_to_analyze])
+    )
+
+    return JSONResponse(content={
+        "status": "pending",
+        "task_id": task.task_id,
+        "total": len(jobs_to_analyze),
+        "message": f"分析任务已启动，通过 GET /jobs/tasks/{task.task_id} 查询进度",
+    })
+
+
+@router.get("/tasks/{task_id}")
+async def get_match_analysis_task_status(task_id: str):
+    """Get status of a match analysis task.
+
+    Returns task progress (total/success/errors) and final results when completed.
+    """
+    from app.services.scheduler_service import get_task
+
+    task = get_task(task_id)
+    if not task:
+        return JSONResponse(
+            content={"status": "error", "reason": "task_not_found"},
+            status_code=404,
+        )
+
+    response = {
+        "task_id": task.task_id,
+        "status": task.status.value,
+        "total": task.total,
+        "success": task.success,
+        "errors": task.errors,
+        "reason": task.reason,
+    }
+
+    # Include details when completed
+    if task.status.value == "completed":
+        response["details"] = task.details
+
+    return JSONResponse(content=response)
 
 
 @router.get("/configs/{config_id}", response_model=JobSearchConfigResponse)

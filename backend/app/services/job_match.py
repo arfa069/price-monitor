@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 from typing import Iterable
 
@@ -103,17 +104,24 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
     user_result = await db.execute(select(User).where(User.id == 1))
     user = user_result.scalar_one_or_none()
 
-    # 4. Analyze each job serially
+    # 4. Analyze in batches of 3 (concurrent)
+    BATCH_SIZE = 3
     provider = get_llm_provider()
+    notify_jobs = []  #高分职位，汇总后发一条飞书
 
-    for job in jobs_to_analyze:
-        # Skip jobs with no meaningful info
-        if not any([job.title, job.company, job.salary, job.location, job.description]):
-            task.errors += 1
+    for i in range(0, len(jobs_to_analyze), BATCH_SIZE):
+        batch = jobs_to_analyze[i:i + BATCH_SIZE]
+
+        # 过滤无内容的 job
+        valid_jobs = [j for j in batch if any([j.title, j.company, j.salary, j.location, j.description])]
+
+        if not valid_jobs:
+            task.errors += len(batch)
             continue
 
-        try:
-            analysis = await provider.analyze_match(
+        # 并发分析
+        tasks = [
+            provider.analyze_match(
                 resume_text=resume.resume_text,
                 job_title=job.title or "",
                 job_company=job.company or "",
@@ -123,36 +131,39 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
                 job_education=job.education or "",
                 job_description=job.description or "",
             )
+            for job in valid_jobs
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # 逐个 upsert + commit
+        for job, result in zip(valid_jobs, results):
+            if isinstance(result, Exception):
+                task.errors += 1
+                continue
 
             await upsert_match_result(
                 db=db,
                 user_id=resume.user_id,
                 resume_id=resume.id,
                 job_id=job.id,
-                analysis=analysis,
+                analysis=result,
             )
             task.success += 1
+            await db.commit()
 
-            # Send notification for high scores
-            if should_notify_match(analysis.match_score) and user and user.feishu_webhook_url:
-                try:
-                    await send_feishu_notification(
-                        user.feishu_webhook_url,
-                        (
-                            f"职位匹配提醒\n"
-                            f"简历：{resume.name}\n"
-                            f"职位：{job.title or '-'} / {job.company or '-'}\n"
-                            f"分数：{analysis.match_score}\n"
-                            f"结论：{analysis.apply_recommendation}\n"
-                            f"原因：{analysis.match_reason}"
-                        ),
-                    )
-                except Exception:
-                    pass  # Notification failure should not fail the task
+            if should_notify_match(result.match_score):
+                notify_jobs.append((job, result))
 
+    # 汇总飞书通知（只发一条）
+    if notify_jobs and user and user.feishu_webhook_url:
+        try:
+            lines = [f"职位匹配提醒（共 {len(notify_jobs)} 个高分职位）", f"简历：{resume.name}"]
+            for job, analysis in sorted(notify_jobs, key=lambda x: x[1].match_score, reverse=True):
+                lines.append(f"• {job.title or '-'} / {job.company or '-'}（{analysis.match_score}分）")
+            lines.append(f"结论：{analysis.apply_recommendation}")
+            await send_feishu_notification(user.feishu_webhook_url, "\n".join(lines))
         except Exception:
-            task.errors += 1
-            continue
+            pass
 
     task.status = TaskStatus.COMPLETED
 
@@ -266,32 +277,53 @@ async def upsert_match_result(
     job_id: int,
     analysis: MatchAnalysis,
 ) -> tuple[MatchResult, bool]:
-    """Insert or update a single match result."""
+    """Insert or update a single match result using direct SQL."""
+    from sqlalchemy import text
 
+    # 直接用 SQL 查询是否存在
     result = await db.execute(
-        select(MatchResult).where(
-            MatchResult.resume_id == resume_id,
-            MatchResult.job_id == job_id,
-        )
+        text("SELECT id FROM match_results WHERE resume_id = :resume_id AND job_id = :job_id"),
+        {"resume_id": resume_id, "job_id": job_id}
     )
-    existing = result.scalar_one_or_none()
-    if existing:
-        existing.match_score = analysis.match_score
-        existing.match_reason = analysis.match_reason
-        existing.apply_recommendation = analysis.apply_recommendation
-        existing.llm_model_used = analysis.model_used
-        existing.updated_at = datetime.now(UTC)
-        return existing, False
+    existing_id = result.scalar_one_or_none()
 
-    match_result = MatchResult(
-        user_id=user_id,
-        resume_id=resume_id,
-        job_id=job_id,
-        match_score=analysis.match_score,
-        match_reason=analysis.match_reason,
-        apply_recommendation=analysis.apply_recommendation,
-        llm_model_used=analysis.model_used,
+    if existing_id:
+        # 更新
+        await db.execute(
+            text("""
+                UPDATE match_results
+                SET match_score = :score, match_reason = :reason,
+                    apply_recommendation = :rec, llm_model_used = :model,
+                    updated_at = NOW()
+                WHERE id = :id
+            """),
+            {
+                "score": analysis.match_score,
+                "reason": analysis.match_reason,
+                "rec": analysis.apply_recommendation,
+                "model": analysis.model_used,
+                "id": existing_id
+            }
+        )
+        return await db.get(MatchResult, existing_id), False
+
+    # 插入
+    result = await db.execute(
+        text("""
+            INSERT INTO match_results
+            (user_id, resume_id, job_id, match_score, match_reason, apply_recommendation, llm_model_used, created_at, updated_at)
+            VALUES (:user_id, :resume_id, :job_id, :score, :reason, :rec, :model, NOW(), NOW())
+            RETURNING id
+        """),
+        {
+            "user_id": user_id,
+            "resume_id": resume_id,
+            "job_id": job_id,
+            "score": analysis.match_score,
+            "reason": analysis.match_reason,
+            "rec": analysis.apply_recommendation,
+            "model": analysis.model_used,
+        }
     )
-    db.add(match_result)
-    await db.flush()
-    return match_result, True
+    new_id = result.scalar()
+    return await db.get(MatchResult, new_id), True

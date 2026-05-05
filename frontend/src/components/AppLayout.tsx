@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Layout, Menu, Button, Drawer } from 'antd'
+import { Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, message } from 'antd'
+import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
   TeamOutlined,
@@ -7,7 +8,11 @@ import {
   ScheduleOutlined,
   ReloadOutlined,
   BarsOutlined,
+  UserOutlined,
+  LogoutOutlined,
+  SettingOutlined,
 } from '@ant-design/icons'
+import { useAuth } from '@/contexts/AuthContext'
 
 const { Sider, Header, Footer } = Layout
 
@@ -25,6 +30,36 @@ export default function AppLayout({
   const [isMobile, setIsMobile] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { user, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    message.success('已退出登录')
+    navigate('/login', { replace: true })
+  }
+
+  const userMenuItems: MenuProps['items'] = [
+    {
+      key: 'profile',
+      icon: <UserOutlined />,
+      label: '个人信息',
+      disabled: true,
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: '账号设置',
+      disabled: true,
+    },
+    { type: 'divider' },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      danger: true,
+      onClick: handleLogout,
+    },
+  ]
 
   // Detect mobile viewport
   useEffect(() => {
@@ -139,13 +174,6 @@ export default function AppLayout({
           <>
             <Button
               type="text"
-              icon={<BarsOutlined />}
-              style={{ color: '#fff' }}
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? '展开菜单' : '收起菜单'}
-            />
-            <Button
-              type="text"
               icon={<ReloadOutlined />}
               style={{ color: '#fff' }}
               onClick={onRefresh}
@@ -153,6 +181,22 @@ export default function AppLayout({
             >
               刷新
             </Button>
+            <Divider type="vertical" style={{ margin: '0 8px', borderColor: 'rgba(255,255,255,0.2)' }} />
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
+              <Button type="text" style={{ color: '#fff', height: 'auto', padding: '4px 8px' }}>
+                <Space>
+                  <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#0ea5e9' }} />
+                  <span style={{ fontSize: 14 }}>{user?.username || '用户'}</span>
+                </Space>
+              </Button>
+            </Dropdown>
+            <Button
+              type="text"
+              icon={<BarsOutlined />}
+              style={{ color: '#fff' }}
+              onClick={() => setCollapsed(!collapsed)}
+              aria-label={collapsed ? '展开菜单' : '收起菜单'}
+            />
           </>
         )}
       </Header>

@@ -18,6 +18,7 @@ from sqlalchemy import select, text
 from app.config import settings
 from app.database import AsyncSessionLocal, engine
 from app.models.user import User
+from app.api.auth import router as auth_router
 from app.routers import alerts, config, crawl, products
 from app.routers.jobs import router as jobs_router
 
@@ -108,6 +109,7 @@ app.include_router(products.router)
 app.include_router(alerts.router)
 app.include_router(crawl.router)
 app.include_router(jobs_router)
+app.include_router(auth_router)
 
 # Scheduler status endpoint
 @app.get("/scheduler/status", tags=["scheduler"])

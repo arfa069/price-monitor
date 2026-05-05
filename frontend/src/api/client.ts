@@ -4,10 +4,24 @@ import axios, { AxiosError } from 'axios'
 type ErrorDetailItem = { msg?: string } | string
 type ErrorResponse = { detail?: ErrorDetailItem[] | string }
 
+const TOKEN_KEY = 'auth_token'
+
 const api = axios.create({
   baseURL: '/api',
   timeout: 300000,
 })
+
+// 请求拦截器：添加 Authorization header
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem(TOKEN_KEY)
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error),
+)
 
 const handleServerError = (status: number, msg: string) => {
   notification.error({

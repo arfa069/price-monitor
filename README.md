@@ -82,6 +82,87 @@ JD_COOKIE=...
 | POST | /jobs/crawl-now/{id} | Crawl single job config |
 | GET/PUT | /config/job-crawl-cron | Get/Update job crawl schedule |
 
+## 认证 API
+
+系统使用 JWT Token 进行身份验证。
+
+### 端点
+
+| Method | Path | Description | 认证 |
+|--------|------|-------------|------|
+| POST | /auth/register | 注册新用户 | 否 |
+| POST | /auth/login | 用户登录 | 否 |
+| POST | /auth/logout | 用户登出 | 是 |
+| GET | /auth/me | 获取当前用户信息 | 是 |
+
+### 注册
+
+```bash
+curl -X POST http://localhost:8000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "email": "test@example.com", "password": "123456"}'
+```
+
+**请求体：**
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| username | string | 是 | 用户名（3-50字符） |
+| email | string | 是 | 邮箱地址 |
+| password | string | 是 | 密码（至少6位） |
+
+**响应（201 Created）：**
+```json
+{
+  "id": 1,
+  "username": "testuser",
+  "email": "test@example.com",
+  "is_active": true,
+  "created_at": "2026-05-06T10:30:00Z"
+}
+```
+
+### 登录
+
+```bash
+curl -X POST http://localhost:8000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "testuser", "password": "123456"}'
+```
+
+**响应（200 OK）：**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer"
+}
+```
+
+### 访问受保护资源
+
+登录后，在请求头中携带 Token：
+
+```bash
+curl -X GET http://localhost:8000/auth/me \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+```
+
+### 错误码
+
+| 状态码 | 含义 | 说明 |
+|--------|------|------|
+| 201 | 注册成功 | 新用户创建成功 |
+| 200 | 登录/登出成功 | 操作成功 |
+| 400 | 用户名或邮箱已注册 | 注册时用户名或邮箱冲突 |
+| 401 | 认证失败 | 用户名/密码错误或 Token 过期 |
+| 422 | 参数验证失败 | 密码太短、邮箱格式错误等 |
+| 429 | 请求过于频繁 | 连续5次登录失败后锁定15分钟 |
+
+### 安全机制
+
+- **登录失败锁定**：连续5次登录失败后，账户将被锁定15分钟
+- **Token 有效期**：24小时
+- **密码加密**：使用 bcrypt 算法加密存储
+
 ## Development
 
 ```powershell

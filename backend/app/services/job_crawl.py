@@ -148,28 +148,58 @@ async def process_job_results(
                     existing.url = job_data["url"]
                 updated_count += 1
             else:
-                # Insert new job
-                new_job = Job(
-                    job_id=job_id,
-                    search_config_id=config_id,
-                    title=job_data.get("title") or "",
-                    company=job_data.get("company") or "",
-                    company_id=job_data.get("company_id") or "",
-                    salary=salary or "",
-                    salary_min=salary_min,
-                    salary_max=salary_max,
-                    location=job_data.get("location") or "",
-                    experience=job_data.get("experience") or "",
-                    education=job_data.get("education") or "",
-                    url=job_data.get("url") or "",
-                    first_seen_at=datetime.now(UTC),
-                    last_updated_at=datetime.now(UTC),
-                    is_active=True,
+                # Deduplicate: check if same (config_id, title, company, salary) already exists
+                title_val = job_data.get("title") or ""
+                company_val = job_data.get("company") or ""
+                salary_val = salary or ""
+
+                dup_result = await db.execute(
+                    select(Job).where(
+                        Job.search_config_id == config_id,
+                        Job.title == title_val,
+                        Job.company == company_val,
+                        Job.salary == salary_val,
+                    )
                 )
-                db.add(new_job)
-                await db.flush()  # Get the inserted job's id
-                new_count += 1
-                new_job_ids.append(new_job.id)
+                existing_dup = dup_result.scalar_one_or_none()
+
+                if existing_dup:
+                    # Update the existing record with new job_id and refresh timestamp
+                    existing_dup.job_id = job_id
+                    existing_dup.last_updated_at = datetime.now(UTC)
+                    existing_dup.is_active = True
+                    if job_data.get("location"):
+                        existing_dup.location = job_data["location"]
+                    if job_data.get("experience"):
+                        existing_dup.experience = job_data["experience"]
+                    if job_data.get("education"):
+                        existing_dup.education = job_data["education"]
+                    if job_data.get("url"):
+                        existing_dup.url = job_data["url"]
+                    updated_count += 1
+                else:
+                    # Insert new job
+                    new_job = Job(
+                        job_id=job_id,
+                        search_config_id=config_id,
+                        title=title_val,
+                        company=company_val,
+                        company_id=job_data.get("company_id") or "",
+                        salary=salary_val,
+                        salary_min=salary_min,
+                        salary_max=salary_max,
+                        location=job_data.get("location") or "",
+                        experience=job_data.get("experience") or "",
+                        education=job_data.get("education") or "",
+                        url=job_data.get("url") or "",
+                        first_seen_at=datetime.now(UTC),
+                        last_updated_at=datetime.now(UTC),
+                        is_active=True,
+                    )
+                    db.add(new_job)
+                    await db.flush()  # Get the inserted job's id
+                    new_count += 1
+                    new_job_ids.append(new_job.id)
 
         # Send notification for new jobs (after commit so config.notify_on_new is available)
         if new_count > 0 and config.notify_on_new:

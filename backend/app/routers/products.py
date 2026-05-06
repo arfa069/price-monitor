@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.price_history import PriceHistory
 from app.models.product import Product, ProductPlatformCron
+from app.models.user import User
+from app.routers.auth import get_current_user
 from app.schemas.price_history import PriceHistoryResponse
 from app.schemas.product import (
     BatchOperationResult,
@@ -65,13 +67,16 @@ def _normalize_product_url(url: str, platform: str) -> str:
 async def create_product(
     product_data: ProductCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Add a new product to track."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     # Normalize URL to extract and preserve skuId for Tmall
     normalized_url = _normalize_product_url(product_data.url, product_data.platform)
 
     product = Product(
-        user_id=1,  # Single user system
+        user_id=current_user.id,
         platform=product_data.platform,
         url=normalized_url,
         title=product_data.title,
@@ -91,9 +96,12 @@ async def list_products(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=15, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """List tracked products with pagination."""
-    base_query = select(Product).where(Product.user_id == 1)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+    base_query = select(Product).where(Product.user_id == current_user.id)
 
     if platform is not None:
         base_query = base_query.where(Product.platform == platform)
@@ -140,10 +148,15 @@ async def list_products(
 # ── Per-Platform Cron Management (must be before /{product_id} routes) ──
 
 @router.get("/cron-configs", response_model=list[ProductPlatformCronResponse])
-async def list_product_cron_configs(db: AsyncSession = Depends(get_db)):
+async def list_product_cron_configs(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """List all per-platform cron configs for product crawling."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(ProductPlatformCron).where(ProductPlatformCron.user_id == 1)
+        select(ProductPlatformCron).where(ProductPlatformCron.user_id == current_user.id)
     )
     return result.scalars().all()
 
@@ -153,8 +166,11 @@ async def create_product_cron_config(
     data: ProductPlatformCronCreate,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Create a new per-platform cron config for product crawling."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     if data.platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
@@ -162,14 +178,14 @@ async def create_product_cron_config(
     existing = await db.execute(
         select(ProductPlatformCron).where(
             ProductPlatformCron.platform == data.platform,
-            ProductPlatformCron.user_id == 1,
+            ProductPlatformCron.user_id == current_user.id,
         )
     )
     if existing.scalar_one_or_none():
         raise HTTPException(status_code=409, detail="Platform cron config already exists")
 
     config = ProductPlatformCron(
-        user_id=1,
+        user_id=current_user.id,
         platform=data.platform,
         cron_expression=data.cron_expression,
         cron_timezone=data.cron_timezone or "Asia/Shanghai",
@@ -193,15 +209,18 @@ async def delete_product_cron_config(
     platform: str,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Delete a per-platform cron config for product crawling."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     if platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
     result = await db.execute(
         select(ProductPlatformCron).where(
             ProductPlatformCron.platform == platform,
-            ProductPlatformCron.user_id == 1,
+            ProductPlatformCron.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -225,15 +244,18 @@ async def update_product_cron_config(
     data: ProductPlatformCronUpdate,
     request: Request,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update cron expression for a product platform."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     if platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
     result = await db.execute(
         select(ProductPlatformCron).where(
             ProductPlatformCron.platform == platform,
-            ProductPlatformCron.user_id == 1,
+            ProductPlatformCron.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -268,10 +290,16 @@ async def get_product_cron_schedules(request: Request):
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
-async def get_product(product_id: int, db: AsyncSession = Depends(get_db)):
+async def get_product(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Get product details."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == 1)
+        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
     )
     product = result.scalar_one_or_none()
 
@@ -286,10 +314,13 @@ async def update_product(
     product_id: int,
     product_data: ProductUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Update a product."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == 1)
+        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
     )
     product = result.scalar_one_or_none()
 
@@ -306,10 +337,16 @@ async def update_product(
 
 
 @router.delete("/{product_id}")
-async def delete_product(product_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_product(
+    product_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Delete a product and its related data."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == 1)
+        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
     )
     product = result.scalar_one_or_none()
 
@@ -340,8 +377,11 @@ def _detect_platform(url: str) -> str | None:
 async def batch_create_products(
     batch: ProductBatchCreate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Batch create products from URLs."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     results: list[BatchOperationResult] = []
 
     # Deduplicate input
@@ -355,9 +395,12 @@ async def batch_create_products(
         seen_urls.add(url)
         deduped_items.append(item)
 
-    # Check existing URLs in DB
+    # Check existing URLs in DB (filter by user_id to prevent cross-user URL enumeration)
     existing_urls_result = await db.execute(
-        select(Product.url).where(Product.url.in_(list(seen_urls)))
+        select(Product.url).where(
+            Product.url.in_(list(seen_urls)),
+            Product.user_id == current_user.id,
+        )
     )
     existing_urls = set(existing_urls_result.scalars().all())
 
@@ -381,7 +424,7 @@ async def batch_create_products(
             normalized_url = _normalize_product_url(url, platform)
 
             product = Product(
-                user_id=1,
+                user_id=current_user.id,
                 platform=platform,
                 url=normalized_url,
                 title=item.title,
@@ -403,12 +446,15 @@ async def batch_create_products(
 async def batch_delete_products(
     payload: ProductBatchDelete,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Batch delete products by IDs."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     results: list[BatchOperationResult] = []
 
     result = await db.execute(
-        select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
+        select(Product).where(Product.id.in_(payload.ids), Product.user_id == current_user.id)
     )
     product_map = {p.id: p for p in result.scalars().all()}
     found_ids = set(product_map.keys())
@@ -440,12 +486,15 @@ async def batch_delete_products(
 async def batch_update_products(
     payload: ProductBatchUpdate,
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Batch update products (active status)."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     results: list[BatchOperationResult] = []
 
     result = await db.execute(
-        select(Product).where(Product.id.in_(payload.ids), Product.user_id == 1)
+        select(Product).where(Product.id.in_(payload.ids), Product.user_id == current_user.id)
     )
     product_map = {p.id: p for p in result.scalars().all()}
     found_ids = set(product_map.keys())
@@ -476,15 +525,18 @@ async def batch_update_products(
 
 @router.get("/{product_id}/history", response_model=list[PriceHistoryResponse])
 async def get_product_history(
-    product_id: int,
+    _product_id: int,
     days: int = Query(default=30, ge=1, le=365),
     limit: int = Query(default=100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """Get price history for a product."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     # Verify product exists and belongs to user
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == 1)
+        select(Product).where(Product.id == _product_id, Product.user_id == current_user.id)
     )
     product = result.scalar_one_or_none()
 
@@ -496,7 +548,7 @@ async def get_product_history(
     result = await db.execute(
         select(PriceHistory)
         .where(
-            PriceHistory.product_id == product_id,
+            PriceHistory.product_id == _product_id,
             PriceHistory.scraped_at >= cutoff,
         )
         .order_by(desc(PriceHistory.scraped_at))

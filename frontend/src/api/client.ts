@@ -53,6 +53,11 @@ const formatDetail = (detail: ErrorResponse['detail'], fallback: string) => {
 api.interceptors.response.use(
   (res) => res,
   (err: AxiosError<ErrorResponse>) => {
+    if (err.response?.status === 401) {
+      localStorage.removeItem(TOKEN_KEY)
+      window.location.href = '/login'
+      return Promise.reject(err)
+    }
     if (err.response?.status && err.response.status >= 500) {
       handleServerError(err.response.status, err.message)
     } else if (err.response?.status && err.response.status >= 400) {

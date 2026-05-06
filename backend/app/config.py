@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     cdp_enabled: bool = False
     cdp_url: str = "http://127.0.0.1:9222"  # CDP endpoint for existing browser
 
+    # JWT settings
+    jwt_secret_key: str = "your-secret-key-change-in-production"
+
     # App settings
     app_name: str = "Price Monitor"
     debug: bool = False

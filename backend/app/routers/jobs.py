@@ -9,6 +9,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
 from app.models.job_match import MatchResult, UserResume
+from app.models.user import User
+from app.routers.auth import get_current_user
 from app.schemas.job import (
     JobConfigCronUpdate,
     JobListResponse,
@@ -68,10 +70,13 @@ def _serialize_match_result(item: MatchResult) -> MatchResultResponse:
 @router.get("/configs", response_model=list[JobSearchConfigResponse])
 async def list_configs(
     active: bool | None = None,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """List all job search configs."""
-    query = select(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+    query = select(JobSearchConfig).where(JobSearchConfig.user_id == current_user.id)
     if active is not None:
         query = query.where(JobSearchConfig.active == active)
     query = query.order_by(desc(JobSearchConfig.created_at))
@@ -83,11 +88,14 @@ async def list_configs(
 async def create_config(
     data: JobSearchConfigCreate,
     request: Request,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new job search config."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     config = JobSearchConfig(
-        user_id=1,
+        user_id=current_user.id,
         **data.model_dump(),
     )
     db.add(config)
@@ -104,16 +112,27 @@ async def create_config(
 
 
 @router.get("/resumes", response_model=list[UserResumeResponse])
-async def list_resumes(db: AsyncSession = Depends(get_db)):
+async def list_resumes(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(UserResume).where(UserResume.user_id == 1).order_by(desc(UserResume.created_at))
+        select(UserResume).where(UserResume.user_id == current_user.id).order_by(desc(UserResume.created_at))
     )
     return result.scalars().all()
 
 
 @router.post("/resumes", response_model=UserResumeResponse, status_code=201)
-async def create_resume(data: UserResumeCreate, db: AsyncSession = Depends(get_db)):
-    resume = UserResume(user_id=1, **data.model_dump())
+async def create_resume(
+    data: UserResumeCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+    resume = UserResume(user_id=current_user.id, **data.model_dump())
     db.add(resume)
     await db.commit()
     await db.refresh(resume)
@@ -124,10 +143,13 @@ async def create_resume(data: UserResumeCreate, db: AsyncSession = Depends(get_d
 async def update_resume(
     resume_id: int,
     data: UserResumeUpdate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == 1)
+        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == current_user.id)
     )
     resume = result.scalar_one_or_none()
     if not resume:
@@ -140,9 +162,15 @@ async def update_resume(
 
 
 @router.delete("/resumes/{resume_id}")
-async def delete_resume(resume_id: int, db: AsyncSession = Depends(get_db)):
+async def delete_resume(
+    resume_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == 1)
+        select(UserResume).where(UserResume.id == resume_id, UserResume.user_id == current_user.id)
     )
     resume = result.scalar_one_or_none()
     if not resume:
@@ -159,20 +187,23 @@ async def list_match_results(
     min_score: int | None = Query(default=None, ge=0, le=100),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     query = (
         select(MatchResult)
         .join(UserResume, MatchResult.resume_id == UserResume.id)
         .join(Job, MatchResult.job_id == Job.id)
-        .where(UserResume.user_id == 1)
+        .where(UserResume.user_id == current_user.id)
         .order_by(desc(MatchResult.match_score), desc(MatchResult.updated_at))
     )
     count_query = (
         select(func.count())
         .select_from(MatchResult)
         .join(UserResume, MatchResult.resume_id == UserResume.id)
-        .where(UserResume.user_id == 1)
+        .where(UserResume.user_id == current_user.id)
     )
 
     if resume_id is not None:
@@ -202,10 +233,13 @@ async def list_match_results(
 @router.post("/match-results/analyze", response_model=MatchAnalyzeResponse)
 async def trigger_match_analysis(
     data: MatchAnalyzeRequest,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     resume = await db.get(UserResume, data.resume_id)
-    if not resume or resume.user_id != 1:
+    if not resume or resume.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     result = await analyze_resume_vs_jobs(data.resume_id, data.job_ids)
@@ -221,6 +255,7 @@ async def trigger_match_analysis(
 @router.post("/match-results/analyze-async")
 async def trigger_match_analysis_async(
     data: MatchAnalyzeRequest,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Trigger async match analysis, returning task_id for polling.
@@ -232,15 +267,17 @@ async def trigger_match_analysis_async(
 
     from app.services.scheduler_service import create_task
 
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     resume = await db.get(UserResume, data.resume_id)
-    if not resume or resume.user_id != 1:
+    if not resume or resume.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Resume not found")
 
     # Build job_ids list
     job_ids = data.job_ids
     if job_ids is None:
         # Get all active jobs for user
-        query = select(Job.id).join(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+        query = select(Job.id).join(JobSearchConfig).where(JobSearchConfig.user_id == current_user.id)
         result = await db.execute(query)
         job_ids = [r for r in result.scalars().all()]
 
@@ -304,12 +341,18 @@ async def get_match_analysis_task_status(task_id: str):
 
 
 @router.get("/configs/{config_id}", response_model=JobSearchConfigResponse)
-async def get_config(config_id: int, db: AsyncSession = Depends(get_db)):
+async def get_config(
+    config_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Get a single config."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
-            JobSearchConfig.user_id == 1,
+            JobSearchConfig.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -323,13 +366,16 @@ async def update_config(
     config_id: int,
     data: JobSearchConfigUpdate,
     request: Request,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Update a config."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
-            JobSearchConfig.user_id == 1,
+            JobSearchConfig.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -359,13 +405,16 @@ async def update_config(
 async def delete_config(
     config_id: int,
     request: Request,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a config (cascades to jobs)."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
-            JobSearchConfig.user_id == 1,
+            JobSearchConfig.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -397,13 +446,16 @@ async def list_jobs(
     sort_order: str = Query(default="desc"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """List jobs with filtering and pagination."""
-    # Join with JobSearchConfig to filter by user_id=1
-    query = select(Job).join(JobSearchConfig).where(JobSearchConfig.user_id == 1)
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+    # Join with JobSearchConfig to filter by current_user
+    query = select(Job).join(JobSearchConfig).where(JobSearchConfig.user_id == current_user.id)
     count_query = select(func.count()).select_from(Job).join(JobSearchConfig).where(
-        JobSearchConfig.user_id == 1
+        JobSearchConfig.user_id == current_user.id
     )
 
     if search_config_id is not None:
@@ -464,12 +516,18 @@ async def list_jobs(
 
 
 @router.get("/{job_id_str}", response_model=JobResponse)
-async def get_job(job_id_str: str, db: AsyncSession = Depends(get_db)):
+async def get_job(
+    job_id_str: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Get a single job by boss job_id."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(Job).join(JobSearchConfig).where(
             Job.job_id == job_id_str,
-            JobSearchConfig.user_id == 1,
+            JobSearchConfig.user_id == current_user.id,
         )
     )
     job = result.scalar_one_or_none()
@@ -492,8 +550,26 @@ async def crawl_now():
 
 
 @router.post("/crawl-now/{config_id}")
-async def crawl_single(config_id: int):
+async def crawl_single(
+    config_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Trigger crawling a single config (async)."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    # 验证 config 归属
+    result = await db.execute(
+        select(JobSearchConfig).where(
+            JobSearchConfig.id == config_id,
+            JobSearchConfig.user_id == current_user.id
+        )
+    )
+    config = result.scalar_one_or_none()
+    if not config:
+        raise HTTPException(status_code=404, detail="配置不存在或无权访问")
+
     task = await crawl_single_config_background(config_id)
     return JSONResponse(content={
         "status": "pending",
@@ -555,16 +631,19 @@ async def update_config_cron(
     config_id: int,
     data: JobConfigCronUpdate,
     request: Request,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Update only the cron settings for a job search config.
 
     Null cron_expression disables scheduled crawling for this config.
     """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
-            JobSearchConfig.user_id == 1,
+            JobSearchConfig.user_id == current_user.id,
         )
     )
     config = result.scalar_one_or_none()
@@ -589,12 +668,27 @@ async def update_config_cron(
 
 
 @router.get("/scheduler/job-configs")
-async def get_job_config_schedules(request: Request):
+async def get_job_config_schedules(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Get next run times for all per-config job crawl schedules."""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="请先登录")
+
+    # 获取当前用户的 config_ids
+    result = await db.execute(
+        select(JobSearchConfig.id).where(JobSearchConfig.user_id == current_user.id)
+    )
+    user_config_ids = set(result.scalars().all())
+
     scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
     if not scheduler:
         return {"configs": []}
     schedules = scheduler.get_next_run_times()
+
+    # 只返回当前用户拥有的配置
     return {"configs": [
-        {"config_id": cid, **info} for cid, info in schedules.items()
+        {"config_id": cid, **info} for cid, info in schedules.items() if cid in user_config_ids
     ]}

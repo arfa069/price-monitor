@@ -167,44 +167,6 @@ async def get_current_user(
         422: {"description": "参数验证失败（密码太短、邮箱格式错误等）"},
     },
 )
-"""
-注册新用户
-
-创建一个新用户账户，包含用户名、邮箱和密码。
-
-### 请求
-- **Method**: `POST /auth/register`
-- **Content-Type**: `application/json`
-
-### 请求体
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| username | string | 是 | 用户名（3-50字符） |
-| email | string | 是 | 邮箱地址（有效格式） |
-| password | string | 是 | 密码（至少6位） |
-
-### 响应状态码
-- **201 Created**: 注册成功
-- **400 Bad Request**: 用户名或邮箱已被注册
-- **422 Unprocessable Entity**: 参数验证失败
-
-### 示例
-```bash
-curl -X POST http://localhost:8000/auth/register \\
-    -H "Content-Type: application/json" \\
-    -d '{"username": "testuser", "email": "test@example.com", "password": "123456"}'
-```
-
-### 响应示例（成功）
-```json
-{
-    "id": 1,
-    "username": "testuser",
-    "email": "test@example.com"
-}
-```
-"""
-
 
 async def register(
     user_data: UserRegisterRequest,
@@ -260,58 +222,6 @@ async def register(
         429: {"description": "请求过于频繁（连续失败5次后锁定15分钟）"},
     },
 )
-"""
-用户登录
-
-通过用户名（或邮箱）和密码进行身份验证，返回 JWT 访问令牌。
-
-### 请求
-- **Method**: `POST /auth/login`
-- **Content-Type**: `application/json` 或 `application/x-www-form-urlencoded`
-
-### 请求体（JSON 格式）
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| username | string | 是 | 用户名或邮箱 |
-| password | string | 是 | 密码 |
-
-### 请求体（表单格式，OAuth2 标准）
-| 字段 | 类型 | 必填 | 说明 |
-|------|------|------|------|
-| username | string | 是 | 用户名或邮箱 |
-| password | string | 是 | 密码 |
-
-### 响应状态码
-- **200 OK**: 登录成功，返回 JWT 令牌
-- **401 Unauthorized**: 用户名或密码错误
-- **429 Too Many Requests**: 账户已被锁定（连续5次失败后锁定15分钟）
-
-### 示例
-```bash
-# JSON 格式
-curl -X POST http://localhost:8000/auth/login \\
-    -H "Content-Type: application/json" \\
-    -d '{"username": "testuser", "password": "123456"}'
-
-# 表单格式（OAuth2 标准）
-curl -X POST http://localhost:8000/auth/login \\
-    -d "username=testuser&password=123456"
-```
-
-### 响应示例（成功）
-```json
-{
-    "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "token_type": "bearer"
-}
-```
-
-### 错误码
-| 状态码 | 含义 | 详情 |
-|--------|------|------|
-| 401 | 认证失败 | 用户名或密码错误 |
-| 429 | 账户锁定 | 连续5次失败后锁定15分钟 |
-"""
 
 
 async def login(
@@ -362,31 +272,6 @@ async def login(
     response_model=UserProfileResponse,
     summary="获取当前用户资料",
 )
-"""
-获取当前登录用户的资料
-
-需要提供有效的 JWT 访问令牌。
-
-### 请求
-- **Method**: `GET /auth/me`
-- **Headers**: `Authorization: Bearer <access_token>`
-
-### 示例
-```bash
-curl -X GET http://localhost:8000/auth/me \\
-    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
-
-### 响应示例
-```json
-{
-    "id": 1,
-    "username": "testuser",
-    "email": "test@example.com",
-    "created_at": "2026-05-06T10:30:00Z"
-}
-```
-"""
 
 
 async def get_me(current_user: User = Depends(get_current_user)):
@@ -404,21 +289,6 @@ async def get_me(current_user: User = Depends(get_current_user)):
     response_model=Token,
     summary="刷新访问令牌",
 )
-"""
-刷新访问令牌
-
-使用当前有效的令牌获取新的访问令牌。
-
-### 请求
-- **Method**: `POST /auth/refresh`
-- **Headers**: `Authorization: Bearer <access_token>`
-
-### 示例
-```bash
-curl -X POST http://localhost:8000/auth/refresh \\
-    -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-```
-"""
 
 
 async def refresh_token(current_user: User = Depends(get_current_user)):

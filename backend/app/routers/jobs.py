@@ -4,6 +4,7 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import asc, desc, func, select
+from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -196,6 +197,7 @@ async def list_match_results(
         select(MatchResult)
         .join(UserResume, MatchResult.resume_id == UserResume.id)
         .join(Job, MatchResult.job_id == Job.id)
+        .options(selectinload(MatchResult.job))
         .where(UserResume.user_id == current_user.id)
         .order_by(desc(MatchResult.match_score), desc(MatchResult.updated_at))
     )
@@ -219,8 +221,6 @@ async def list_match_results(
     total = (await db.execute(count_query)).scalar() or 0
     result = await db.execute(query.offset((page - 1) * page_size).limit(page_size))
     items = result.scalars().all()
-    for item in items:
-        await db.refresh(item, attribute_names=["job"])
 
     return MatchResultListResponse(
         items=[_serialize_match_result(item) for item in items],

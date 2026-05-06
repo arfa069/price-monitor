@@ -66,6 +66,7 @@ class Job(Base):
     __table_args__ = (
         Index("ix_jobs_job_id", "job_id"),
         Index("ix_jobs_search_config_id", "search_config_id"),
+        Index("ix_jobs_dedup", "search_config_id", "title", "company", "salary"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

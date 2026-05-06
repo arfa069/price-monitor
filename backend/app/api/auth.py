@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Token expiration time
-TOKEN_EXPIRE_HOURS = 24
+TOKEN_EXPIRE_HOURS = 1
 
 
 async def get_current_user(
@@ -190,7 +190,7 @@ async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
             -d '{"username": "testuser", "password": "123456"}'
     """
     # Check if account is locked
-    is_locked, minutes_remaining = is_account_locked(login_data.username)
+    is_locked, minutes_remaining = await is_account_locked(login_data.username)
     if is_locked:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -203,7 +203,7 @@ async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
 
     if user is None or not verify_password(login_data.password, user.hashed_password):
         # Record failed attempt
-        record_failed_login(login_data.username)
+        await record_failed_login(login_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="用户名或密码错误",
@@ -217,7 +217,7 @@ async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
         )
 
     # Clear failed login attempts
-    clear_login_attempts(login_data.username)
+    await clear_login_attempts(login_data.username)
 
     # Create access token
     access_token = create_access_token(

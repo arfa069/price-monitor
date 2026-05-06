@@ -29,12 +29,15 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     """Lifespan context manager for startup and shutdown events."""
     # Startup
+    app.state.redis_client = redis.from_url(settings.redis_url_with_password)
     await _start_scheduler(app)
     yield
     # Shutdown: stop scheduler gracefully
     await _stop_scheduler(app)
     # Close database engine connections
     await engine.dispose()
+    # Close Redis connection
+    await app.state.redis_client.aclose()
 
 
 async def _start_scheduler(app: FastAPI) -> None:
@@ -91,15 +94,13 @@ app = FastAPI(
 # CORS middleware - restrict origins in production
 _ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "http://localhost:5173",
     "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
 ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -167,10 +168,12 @@ async def health_check():
 
     # Redis check
     try:
-        redis_client = redis.from_url(settings.redis_url_with_password)
-        await redis_client.ping()
-        await redis_client.aclose()
-        checks["redis"] = "healthy"
+        redis_client = getattr(app.state, "redis_client", None)
+        if redis_client is not None:
+            await redis_client.ping()
+            checks["redis"] = "healthy"
+        else:
+            checks["redis"] = "unhealthy: redis client not initialized"
     except Exception as e:
         checks["redis"] = f"unhealthy: {e}"
 

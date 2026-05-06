@@ -2,21 +2,33 @@
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+import redis.asyncio as redis
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+
+from app.config import settings
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT settings
-SECRET_KEY = "your-secret-key-change-in-production"  # TODO: Load from settings
+SECRET_KEY = settings.jwt_secret_key
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Login attempt tracking (in-memory for simplicity; use Redis in production)
-_login_attempts: dict[str, list[datetime]] = {}
+# Login attempt tracking (Redis-backed)
 MAX_LOGIN_ATTEMPTS = 5
-LOCKOUT_DURATION_MINUTES = 15
+LOCKOUT_DURATION_SECONDS = 900  # 15 minutes
+
+_redis_client: redis.Redis | None = None
+
+
+async def _get_redis() -> redis.Redis:
+    """Get or create Redis client (connection reused)."""
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = redis.from_url(settings.redis_url_with_password)
+    return _redis_client
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -46,39 +58,37 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return None
 
 
-def is_account_locked(username: str) -> tuple[bool, int]:
+async def is_account_locked(username: str) -> tuple[bool, int]:
     """Check if account is locked due to too many failed attempts.
 
     Returns:
         tuple of (is_locked, minutes_remaining)
     """
-    now = datetime.now(UTC)
-    if username not in _login_attempts:
+    redis_client = await _get_redis()
+    key = f"login_attempts:{username}"
+    count = await redis_client.get(key)
+    if count is None:
         return False, 0
 
-    # Clean old attempts
-    _login_attempts[username] = [
-        t for t in _login_attempts[username]
-        if now - t < timedelta(minutes=LOCKOUT_DURATION_MINUTES)
-    ]
-
-    if len(_login_attempts[username]) >= MAX_LOGIN_ATTEMPTS:
-        # Calculate minutes remaining
-        oldest_attempt = min(_login_attempts[username])
-        remaining = LOCKOUT_DURATION_MINUTES - int((now - oldest_attempt).total_seconds() / 60)
-        return True, max(1, remaining)
+    count_int = int(count)
+    if count_int >= MAX_LOGIN_ATTEMPTS:
+        ttl = await redis_client.ttl(key)
+        minutes_remaining = max(1, int(ttl / 60)) if ttl > 0 else 1
+        return True, minutes_remaining
 
     return False, 0
 
 
-def record_failed_login(username: str) -> None:
+async def record_failed_login(username: str) -> None:
     """Record a failed login attempt."""
-    if username not in _login_attempts:
-        _login_attempts[username] = []
-    _login_attempts[username].append(datetime.now(UTC))
+    redis_client = await _get_redis()
+    key = f"login_attempts:{username}"
+    count = await redis_client.incr(key)
+    if count == 1:
+        await redis_client.expire(key, LOCKOUT_DURATION_SECONDS)
 
 
-def clear_login_attempts(username: str) -> None:
+async def clear_login_attempts(username: str) -> None:
     """Clear failed login attempts after successful login."""
-    if username in _login_attempts:
-        del _login_attempts[username]
+    redis_client = await _get_redis()
+    await redis_client.delete(f"login_attempts:{username}")

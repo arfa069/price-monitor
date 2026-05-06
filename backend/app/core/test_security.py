@@ -1,6 +1,8 @@
 """Unit tests for security utilities: password hashing and JWT tokens."""
 from datetime import timedelta
 
+import pytest
+
 from app.core.security import (
     clear_login_attempts,
     create_access_token,
@@ -10,6 +12,45 @@ from app.core.security import (
     record_failed_login,
     verify_password,
 )
+
+
+class FakeRedis:
+    """In-memory fake Redis for login-tracking tests."""
+
+    def __init__(self):
+        self._data: dict[str, int] = {}
+        self._ttl: dict[str, int] = {}
+
+    async def get(self, key: str):
+        val = self._data.get(key)
+        return str(val).encode() if val is not None else None
+
+    async def incr(self, key: str) -> int:
+        self._data[key] = self._data.get(key, 0) + 1
+        return self._data[key]
+
+    async def expire(self, key: str, seconds: int) -> None:
+        self._ttl[key] = seconds
+
+    async def delete(self, key: str) -> None:
+        self._data.pop(key, None)
+        self._ttl.pop(key, None)
+
+    async def ttl(self, key: str) -> int:
+        return self._ttl.get(key, -1)
+
+
+@pytest.fixture
+def fake_redis():
+    return FakeRedis()
+
+
+@pytest.fixture(autouse=True)
+def patch_redis(fake_redis, monkeypatch):
+    async def fake_get_redis():
+        return fake_redis
+    monkeypatch.setattr("app.core.security._get_redis", fake_get_redis)
+
 
 # --- Password Hashing Tests ---
 
@@ -120,57 +161,57 @@ def test_create_access_token_custom_expiry():
 # --- Login Attempt Tracking Tests ---
 
 
-def test_record_failed_login_tracks_attempt():
+async def test_record_failed_login_tracks_attempt():
     """record_failed_login adds attempt to tracking dict."""
     username = "testuser_record"
-    clear_login_attempts(username)  # Clean slate
+    await clear_login_attempts(username)  # Clean slate
 
-    record_failed_login(username)
+    await record_failed_login(username)
 
-    is_locked, _ = is_account_locked(username)
+    is_locked, _ = await is_account_locked(username)
     assert is_locked is False  # First attempt, not locked
 
 
-def test_is_account_locked_after_max_attempts():
+async def test_is_account_locked_after_max_attempts():
     """is_account_locked returns True after MAX_LOGIN_ATTEMPTS failures."""
     username = "testuser_locked"
-    clear_login_attempts(username)
+    await clear_login_attempts(username)
 
     # Simulate 5 failed attempts
     for _ in range(5):
-        record_failed_login(username)
+        await record_failed_login(username)
 
-    is_locked, minutes_remaining = is_account_locked(username)
+    is_locked, minutes_remaining = await is_account_locked(username)
 
     assert is_locked is True
     assert minutes_remaining >= 1
 
 
-def test_is_account_locked_false_before_max_attempts():
+async def test_is_account_locked_false_before_max_attempts():
     """is_account_locked returns False before MAX_LOGIN_ATTEMPTS."""
     username = "testuser_safe"
-    clear_login_attempts(username)
+    await clear_login_attempts(username)
 
     # Only 3 attempts
     for _ in range(3):
-        record_failed_login(username)
+        await record_failed_login(username)
 
-    is_locked, _ = is_account_locked(username)
+    is_locked, _ = await is_account_locked(username)
 
     assert is_locked is False
 
 
-def test_clear_login_attempts_resets_lockout():
+async def test_clear_login_attempts_resets_lockout():
     """clear_login_attempts removes all tracked attempts."""
     username = "testuser_clear"
-    clear_login_attempts(username)
+    await clear_login_attempts(username)
 
     # Add 5 failed attempts
     for _ in range(5):
-        record_failed_login(username)
+        await record_failed_login(username)
 
     # Clear attempts
-    clear_login_attempts(username)
+    await clear_login_attempts(username)
 
-    is_locked, _ = is_account_locked(username)
+    is_locked, _ = await is_account_locked(username)
     assert is_locked is False

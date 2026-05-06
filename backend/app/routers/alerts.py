@@ -1,6 +1,6 @@
 """Alerts API router."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,7 @@ from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 
-@router.post("", response_model=AlertResponse)
+@router.post("", response_model=AlertResponse, status_code=status.HTTP_201_CREATED)
 async def create_alert(
     alert_data: AlertCreate,
     db: AsyncSession = Depends(get_db),

@@ -1,6 +1,7 @@
 """Application configuration using Pydantic Settings."""
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _env_file = next(
@@ -65,6 +66,16 @@ class Settings(BaseSettings):
     anthropic_base_url: str = ""
     openai_api_key: str = ""
     ollama_base_url: str = "http://127.0.0.1:11434"
+
+    @field_validator("jwt_secret_key")
+    @classmethod
+    def _check_jwt_secret(cls, v: str) -> str:
+        if v in ("your-secret-key-change-in-production", "change-this-to-a-random-secret-key", ""):
+            raise ValueError(
+                "JWT_SECRET_KEY 不能使用默认值。请设置一个随机强密钥，"
+                "或在 .env 文件中配置 JWT_SECRET_KEY。"
+            )
+        return v
 
     @property
     def redis_url_with_password(self) -> str:

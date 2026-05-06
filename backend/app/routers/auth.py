@@ -2,6 +2,7 @@
 import logging
 from datetime import datetime, timedelta, timezone
 
+import redis.asyncio as redis
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import JWTError, jwt
@@ -10,9 +11,9 @@ from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +30,19 @@ SECRET_KEY = settings.jwt_secret_key  # 从环境变量读取
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# 登录失败追踪（内存存储，生产环境建议使用 Redis）
-_login_failures: dict[str, dict] = {}
+# 登录失败锁定配置
+MAX_LOGIN_FAILURES = 5
+LOCK_DURATION_SECONDS = 900  # 15 分钟
+
+_redis_client: redis.Redis | None = None
+
+
+async def _get_redis() -> redis.Redis:
+    """获取或创建 Redis 客户端（复用连接）。"""
+    global _redis_client
+    if _redis_client is None:
+        _redis_client = redis.from_url(settings.redis_url_with_password)
+    return _redis_client
 
 
 # ============ 请求/响应模型 ============
@@ -98,34 +110,29 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-def _is_account_locked(identifier: str) -> bool:
+async def _is_account_locked(identifier: str) -> bool:
     """检查账户是否因连续登录失败而被锁定。"""
-    if identifier not in _login_failures:
+    redis_client = await _get_redis()
+    count = await redis_client.get(f"login_fail:{identifier}")
+    if count is None:
         return False
-    record = _login_failures[identifier]
-    if record["failures"] < 5:
-        return False
-    # 锁定15分钟后解锁
-    lock_duration = timedelta(minutes=15)
-    if datetime.now(timezone.utc) - record["last_failure"] < lock_duration:
-        return True
-    # 锁定已过期，重置
-    del _login_failures[identifier]
-    return False
+    return int(count) >= MAX_LOGIN_FAILURES
 
 
-def _record_login_failure(identifier: str) -> None:
-    """记录登录失败次数。"""
-    now = datetime.now(timezone.utc)
-    if identifier not in _login_failures:
-        _login_failures[identifier] = {"failures": 0, "last_failure": now}
-    _login_failures[identifier]["failures"] += 1
-    _login_failures[identifier]["last_failure"] = now
+async def _record_login_failure(identifier: str) -> int:
+    """记录登录失败次数，返回剩余可尝试次数。"""
+    redis_client = await _get_redis()
+    key = f"login_fail:{identifier}"
+    count = await redis_client.incr(key)
+    if count == 1:
+        await redis_client.expire(key, LOCK_DURATION_SECONDS)
+    return max(0, MAX_LOGIN_FAILURES - count)
 
 
-def _reset_login_failures(identifier: str) -> None:
+async def _reset_login_failures(identifier: str) -> None:
     """重置登录失败计数。"""
-    _login_failures.pop(identifier, None)
+    redis_client = await _get_redis()
+    await redis_client.delete(f"login_fail:{identifier}")
 
 
 async def get_current_user(
@@ -232,7 +239,7 @@ async def login(
     identifier = form_data.username
 
     # 检查账户是否被锁定
-    if _is_account_locked(identifier):
+    if await _is_account_locked(identifier):
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="账户已锁定：连续登录失败5次，请15分钟后再试",
@@ -247,8 +254,7 @@ async def login(
     user = result.scalar_one_or_none()
 
     if not user or not verify_password(form_data.password, user.hashed_password):
-        _record_login_failure(identifier)
-        remaining = 5 - _login_failures[identifier]["failures"]
+        remaining = await _record_login_failure(identifier)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"用户名或密码错误（剩余尝试次数: {remaining}）",
@@ -256,7 +262,7 @@ async def login(
         )
 
     # 登录成功，重置失败计数
-    _reset_login_failures(identifier)
+    await _reset_login_failures(identifier)
 
     # 创建访问令牌
     access_token = create_access_token(

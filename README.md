@@ -56,9 +56,11 @@ JD_COOKIE=...
 
 ## API Endpoints
 
+> **认证说明**：除 `/auth/register` 和 `/auth/login` 外，所有 API 调用都需要在请求头中携带 `Authorization: Bearer <token>`。未带 token 的请求返回 401。
+
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | /health | Health check (database + Redis + scheduler) |
+| GET | /health | Health check (database + Redis + scheduler) | 否 |
 | GET | /config | Get current configuration |
 | POST | /config | Create or update full configuration |
 | PATCH | /config | Partial update configuration (cron/tz/hours) |
@@ -162,6 +164,8 @@ curl -X GET http://localhost:8000/auth/me \
 - **登录失败锁定**：连续5次登录失败后，账户将被锁定15分钟
 - **Token 有效期**：24小时
 - **密码加密**：使用 bcrypt 算法加密存储
+- **数据隔离**：所有数据按 `user_id` 隔离，用户只能访问自己的数据
+- **强制认证**：除 `/auth/register` 和 `/auth/login` 外，所有接口均需认证
 
 ## Development
 

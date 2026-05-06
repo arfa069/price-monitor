@@ -2,7 +2,9 @@
 
 ## Overview
 
-A single-user e-commerce price monitoring system that tracks product prices across Taobao, JD, Amazon, and Boss Zhipin job searches. When price drops are detected, notifications are sent via Feishu Webhook.
+A multi-user e-commerce price monitoring system that tracks product prices across Taobao, JD, Amazon, and Boss Zhipin job searches. When price drops are detected, notifications are sent via Feishu Webhook.
+
+All API endpoints (except `/auth/register` and `/auth/login`) require JWT authentication. Data is isolated per user — each user can only access their own products, alerts, jobs, and configurations.
 
 ## Tech Stack
 
@@ -92,6 +94,8 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 - Proxy support for rotating IPs
 
 ## Data Model
+
+> **数据隔离**：所有包含 `user_id` 字段的表（users 除外）均按 `user_id` 隔离查询。用户只能操作属于自己的数据。
 
 ### users
 | Column | Type | Description |

@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-此文件为 Claude Code (claude.ai/code) 提供代码库操作指南。
+此文件为提供代码库操作指南。
 
 # 执行任何命令前必读⚠️ 
 在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 X 节的"常用命令"，

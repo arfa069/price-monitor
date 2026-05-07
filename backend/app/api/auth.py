@@ -71,6 +71,7 @@ from app.models.session import Session
 from app.models.user import User
 from app.schemas.auth import (
     BaseModel,
+    LoginLogResponse,
     MessageResponse,
     PasswordChange,
     ProfileUpdate,
@@ -411,3 +412,25 @@ async def delete_other_sessions_endpoint(
     """Logout from all other devices."""
     count = await delete_other_sessions(session_id, current_user.id, db)
     return MessageResponse(message=f"已登出 {count} 个其他设备")
+
+
+@router.get("/me/login-history", response_model=list[LoginLogResponse])
+async def get_my_login_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get login history for current user.
+
+    Returns list of recent login records.
+
+    Example:
+        curl -X GET http://localhost:8000/auth/me/login-history \\
+            -H "Authorization: Bearer <token>"
+    """
+    result = await db.execute(
+        select(LoginLog)
+        .where(LoginLog.user_id == current_user.id)
+        .order_by(LoginLog.created_at.desc())
+        .limit(50)
+    )
+    return result.scalars().all()

@@ -57,3 +57,12 @@ class PasswordChange(BaseModel):
 class MessageResponse(BaseModel):
     """Generic message response."""
     message: str
+
+
+class LoginLogResponse(BaseModel):
+    """Response schema for login history."""
+    id: int
+    ip_address: str | None
+    user_agent: str | None
+    created_at: datetime
+    model_config = {"from_attributes": True}

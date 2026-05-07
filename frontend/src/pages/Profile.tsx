@@ -47,7 +47,7 @@ export default function ProfilePage() {
           <Descriptions.Item label="用户名">{user.username}</Descriptions.Item>
           <Descriptions.Item label="邮箱">{user.email}</Descriptions.Item>
           <Descriptions.Item label="角色">{user.role === 'user' ? '普通用户' : user.role === 'admin' ? '管理员' : '系统管理员'}</Descriptions.Item>
-          <Descriptions.Item label="注册时间">{new Date(user.created_at).toLocaleString()}</Descriptions.Item>
+          <Descriptions.Item label="注册时间">{user.created_at ? new Date(user.created_at).toLocaleString() : '-'}</Descriptions.Item>
         </Descriptions>
       </Card>
 

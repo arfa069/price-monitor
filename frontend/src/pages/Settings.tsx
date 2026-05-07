@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, Form, Input, InputNumber, Button, message } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
-import { authApi } from '@/api/auth'
+import { configApi } from '@/api/config'
 
 export default function SettingsPage() {
   const { user } = useAuth()
@@ -12,7 +12,7 @@ export default function SettingsPage() {
   const handleSubmit = async (values: { feishu_webhook_url?: string; data_retention_days?: number }) => {
     setLoading(true)
     try {
-      await authApi.updateConfig(values)
+      await configApi.update(values)
       message.success('设置已保存')
       window.location.reload()
     } catch (error: unknown) {

@@ -33,14 +33,14 @@ export default function LoginPage() {
       const { access_token } = response.data
 
       // 先保存 token，让后续请求能携带 token
-      login(access_token, { id: 0, username: '', email: '' })
+      login(access_token, { id: 0, username: '', email: '', role: 'user' as const })
 
       // 获取用户信息
       const meResponse = await authApi.getMe()
       const user = meResponse.data
 
       // 更新用户信息
-      login(access_token, { id: user.id, username: user.username, email: user.email })
+      login(access_token, { id: user.id, username: user.username, email: user.email, role: user.role || 'user' })
 
       message.success(`欢迎回来，${user.username}！`)
 

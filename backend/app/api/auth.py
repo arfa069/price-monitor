@@ -60,6 +60,8 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
     MessageResponse,
+    PasswordChange,
+    ProfileUpdate,
     TokenResponse,
     UserLogin,
     UserRegister,
@@ -227,3 +229,110 @@ async def get_me(current_user: User = Depends(get_current_user)):
             -H "Authorization: Bearer <token>"
     """
     return current_user
+
+
+@router.patch("/me", response_model=UserResponse, tags=["auth"])
+async def update_me(
+    update_data: ProfileUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update current user's profile (username, email).
+
+    Args:
+        update_data: Profile update data (username, email)
+        current_user: Authenticated user (from JWT token)
+        db: Database session
+
+    Returns:
+        UserResponse: Updated user profile
+
+    Raises:
+        HTTPException 400: Username or email already exists
+
+    Example:
+        curl -X PATCH http://localhost:8000/auth/me \\
+            -H "Authorization: Bearer <token>" \\
+            -H "Content-Type: application/json" \\
+            -d '{"username": "new_username", "email": "new@example.com"}'
+    """
+    # Check username conflict (only if username is being changed)
+    if update_data.username and update_data.username != current_user.username:
+        result = await db.execute(
+            select(User).where(
+                User.username == update_data.username,
+                User.id != current_user.id,
+                User.deleted_at.is_(None),
+            )
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="用户名已存在",
+            )
+
+    # Check email conflict (only if email is being changed)
+    if update_data.email and update_data.email != current_user.email:
+        result = await db.execute(
+            select(User).where(
+                User.email == update_data.email,
+                User.id != current_user.id,
+                User.deleted_at.is_(None),
+            )
+        )
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邮箱已存在",
+            )
+
+    # Update fields
+    if update_data.username:
+        current_user.username = update_data.username
+    if update_data.email:
+        current_user.email = update_data.email
+
+    await db.commit()
+    await db.refresh(current_user)
+    logger.info(f"Profile updated for user: {current_user.username}")
+    return current_user
+
+
+@router.post("/me/password", response_model=MessageResponse, tags=["auth"])
+async def change_password(
+    password_data: PasswordChange,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Change current user's password.
+
+    Args:
+        password_data: Password change data (old_password, new_password)
+        current_user: Authenticated user (from JWT token)
+        db: Database session
+
+    Returns:
+        MessageResponse: Success message
+
+    Raises:
+        HTTPException 400: Old password is incorrect
+
+    Example:
+        curl -X POST http://localhost:8000/auth/me/password \\
+            -H "Authorization: Bearer <token>" \\
+            -H "Content-Type: application/json" \\
+            -d '{"old_password": "old_password", "new_password": "new_secure_password"}'
+    """
+    # Verify old password
+    if not verify_password(password_data.old_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="原密码错误",
+        )
+
+    # Update password
+    current_user.hashed_password = get_password_hash(password_data.new_password)
+    await db.commit()
+
+    logger.info(f"Password changed for user: {current_user.username}")
+    return MessageResponse(message="密码修改成功")

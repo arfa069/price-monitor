@@ -408,6 +408,277 @@ async def test_me_with_expired_token_returns_401(mock_get_db):
     assert response.status_code == 401
 
 
+# --- PATCH /auth/me Tests ---
+
+
+@pytest.mark.asyncio
+async def test_update_me_with_valid_data_returns_200(test_user, mock_get_db):
+    """PATCH /auth/me with valid data returns 200 and updated user info."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash(test_user["password"])
+    mock_user.role = "user"
+
+    # Mock results for execute calls: get_current_user, username check, email check
+    mock_result_user = MagicMock()
+    mock_result_user.scalar_one_or_none.return_value = mock_user
+
+    mock_result_none = MagicMock()
+    mock_result_none.scalar_one_or_none.return_value = None
+
+    mock_get_db.execute.side_effect = [mock_result_user, mock_result_none, mock_result_none]
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "username": "new_username",
+                "email": "new@example.com",
+            },
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["username"] == "new_username"
+    assert data["email"] == "new@example.com"
+
+
+@pytest.mark.asyncio
+async def test_update_me_with_duplicate_username_returns_400(test_user, mock_get_db):
+    """PATCH /auth/me with existing username returns 400."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash(test_user["password"])
+    mock_user.role = "user"
+
+    # Mock results: get_current_user returns user, username check returns duplicate
+    mock_result_user = MagicMock()
+    mock_result_user.scalar_one_or_none.return_value = mock_user
+
+    mock_result_duplicate = MagicMock()
+    existing_user = MagicMock()
+    existing_user.username = "existing_user"
+    mock_result_duplicate.scalar_one_or_none.return_value = existing_user
+
+    mock_get_db.execute.side_effect = [mock_result_user, mock_result_duplicate]
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"username": "existing_user"},
+        )
+
+    assert response.status_code == 400
+    assert "用户名" in response.json().get("detail", "")
+
+
+@pytest.mark.asyncio
+async def test_update_me_with_duplicate_email_returns_400(test_user, mock_get_db):
+    """PATCH /auth/me with existing email returns 400."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash(test_user["password"])
+    mock_user.role = "user"
+    mock_user.deleted_at = None
+
+    # Mock results: get_current_user returns user, email check returns duplicate
+    # Note: username check is SKIPPED because update_data.username is None
+    mock_result_user = MagicMock()
+    mock_result_user.scalar_one_or_none.return_value = mock_user
+
+    mock_result_duplicate = MagicMock()
+    duplicate_user = MagicMock()
+    duplicate_user.id = 999  # Different from mock_user.id = 1
+    duplicate_user.username = "some_other_user"
+    duplicate_user.deleted_at = None
+    mock_result_duplicate.scalar_one_or_none.return_value = duplicate_user
+
+    # Only 2 execute calls: 1) get_current_user, 2) email check (username check skipped)
+    mock_get_db.execute.side_effect = [mock_result_user, mock_result_duplicate]
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"email": "existing@example.com"},
+        )
+
+    assert response.status_code == 400
+    assert "邮箱" in response.json().get("detail", "")
+
+
+@pytest.mark.asyncio
+async def test_update_me_with_same_username_returns_200(test_user, mock_get_db):
+    """PATCH /auth/me with same username as current user returns 200 (no conflict)."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash(test_user["password"])
+    mock_user.role = "user"
+
+    # Mock results: get_current_user returns user, username check returns None (same username OK)
+    mock_result_user = MagicMock()
+    mock_result_user.scalar_one_or_none.return_value = mock_user
+
+    mock_result_none = MagicMock()
+    mock_result_none.scalar_one_or_none.return_value = None
+
+    mock_get_db.execute.side_effect = [mock_result_user, mock_result_none]
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.patch(
+            "/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"username": test_user["username"]},
+        )
+
+    assert response.status_code == 200
+
+
+# --- POST /auth/me/password Tests ---
+
+
+@pytest.mark.asyncio
+async def test_change_password_with_wrong_old_password_returns_400(test_user, mock_get_db):
+    """POST /auth/me/password with wrong old password returns 400."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash("correct_password")
+    mock_user.role = "user"
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_user
+    mock_get_db.execute.return_value = mock_result
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/auth/me/password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "old_password": "wrong_password",
+                "new_password": "new_secure_password",
+            },
+        )
+
+    assert response.status_code == 400
+    assert "原密码" in response.json().get("detail", "")
+
+
+@pytest.mark.asyncio
+async def test_change_password_with_valid_data_returns_200(test_user, mock_get_db):
+    """POST /auth/me/password with valid data returns 200."""
+    from datetime import UTC, datetime
+
+    from app.core.security import create_access_token, get_password_hash
+
+    token = create_access_token({"sub": "1", "username": test_user["username"]})
+
+    # Mock current user
+    mock_user = MagicMock()
+    mock_user.id = 1
+    mock_user.username = test_user["username"]
+    mock_user.email = test_user["email"]
+    mock_user.is_active = True
+    mock_user.created_at = datetime.now(UTC)
+    mock_user.hashed_password = get_password_hash(test_user["password"])
+    mock_user.role = "user"
+
+    mock_result = MagicMock()
+    mock_result.scalar_one_or_none.return_value = mock_user
+    mock_get_db.execute.return_value = mock_result
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/auth/me/password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "old_password": test_user["password"],
+                "new_password": "new_secure_password",
+            },
+        )
+
+    assert response.status_code == 200
+    assert "成功" in response.json().get("message", "")
+
+
+@pytest.mark.asyncio
+async def test_change_password_without_token_returns_401_or_422():
+    """POST /auth/me/password without token returns 401 or 422."""
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/auth/me/password",
+            json={
+                "old_password": "old",
+                "new_password": "new_password",
+            },
+        )
+
+    assert response.status_code in [401, 422]
+
+
 # --- Health Check for Auth Endpoints ---
 
 

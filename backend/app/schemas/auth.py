@@ -42,6 +42,18 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
 
 
+class ProfileUpdate(BaseModel):
+    """Schema for updating current user's profile (username, email only)."""
+    username: str | None = Field(default=None, min_length=3, max_length=50)
+    email: EmailStr | None = None
+
+
+class PasswordChange(BaseModel):
+    """Schema for password change."""
+    old_password: str
+    new_password: str = Field(..., min_length=6, max_length=100)
+
+
 class MessageResponse(BaseModel):
     """Generic message response."""
     message: str

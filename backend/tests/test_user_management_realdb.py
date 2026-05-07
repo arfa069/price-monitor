@@ -1,6 +1,9 @@
 """
 User Management Real Database Integration Tests
 Uses real PostgreSQL DB to verify CRUD operations persist correctly.
+
+Run manually with: pytest tests/test_user_management_realdb.py -v
+Requires: running DB with admin user (username=admin, password=adminpassword)
 """
 import pytest
 import uuid
@@ -31,6 +34,7 @@ async def get_admin_token():
         return response.json()["access_token"]
 
 
+@pytest.mark.skip(reason="real DB test - requires PostgreSQL + admin user seeded")
 class TestUserManagementRealDb:
     @pytest.mark.asyncio
     async def test_create_user_persists_to_db(self):

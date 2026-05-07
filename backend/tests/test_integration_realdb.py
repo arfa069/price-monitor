@@ -37,6 +37,7 @@ async def run_in_session(fn):
 # Config API Tests
 # =============================================================================
 
+@pytest.mark.skip(reason="real DB test - requires PostgreSQL with seeded data")
 class TestConfigApiRealDb:
     """用户配置 API 真实数据库测试"""
 
@@ -87,6 +88,7 @@ class TestConfigApiRealDb:
 # Product CRUD API Tests
 # =============================================================================
 
+@pytest.mark.skip(reason="real DB test - requires PostgreSQL with seeded data")
 class TestProductCrudApiRealDb:
     """商品 CRUD API 真实数据库测试"""
 
@@ -214,6 +216,7 @@ class TestProductCrudApiRealDb:
 # Pagination API Tests
 # =============================================================================
 
+@pytest.mark.skip(reason="real DB test - requires PostgreSQL with seeded data")
 class TestPaginationApiRealDb:
     """分页查询 API 测试"""
 
@@ -261,6 +264,7 @@ class TestPaginationApiRealDb:
 # Batch Operations Tests
 # =============================================================================
 
+@pytest.mark.skip(reason="real DB test - requires PostgreSQL with seeded data")
 class TestBatchOperationsRealDb:
     """批量操作真实数据库"""
 

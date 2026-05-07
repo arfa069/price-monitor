@@ -1,5 +1,8 @@
 """User configuration model."""
-from sqlalchemy import Boolean, Column, Integer, String
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
 
 from app.models.base import Base, TimestampMixin
 
@@ -13,6 +16,8 @@ class User(Base, TimestampMixin):
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
+    role = Column(String(20), nullable=False, default="user")
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
 
     # Legacy fields (for backward compatibility)
     feishu_webhook_url = Column(String, nullable=True)
@@ -20,5 +25,15 @@ class User(Base, TimestampMixin):
 
     @property
     def is_authenticated(self) -> bool:
-        """Return True if user is active."""
-        return self.is_active
+        """Return True if user is active and not deleted."""
+        return self.is_active and self.deleted_at is None
+
+    @property
+    def is_admin(self) -> bool:
+        """Return True if user has admin role."""
+        return self.role in ("admin", "super_admin")
+
+    @property
+    def is_deleted(self) -> bool:
+        """Return True if user is soft deleted."""
+        return self.deleted_at is not None

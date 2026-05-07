@@ -43,14 +43,24 @@ export default function AppLayout({
       key: 'profile',
       icon: <UserOutlined />,
       label: '个人信息',
-      disabled: true,
+      onClick: () => navigate('/profile'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
       label: '账号设置',
-      disabled: true,
+      onClick: () => navigate('/settings'),
     },
+    ...(user?.role === 'admin' || user?.role === 'super_admin'
+      ? [
+          {
+            key: 'admin/users',
+            icon: <TeamOutlined />,
+            label: '用户管理',
+            onClick: () => navigate('/admin/users'),
+          },
+        ]
+      : []),
     { type: 'divider' },
     {
       key: 'logout',

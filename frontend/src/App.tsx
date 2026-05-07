@@ -7,6 +7,8 @@ import AppLayout from '@/components/AppLayout'
 import JobsPage from '@/pages/JobsPage'
 import ProductsPage from '@/pages/ProductsPage'
 import ScheduleConfigPage from '@/pages/ScheduleConfigPage'
+import ProfilePage from '@/pages/Profile'
+import SettingsPage from '@/pages/Settings'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 
@@ -32,6 +34,31 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   if (!isAuthenticated) {
     // 重定向到登录页，并记录当前位置以便登录后返回
     return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
+  return <>{children}</>
+}
+
+// 管理员路由 - 需要 admin 或 super_admin 角色
+function AdminRoute({ children }: { children: ReactNode }) {
+  const { user, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div style={{
+        height: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#f1f5f9'
+      }}>
+        <Spin size="large" />
+      </div>
+    )
+  }
+
+  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+    return <Navigate to="/jobs" replace />
   }
 
   return <>{children}</>
@@ -132,6 +159,36 @@ function AppRoutes() {
                     <ScheduleConfigPage />
                   </AppLayout>
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <AppLayout onRefresh={handleRefresh}>
+                    <ProfilePage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <AppLayout onRefresh={handleRefresh}>
+                    <SettingsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <AdminRoute>
+                  <AppLayout onRefresh={handleRefresh}>
+                    <div>用户管理（待实现）</div>
+                  </AppLayout>
+                </AdminRoute>
               }
             />
 

@@ -2,9 +2,11 @@ export interface User {
   id: number
   username: string
   email: string
-  role: string
+  role: 'user' | 'admin' | 'super_admin'
   is_active?: boolean
   created_at?: string
+  feishu_webhook_url?: string
+  data_retention_days?: number
 }
 
 export interface Product {

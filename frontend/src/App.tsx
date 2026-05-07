@@ -1,6 +1,6 @@
 import { useCallback, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { App as AntdApp, theme, Spin } from 'antd'
+import { ConfigProvider, theme, Spin } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
@@ -97,7 +97,8 @@ function AppRoutes() {
   }, [queryClient])
 
   return (
-      <AntdApp
+    <>
+      <ConfigProvider
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {
@@ -185,7 +186,7 @@ function AppRoutes() {
               element={
                 <AdminRoute>
                   <AppLayout onRefresh={handleRefresh}>
-                    <div>用户管理（待实现）</div>
+                    <AdminUsersPage />
                   </AppLayout>
                 </AdminRoute>
               }
@@ -196,7 +197,8 @@ function AppRoutes() {
             <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>
         </BrowserRouter>
-      </AntdApp>
+      </ConfigProvider>
+    </>
   )
 }
 

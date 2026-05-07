@@ -1,28 +1,61 @@
-# Repository Guidelines
+# CLAUDE.md
 
-## Project Structure & Module Organization
-`backend/app/` contains the FastAPI backend: `main.py` for app startup, `routers/` for HTTP endpoints, `services/` for crawl and notification logic, `models/` and `schemas/` for persistence and validation, and `platforms/` for Taobao/JD/Amazon/Boss adapters. `backend/alembic/` and `backend/alembic.ini` hold database migrations. `frontend/` is the Vite + React client, with source under `frontend/src/`. Tests live in `backend/tests/`; screenshots and manual QA artifacts are stored under `backend/tests/screenshots/` and `backend/tests/*.md`.
+此文件为 Claude Code (claude.ai/code) 提供代码库操作指南。
 
-## Build, Test, and Development Commands
-- `cd backend && uvicorn app.main:app` starts the backend locally. On Windows, do not use `--reload`.
-- `cd backend && alembic upgrade head` applies database migrations.
-- `cd backend && pytest` runs the Python test suite from `backend/tests/`.
-- `cd backend && ruff check .` runs Python linting.
-- `cd frontend && npm run dev` starts the UI on port `3000`.
-- `cd frontend && npm run build` type-checks and builds the frontend.
-- `cd frontend && npm run lint` runs ESLint.
+# 执行任何命令前必读⚠️ 
+在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 X 节的"常用命令"，
+确认正确的执行方式。默认不在 PATH 中的工具，必须通过 `powershell.exe` 调用。
 
-## Coding Style & Naming Conventions
-Use Python 3.11+, 4-space indentation, and keep imports sorted for Ruff (`E`, `F`, `I`, `N`, `W`, `UP`). Prefer explicit async/await code and keep business logic in services rather than routers. Name backend files by domain, such as `crawl.py`, `notification.py`, or `jd.py`. In the frontend, use TypeScript, PascalCase for components, camelCase for hooks and helpers, and colocate feature code under `frontend/src/components/` or `frontend/src/pages/`.
+## 1.始终加载Karpathy编码准则⚠️ 
+Always load the `karpathy-guidelines` skill when coding.
 
-## Testing Guidelines
-Pytest is the standard test framework. Tests follow `test_*.py` naming and belong in `backend/tests/`. Prefer focused unit tests for adapters and services, plus API tests for endpoints and pagination. When changing crawl, scheduler, or notification behavior, add coverage for failure and edge cases, not just happy paths. Use `cd backend && coverage run -m pytest` and `cd backend && coverage report` when validating broader changes.
+## 2.项目概览
 
-## Commit & Pull Request Guidelines
-Recent commits use short Conventional Commit style messages such as `feat(scope): ...`, `fix(scope): ...`, and occasional verification tags like `[verified]`. Keep messages imperative and scoped when practical. Pull requests should describe the change, list verification performed, and include screenshots for visible frontend updates. Link related issues or notes when applicable.
+淘宝、京东、亚马逊价格监控系统 + Boss 直聘职位搜索监控。通过 Playwright 抓取商品页面/职位信息，记录价格历史，降价时通过飞书 Webhook 发送通知。
+**技术栈**：Python 3.11+ · FastAPI · PostgreSQL (async SQLAlchemy) · Redis · Playwright · 飞书 Webhook
+**前端**：React + Vite + TypeScript + Ant Design
 
-## Security & Configuration Tips
-Keep secrets in `.env` at the project root; never hardcode database, Redis, Feishu, or browser/CDP credentials. Review `README.md` and `ARCHITECTURE.md` before changing config, scheduling, or crawl behavior, because the backend runs crawls in-process inside FastAPI rather than through a separate worker.
+## 3.常用命令
 
-## RTK
-@C:\Users\arfac\.codex\RTK.md
+### **Windows/WSL执行脚本**：WSL中优先用`powershell.exe`调用 Windows PowerShell
+/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File
+
+### 启动前端服务器和后端服务器
+Windows环境：
+powershell -ExecutionPolicy Bypass -File ".\scripts\start_server.ps1"
+WSL环境：
+/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File "C:/Users/arfac/price-monitor/scripts/start_server.ps1"
+
+### 安装依赖
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e ."
+
+### 运行数据库迁移
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; alembic upgrade head"
+
+### 启动前端开发服务器
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; npm run dev“
+
+### 启动后端开发服务器 **注意：Windows 上不要用 --reload，会导致 Playwright 子进程报错**
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+
+### 运行测试
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pytest"
+
+### 代码检查
+powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
+
+## 4.后端架构
+→ 详见 doc/backend-architecture.md
+
+## 5.前端架构
+→ 详见 doc/frontend-architecture.md
+
+## 6.关键约定
+- user_id 硬编码为 1（单用户系统）已添加多用户认证，原有 user_id=1 硬编码仍适用于商品/职位爬取
+- 所有时间戳字段使用 UTC 时区（`datetime.now(timezone.utc)`）
+- 价格比较使用 Decimal 避免浮点误差
+- LLM provider 通过 `LLMProviderFactory` 切换，支持 Anthropic/OpenAI/Ollama
+
+## 7.本地开发及验证流程
+- 「改 → 构建 → 启动 → 验证」完整闭环
+- 所有测试必须先重启前后端

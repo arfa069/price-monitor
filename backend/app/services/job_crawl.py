@@ -111,95 +111,135 @@ async def process_job_results(
                         job.last_updated_at = datetime.now(UTC)
                         deactivated_count += 1
 
-        # Process each scraped job
-        for job_data in jobs:
-            job_id = job_data.get("job_id")
-            if not job_id:
-                continue
+        # Batch query: find all jobs by job_id in ONE query
+        job_ids = [job["job_id"] for job in jobs if job.get("job_id")]
+        job_id_to_data: dict[str, dict] = {job["job_id"]: job for job in jobs if job.get("job_id")}
 
+        jobs_by_job_id: dict[str, Job] = {}
+        if job_ids:
             result = await db.execute(
-                select(Job).where(Job.job_id == job_id)
+                select(Job).where(Job.job_id.in_(job_ids))
             )
-            existing = result.scalar_one_or_none()
+            for job in result.scalars().all():
+                jobs_by_job_id[job.job_id] = job
 
+        # Separate into found by job_id vs need dedup check
+        jobs_need_dedup: list[dict] = []  # jobs not found by job_id, need dedup by (title, company, salary)
+
+        for job_id, job_obj in jobs_by_job_id.items():
+            if job_id not in job_id_to_data:
+                continue  # Skip jobs not in our input data (mock may return unexpected results)
+            job_data = job_id_to_data[job_id]
             salary = job_data.get("salary")
             salary_min, salary_max = parse_salary(salary)
+            # Update existing job
+            job_obj.last_updated_at = datetime.now(UTC)
+            job_obj.is_active = True
+            if job_data.get("title"):
+                job_obj.title = job_data["title"]
+            if job_data.get("company"):
+                job_obj.company = job_data["company"]
+            if salary:
+                job_obj.salary = salary
+                job_obj.salary_min = salary_min
+                job_obj.salary_max = salary_max
+            if job_data.get("location"):
+                job_obj.location = job_data["location"]
+            if job_data.get("experience"):
+                job_obj.experience = job_data["experience"]
+            if job_data.get("education"):
+                job_obj.education = job_data["education"]
+            if job_data.get("url"):
+                job_obj.url = job_data["url"]
+            updated_count += 1
 
-            if existing:
-                # Update existing job
-                existing.last_updated_at = datetime.now(UTC)
-                existing.is_active = True
-                # Update fields if changed
-                if job_data.get("title"):
-                    existing.title = job_data["title"]
-                if job_data.get("company"):
-                    existing.company = job_data["company"]
-                if salary:
-                    existing.salary = salary
-                    existing.salary_min = salary_min
-                    existing.salary_max = salary_max
-                if job_data.get("location"):
-                    existing.location = job_data["location"]
-                if job_data.get("experience"):
-                    existing.experience = job_data["experience"]
-                if job_data.get("education"):
-                    existing.education = job_data["education"]
-                if job_data.get("url"):
-                    existing.url = job_data["url"]
-                updated_count += 1
-            else:
-                # Deduplicate: check if same (config_id, title, company, salary) already exists
-                title_val = job_data.get("title") or ""
-                company_val = job_data.get("company") or ""
-                salary_val = salary or ""
+        for job_data in jobs:
+            job_id = job_data.get("job_id")
+            if not job_id or job_id in jobs_by_job_id:
+                continue
+            # Not found by job_id — collect for dedup check
+            salary = job_data.get("salary")
+            salary_min, salary_max = parse_salary(salary)
+            jobs_need_dedup.append({
+                "job_id": job_id,
+                "data": job_data,
+                "salary": salary,
+                "salary_min": salary_min,
+                "salary_max": salary_max,
+                "title": job_data.get("title") or "",
+                "company": job_data.get("company") or "",
+                "company_id": job_data.get("company_id") or "",
+                "location": job_data.get("location") or "",
+                "experience": job_data.get("experience") or "",
+                "education": job_data.get("education") or "",
+                "url": job_data.get("url") or "",
+            })
 
-                dup_result = await db.execute(
-                    select(Job).where(
-                        Job.search_config_id == config_id,
-                        Job.title == title_val,
-                        Job.company == company_val,
-                        Job.salary == salary_val,
-                    )
+        # Batch dedup query: find all matching by (title, company, salary) in ONE query
+        newly_inserted_job_ids: list[str] = []  # track string job_ids of new inserts
+        if jobs_need_dedup:
+            dedup_tuples = [(j["title"], j["company"], j["salary"] or "") for j in jobs_need_dedup]
+            result = await db.execute(
+                select(Job).where(
+                    Job.search_config_id == config_id,
+                    Job.title.in_([t[0] for t in dedup_tuples]),
+                    Job.company.in_([t[1] for t in dedup_tuples]),
+                    Job.salary.in_([t[2] for t in dedup_tuples]),
                 )
-                existing_dup = dup_result.scalar_one_or_none()
+            )
+            # Build dedup lookup: (title, company, salary) -> Job
+            dedup_map: dict[tuple[str, str, str], Job] = {}
+            for job in result.scalars().all():
+                dedup_map[(job.title, job.company, job.salary or "")] = job
 
+            now = datetime.now(UTC)
+            for item in jobs_need_dedup:
+                key = (item["title"], item["company"], item["salary"])
+                existing_dup = dedup_map.get(key)
                 if existing_dup:
-                    # Update the existing record with new job_id and refresh timestamp
-                    existing_dup.job_id = job_id
-                    existing_dup.last_updated_at = datetime.now(UTC)
+                    # Update existing record with new job_id
+                    existing_dup.job_id = item["job_id"]
+                    existing_dup.last_updated_at = now
                     existing_dup.is_active = True
-                    if job_data.get("location"):
-                        existing_dup.location = job_data["location"]
-                    if job_data.get("experience"):
-                        existing_dup.experience = job_data["experience"]
-                    if job_data.get("education"):
-                        existing_dup.education = job_data["education"]
-                    if job_data.get("url"):
-                        existing_dup.url = job_data["url"]
+                    if item["location"]:
+                        existing_dup.location = item["location"]
+                    if item["experience"]:
+                        existing_dup.experience = item["experience"]
+                    if item["education"]:
+                        existing_dup.education = item["education"]
+                    if item["url"]:
+                        existing_dup.url = item["url"]
                     updated_count += 1
                 else:
                     # Insert new job
+                    newly_inserted_job_ids.append(item["job_id"])
                     new_job = Job(
-                        job_id=job_id,
+                        job_id=item["job_id"],
                         search_config_id=config_id,
-                        title=title_val,
-                        company=company_val,
-                        company_id=job_data.get("company_id") or "",
-                        salary=salary_val,
-                        salary_min=salary_min,
-                        salary_max=salary_max,
-                        location=job_data.get("location") or "",
-                        experience=job_data.get("experience") or "",
-                        education=job_data.get("education") or "",
-                        url=job_data.get("url") or "",
-                        first_seen_at=datetime.now(UTC),
-                        last_updated_at=datetime.now(UTC),
+                        title=item["title"],
+                        company=item["company"],
+                        company_id=item["company_id"],
+                        salary=item["salary"],
+                        salary_min=item["salary_min"],
+                        salary_max=item["salary_max"],
+                        location=item["location"],
+                        experience=item["experience"],
+                        education=item["education"],
+                        url=item["url"],
+                        first_seen_at=now,
+                        last_updated_at=now,
                         is_active=True,
                     )
                     db.add(new_job)
-                    await db.flush()  # Get the inserted job's id
                     new_count += 1
-                    new_job_ids.append(new_job.id)
+
+        # Flush all new jobs and fetch their internal IDs
+        if newly_inserted_job_ids:
+            await db.flush()
+            result = await db.execute(
+                select(Job.id).where(Job.job_id.in_(newly_inserted_job_ids))
+            )
+            new_job_ids = [row[0] for row in result.all()]
 
         # Send notification for new jobs (after commit so config.notify_on_new is available)
         if new_count > 0 and config.notify_on_new:

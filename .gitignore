@@ -48,3 +48,5 @@ tests/AGENTS.md
 .claude/settings.local.json
 scripts/install-codex-rtk-wrapper.ps1
 backend/.coverage
+.claude/settings.local.json
+backend/app/platforms/.boss_cookies.json

@@ -14,7 +14,13 @@
       "Bash(psql:*)",
       "Bash(set DATABASE_URL=postgresql+asyncpg://postgres:Adminf8869!@localhost:5432/pricemonitor)",
       "Bash(alembic upgrade:*)",
-      "Bash(DATABASE_URL=\"postgresql+asyncpg://postgres:Adminf8869!@localhost:5432/pricemonitor\" python:*)"
+      "Bash(DATABASE_URL=\"postgresql+asyncpg://postgres:Adminf8869!@localhost:5432/pricemonitor\" python:*)",
+      "Bash(/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -Command \"python -m py_compile app/config.py; if \\(\\\\$?\\) { echo 'Syntax OK' } else { echo 'Syntax Error' }\")",
+      "Bash(/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe *)",
+      "Bash(cat)",
+      "Bash(python3 /tmp/test_redis.py)",
+      "Bash(python3 *)",
+      "Skill(browse)"
     ]
   }
 }

@@ -176,10 +176,10 @@ User (1) ──────< Product (多)
 
 ### 6.2 认证系统
 - `POST /auth/register` — 用户注册
-- `POST /auth/login` — 用户登录（JWT token，24小时有效期）
+- `POST /auth/login` — 用户登录（JWT token，1小时有效期）
 - `POST /auth/logout` — 登出
 - `GET /auth/me` — 获取当前用户信息
-- 密码 bcrypt 加密，登录失败锁定（5次失败锁定15分钟）
+- 密码 bcrypt 加密，登录失败锁定（5次失败锁定15分钟，Redis 持久化，重启不丢失）
 - 前端 AuthContext 状态管理，路由守卫（PublicRoute/ProtectedRoute）
 - 请求拦截器自动添加 Token
 
@@ -352,7 +352,7 @@ _shared_context: BrowserContext
 ### 9.1 认证与授权
 - JWT Token：24 小时有效期
 - 密码：bcrypt 加密
-- 登录失败锁定：5 次失败后锁定 15 分钟
+- 登录失败锁定：5 次失败后锁定 15 分钟（Redis 持久化，重启不丢失）
 
 ### 9.2 数据隔离
 - 所有数据库查询通过 `user_id = current_user.id` 过滤

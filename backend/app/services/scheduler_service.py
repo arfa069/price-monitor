@@ -122,14 +122,6 @@ async def _run_crawl_task(task: CrawlTask) -> None:
         logger.exception(f"Task {task.task_id}: failed")
         task.status = TaskStatus.FAILED
         task.reason = str(e)
-    finally:
-        # Clean up shared browser context
-        if browser_context:
-            try:
-                from app.routers.crawl import _cleanup_shared_browser
-                _cleanup_shared_browser(browser_context)
-            except Exception:
-                pass
 
 
 async def crawl_all_products(source: Literal["cron", "manual"], background: bool = True) -> dict:

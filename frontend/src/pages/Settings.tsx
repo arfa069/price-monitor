@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, message } from 'antd'
+import { Card, Form, Input, InputNumber, Button, useApp } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { configApi } from '@/api/config'
@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const { user } = useAuth()
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const { message } = useApp()
 
   const handleSubmit = async (values: { feishu_webhook_url?: string; data_retention_days?: number }) => {
     setLoading(true)

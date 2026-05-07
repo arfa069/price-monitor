@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Form, Input, Button, message, Descriptions } from 'antd'
+import { Card, Form, Input, Button, Descriptions, useApp } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/api/auth'
@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const { message } = useApp()
 
   const handleProfileUpdate = async (values: { username: string; email: string }) => {
     setLoading(true)

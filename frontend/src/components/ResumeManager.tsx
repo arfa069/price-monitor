@@ -4,12 +4,12 @@ import {
   Card,
   Empty,
   Input,
-  message,
   Modal,
   Popconfirm,
   Space,
   Spin,
   Typography,
+  useApp,
 } from 'antd'
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useCreateResume, useDeleteResume, useResumes } from '@/hooks/api'
@@ -27,6 +27,7 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
   const [uploadOpen, setUploadOpen] = useState(false)
   const [resumeName, setResumeName] = useState('')
   const [resumeText, setResumeText] = useState('')
+  const { message } = useApp()
 
   const handleUpload = async () => {
     if (!resumeName.trim()) {

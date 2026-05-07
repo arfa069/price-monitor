@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Empty, Select, Space, Spin, Table, Tag, message } from 'antd'
+import { Button, Card, Empty, Select, Space, Spin, Table, Tag, useApp } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMatchResults, useResumes, useTriggerMatch } from '@/hooks/api'
 import { jobsApi } from '@/api/jobs'
@@ -19,6 +19,7 @@ export default function MatchResultList() {
     page_size: pageSize,
   })
   const triggerMatch = useTriggerMatch()
+  const { message } = useApp()
 
   const handleTriggerMatch = async () => {
     if (!resumeId) {

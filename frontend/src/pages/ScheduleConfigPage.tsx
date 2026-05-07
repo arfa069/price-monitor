@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd'
+import { Alert, Button, Card, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag, useApp } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
@@ -29,6 +29,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 export default function ScheduleConfigPage() {
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
+  const { message, modal } = useApp()
 
   const [retentionDays, setRetentionDays] = useState(365)
   const [feishuWebhookUrl, setFeishuWebhookUrl] = useState('')
@@ -169,7 +170,7 @@ export default function ScheduleConfigPage() {
   }
 
   const handleDeletePlatformCron = async (platform: string) => {
-    Modal.confirm({
+    modal.confirm({
       title: '删除定时配置',
       content: `确定删除 ${PLATFORM_LABELS[platform] || platform} 的定时配置？`,
       onOk: async () => {

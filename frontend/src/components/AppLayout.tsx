@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, message } from 'antd'
+import { Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, useApp } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -31,6 +31,7 @@ export default function AppLayout({
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { message } = useApp()
 
   const handleLogout = () => {
     logout()

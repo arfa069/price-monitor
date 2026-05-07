@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Form, Input, Button, message, Typography } from 'antd'
+import { Form, Input, Button, Typography, useApp } from 'antd'
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 
@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
   const navigate = useNavigate()
+  const { message } = useApp()
 
   const handleSubmit = async (values: RegisterFormValues) => {
     if (values.password !== values.password_confirm) {

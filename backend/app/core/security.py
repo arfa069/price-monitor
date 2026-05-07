@@ -125,10 +125,31 @@ async def get_current_user(
     if user_id is None:
         raise credentials_exception
 
-    result = await db.execute(select(User).where(User.id == int(user_id)))
+    result = await db.execute(
+        select(User).where(
+            User.id == int(user_id),
+            User.deleted_at.is_(None)  # 确保软删除用户立即失效
+        )
+    )
     user = result.scalar_one_or_none()
 
     if user is None or not user.is_active:
         raise credentials_exception
 
     return user
+
+
+def require_role(*allowed_roles: str):
+    """Decorator to require specific roles for an endpoint.
+
+    Usage:
+        @router.get("/admin", dependencies=[Depends(require_role("admin", "super_admin"))])
+    """
+    async def role_checker(current_user: User = Depends(get_current_user)):
+        if current_user.role not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="需要管理员权限",
+            )
+        return current_user
+    return role_checker

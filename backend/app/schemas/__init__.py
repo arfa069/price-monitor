@@ -1,4 +1,5 @@
 """Pydantic schemas."""
+from app.schemas.admin import AdminUserUpdate, AdminUserListResponse, AdminUserResponse, UserCreate
 from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
 from app.schemas.auth import MessageResponse, TokenResponse, UserLogin, UserRegister, UserResponse
 from app.schemas.crawl_log import CrawlLogResponse
@@ -21,6 +22,9 @@ from app.schemas.product import (
 from app.schemas.user import UserConfigCreate, UserConfigResponse, UserConfigUpdate
 
 __all__ = [
+    "AdminUserUpdate",
+    "AdminUserListResponse",
+    "AdminUserResponse",
     "AlertCreate",
     "AlertUpdate",
     "AlertResponse",
@@ -46,4 +50,5 @@ __all__ = [
     "UserResponse",
     "TokenResponse",
     "MessageResponse",
+    "UserCreate",
 ]

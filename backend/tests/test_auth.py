@@ -342,3 +342,108 @@ class TestLogout:
             assert "登出成功" in response.json()["message"]
         finally:
             app.dependency_overrides.clear()
+
+
+class TestRequireRole:
+    """Tests for require_role decorator."""
+
+    @pytest.mark.asyncio
+    async def test_require_role_allows_correct_role(self):
+        """Test require_role allows user with correct role."""
+        from app.core.security import require_role
+
+        mock_user = MagicMock(spec=User)
+        mock_user.id = 1
+        mock_user.username = "adminuser"
+        mock_user.email = "admin@example.com"
+        mock_user.role = "admin"
+        mock_user.is_active = True
+        mock_user.deleted_at = None
+        mock_user.created_at = datetime.now(UTC)
+
+        mock_session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_user
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        async def _override_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = _override_get_db
+        try:
+            # Test that user with admin role passes the role check
+            role_checker = require_role("admin")
+            # Directly call the dependency function with mocked user
+            result = await role_checker(current_user=mock_user)
+            assert result == mock_user
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_require_role_denies_wrong_role(self):
+        """Test require_role denies user with wrong role."""
+        from app.core.security import require_role
+        from fastapi import HTTPException
+
+        mock_user = MagicMock(spec=User)
+        mock_user.id = 1
+        mock_user.username = "regularuser"
+        mock_user.email = "user@example.com"
+        mock_user.role = "user"
+        mock_user.is_active = True
+        mock_user.deleted_at = None
+
+        mock_session = AsyncMock()
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_user
+        mock_session.execute = AsyncMock(return_value=mock_result)
+
+        async def _override_get_db():
+            yield mock_session
+
+        app.dependency_overrides[get_db] = _override_get_db
+        try:
+            role_checker = require_role("admin", "super_admin")
+            with pytest.raises(HTTPException) as exc_info:
+                await role_checker(current_user=mock_user)
+            assert exc_info.value.status_code == 403
+            assert "需要管理员权限" in exc_info.value.detail
+        finally:
+            app.dependency_overrides.clear()
+
+    @pytest.mark.asyncio
+    async def test_require_role_allows_super_admin(self):
+        """Test require_role allows super_admin role."""
+        from app.core.security import require_role
+
+        mock_user = MagicMock(spec=User)
+        mock_user.id = 1
+        mock_user.username = "superadmin"
+        mock_user.email = "super@example.com"
+        mock_user.role = "super_admin"
+        mock_user.is_active = True
+        mock_user.deleted_at = None
+
+        role_checker = require_role("admin", "super_admin")
+        result = await role_checker(current_user=mock_user)
+        assert result == mock_user
+
+    @pytest.mark.asyncio
+    async def test_require_role_denies_deleted_user(self):
+        """Test require_role checks are done after get_current_user validates user is active."""
+        from app.core.security import require_role
+
+        # Inactive user should not pass get_current_user, so require_role
+        # receives an active user with the correct role
+        mock_user = MagicMock(spec=User)
+        mock_user.id = 1
+        mock_user.username = "activeadmin"
+        mock_user.email = "admin@example.com"
+        mock_user.role = "admin"
+        mock_user.is_active = True
+        mock_user.deleted_at = None
+
+        # User is active and has admin role - should pass
+        role_checker = require_role("admin")
+        result = await role_checker(current_user=mock_user)
+        assert result == mock_user

@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 from app.api.auth import router as auth_router
+from app.api.admin import router as admin_router
 from app.config import settings
 from app.database import engine
 from app.routers import alerts, config, crawl, products
@@ -103,6 +104,7 @@ app.include_router(alerts.router)
 app.include_router(crawl.router)
 app.include_router(jobs_router)
 app.include_router(auth_router)
+app.include_router(admin_router)
 
 # Scheduler status endpoint
 @app.get("/scheduler/status", tags=["scheduler"])

@@ -6,24 +6,24 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_current_user
 from app.database import get_db
 from app.models.price_history import PriceHistory
 from app.models.product import Product, ProductPlatformCron
 from app.models.user import User
-from app.routers.auth import get_current_user
 from app.schemas.price_history import PriceHistoryResponse
 from app.schemas.product import (
     BatchOperationResult,
     ProductBatchCreate,
     ProductBatchCreateItem,
     ProductBatchDelete,
-    ProductPlatformCronCreate,
     ProductBatchUpdate,
     ProductCreate,
     ProductListResponse,
-    ProductResponse,
+    ProductPlatformCronCreate,
     ProductPlatformCronResponse,
     ProductPlatformCronUpdate,
+    ProductResponse,
     ProductUpdate,
 )
 

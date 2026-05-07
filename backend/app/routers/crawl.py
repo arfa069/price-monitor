@@ -6,12 +6,12 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.security import get_current_user
 from app.database import AsyncSessionLocal, get_db
 from app.models.crawl_log import CrawlLog
 from app.models.price_history import PriceHistory
 from app.models.product import Product
 from app.models.user import User
-from app.routers.auth import get_current_user
 from app.schemas.crawl_log import CrawlLogResponse
 
 router = APIRouter(prefix="/crawl", tags=["crawl"])
@@ -175,7 +175,7 @@ async def get_crawl_status(task_id: str):
 @router.get("/result/{task_id}")
 async def get_crawl_result(task_id: str):
     """Get the final result of a completed crawl task."""
-    from app.services.scheduler_service import get_task, TaskStatus
+    from app.services.scheduler_service import TaskStatus, get_task
 
     task = get_task(task_id)
     if not task:

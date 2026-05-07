@@ -6,9 +6,9 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import get_current_user
 from app.database import get_db
 from app.main import app
-from app.routers.auth import get_current_user
 
 
 @pytest.fixture

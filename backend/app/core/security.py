@@ -3,10 +3,16 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import redis.asyncio as redis
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.database import get_db
+from app.models.user import User
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -92,3 +98,37 @@ async def clear_login_attempts(username: str) -> None:
     """Clear failed login attempts after successful login."""
     redis_client = await _get_redis()
     await redis_client.delete(f"login_attempts:{username}")
+
+
+# OAuth2 scheme for token authentication (used by get_current_user and OpenAPI docs)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Dependency to get current authenticated user from JWT token.
+
+    This is the single source of truth for user authentication across all routers.
+    """
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="认证失败：Token 无效或已过期",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    payload = decode_access_token(token)
+    if payload is None:
+        raise credentials_exception
+
+    user_id = payload.get("sub")
+    if user_id is None:
+        raise credentials_exception
+
+    result = await db.execute(select(User).where(User.id == int(user_id)))
+    user = result.scalar_one_or_none()
+
+    if user is None or not user.is_active:
+        raise credentials_exception
+
+    return user

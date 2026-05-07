@@ -1,14 +1,14 @@
 """Tests for authentication API."""
-from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime, UTC
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from app.main import app
-from app.database import get_db
-from app.models.user import User
 from app.core.security import get_password_hash
+from app.database import get_db
+from app.main import app
+from app.models.user import User
 
 
 class TestRegister:
@@ -239,10 +239,13 @@ class TestGetMe:
     @pytest.mark.asyncio
     async def test_get_me_success(self):
         """Test successful get current user."""
+        from app.core.security import get_password_hash
+
         mock_user = MagicMock(spec=User)
         mock_user.id = 1
         mock_user.username = "testuser"
         mock_user.email = "test@example.com"
+        mock_user.hashed_password = get_password_hash("password123")
         mock_user.is_active = True
         mock_user.created_at = datetime.now(UTC)
 
@@ -283,7 +286,7 @@ class TestGetMe:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/auth/me")
-        assert response.status_code == 422  # FastAPI returns 422 for missing required header
+        assert response.status_code == 401
 
     @pytest.mark.asyncio
     async def test_get_me_invalid_token(self):
@@ -295,7 +298,7 @@ class TestGetMe:
                 headers={"Authorization": "Bearer invalid_token"},
             )
         assert response.status_code == 401
-        assert "登录已过期" in response.json()["detail"]
+        assert "Token 无效或已过期" in response.json()["detail"]
 
 
 class TestLogout:

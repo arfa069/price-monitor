@@ -4,14 +4,14 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import JSONResponse
 from sqlalchemy import asc, desc, func, select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from app.core.security import get_current_user
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
 from app.models.job_match import MatchResult, UserResume
 from app.models.user import User
-from app.routers.auth import get_current_user
 from app.schemas.job import (
     JobConfigCronUpdate,
     JobListResponse,
@@ -263,7 +263,6 @@ async def trigger_match_analysis_async(
     The analysis runs in background, updating task progress.
     Poll GET /jobs/tasks/{task_id} for status.
     """
-    import asyncio
 
     from app.services.scheduler_service import create_task
 

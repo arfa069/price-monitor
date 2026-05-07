@@ -42,16 +42,15 @@ curl -X GET http://localhost:8000/auth/me \\
 """
 import logging
 from datetime import timedelta
-from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
     clear_login_attempts,
     create_access_token,
-    decode_access_token,
+    get_current_user,
     get_password_hash,
     is_account_locked,
     record_failed_login,
@@ -59,7 +58,13 @@ from app.core.security import (
 )
 from app.database import get_db
 from app.models.user import User
-from app.schemas.auth import MessageResponse, TokenResponse, UserLogin, UserRegister, UserResponse
+from app.schemas.auth import (
+    MessageResponse,
+    TokenResponse,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -67,51 +72,6 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 # Token expiration time
 TOKEN_EXPIRE_HOURS = 1
-
-
-async def get_current_user(
-    authorization: Annotated[str, Header()],
-    db: AsyncSession = Depends(get_db),
-) -> User:
-    """Dependency to get current authenticated user from JWT token."""
-    if not authorization:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="未提供认证信息",
-        )
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="认证格式错误",
-        )
-
-    token = authorization[7:]  # Remove "Bearer " prefix
-    payload = decode_access_token(token)
-
-    if payload is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="登录已过期",
-        )
-
-    user_id = payload.get("sub")
-    if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="无效的认证信息",
-        )
-
-    result = await db.execute(select(User).where(User.id == int(user_id)))
-    user = result.scalar_one_or_none()
-
-    if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="用户不存在或已被禁用",
-        )
-
-    return user
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["auth"])

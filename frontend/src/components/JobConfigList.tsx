@@ -9,7 +9,7 @@ import {
   Switch,
   Tag,
   Typography,
-  useApp,
+  message,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -45,7 +45,6 @@ export default function JobConfigList({
 }: JobConfigListProps) {
   const [createOpen, setCreateOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<JobSearchConfig | null>(null)
-  const { message } = useApp()
 
   const handleCreate = async (data: Partial<JobSearchConfigCreate>) => {
     if (!data.name || !data.url) throw new Error('missing required fields')

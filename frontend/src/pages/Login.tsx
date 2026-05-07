@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Form, Input, Button, Typography, useApp } from 'antd'
+import { Form, Input, Button, message, Typography } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,7 +18,6 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
-  const { message } = useApp()
 
   // 获取之前尝试访问的页面，登录后跳转回去
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/jobs'

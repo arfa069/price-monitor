@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { message } from 'antd'
 import App from './App'
 
 type QueryError = {
@@ -19,7 +20,7 @@ const queryCache = new QueryCache({
       return
     }
     if (err.response?.status != null && err.response.status >= 400) {
-      console.error(`请求失败: ${err.message || '未知错误'}`)
+      message.error(`请求失败: ${err.message || '未知错误'}`)
     }
   },
 })

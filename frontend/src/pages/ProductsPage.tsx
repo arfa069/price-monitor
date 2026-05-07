@@ -12,7 +12,8 @@ import {
   Table,
   Tag,
   Tooltip,
-  useApp,
+  message,
+  notification,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -86,7 +87,6 @@ export default function ProductsPage() {
   const [trendModal, setTrendModal] = useState<{ open: boolean; product?: Product }>({
     open: false,
   })
-  const { message, notification } = useApp()
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedKeyword(keyword), 400)

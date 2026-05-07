@@ -11,7 +11,6 @@ import ProfilePage from '@/pages/Profile'
 import SettingsPage from '@/pages/Settings'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
-import AdminUsersPage from '@/pages/AdminUsers'
 
 // 受保护的路由组件 - 需要登录才能访问
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -186,7 +185,7 @@ function AppRoutes() {
               element={
                 <AdminRoute>
                   <AppLayout onRefresh={handleRefresh}>
-                    <AdminUsersPage />
+                    <div>用户管理（待实现）</div>
                   </AppLayout>
                 </AdminRoute>
               }

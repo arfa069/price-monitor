@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Space, Modal, Form, Input, Select, Popconfirm, Switch, Tag, useApp } from 'antd'
+import { Table, Button, Space, Modal, Form, Input, Select, message, Popconfirm, Switch, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { adminApi, type UserCreate, type UserUpdate } from '@/api/admin'
 import type { User } from '@/types'
@@ -16,7 +16,6 @@ export default function AdminUsersPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [form] = Form.useForm()
-  const { message } = useApp()
 
   const fetchUsers = async () => {
     setLoading(true)

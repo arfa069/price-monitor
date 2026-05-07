@@ -421,16 +421,14 @@ class TestHealthCheckRegression:
                 mock_engine.connect.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
                 mock_engine.connect.return_value.__aexit__ = AsyncMock()
 
-                # Patch redis module - redis.from_url(...) returns the mock instance
-                mock_redis_instance = MagicMock()
-                mock_redis_instance.ping = AsyncMock()
-                mock_redis_instance.aclose = AsyncMock()
-                mock_redis_factory = MagicMock()
-                mock_redis_factory.from_url.return_value = mock_redis_instance
+                # Patch redis_client on app.state
+                mock_redis = AsyncMock()
+                mock_redis.ping = AsyncMock()
+                mock_redis.aclose = AsyncMock()
 
-                with patch("app.main.redis", mock_redis_factory):
-                    transport = ASGITransport(app=app)
-                    async with AsyncClient(transport=transport, base_url="http://test") as client:
+                transport = ASGITransport(app=app)
+                async with AsyncClient(transport=transport, base_url="http://test") as client:
+                    with patch.object(app.state, "redis_client", mock_redis):
                         response = await client.get("/health")
 
         assert response.status_code == 200

@@ -1,10 +1,37 @@
 """API tests for config, products pagination, and scheduler."""
 from unittest.mock import AsyncMock, MagicMock, patch
+from datetime import UTC, datetime
 
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import get_current_user
 from app.main import app
+from app.models.user import User
+
+
+def create_mock_user(user_id=1, username="testuser", role="user"):
+    """Create a mock user with minimal attributes."""
+    user = MagicMock()
+    user.id = user_id
+    user.username = username
+    user.email = f"{username}@example.com"
+    user.role = role
+    user.deleted_at = None
+    user.created_at = datetime.now(UTC)
+    user.updated_at = datetime.now(UTC)
+    return user
+
+
+@pytest.fixture
+def mock_get_current_user():
+    """Mock get_current_user to return a test user."""
+    async def _mock_get_current_user(token=None, db=None):
+        return create_mock_user()
+    app.dependency_overrides[get_current_user] = _mock_get_current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
 
 # --- Config Tests ---
 
@@ -12,7 +39,6 @@ from app.main import app
 async def test_get_config_returns_user_config():
     """GET /config returns user configuration."""
     from app.database import get_db
-    from app.models.user import User
 
     mock_user = MagicMock(spec=User)
     mock_user.id = 1
@@ -48,7 +74,7 @@ async def test_get_config_returns_user_config():
 
 
 @pytest.mark.asyncio
-async def test_create_product_rejects_invalid_url_no_scheme():
+async def test_create_product_rejects_invalid_url_no_scheme(mock_get_current_user):
     """POST /products rejects URLs without http/https scheme."""
     from app.database import get_db
 
@@ -77,7 +103,7 @@ async def test_create_product_rejects_invalid_url_no_scheme():
 
 
 @pytest.mark.asyncio
-async def test_create_product_rejects_ftp_scheme():
+async def test_create_product_rejects_ftp_scheme(mock_get_current_user):
     """POST /products rejects ftp:// URLs."""
     from app.database import get_db
 
@@ -104,7 +130,7 @@ async def test_create_product_rejects_ftp_scheme():
 
 
 @pytest.mark.asyncio
-async def test_update_product_rejects_empty_url():
+async def test_update_product_rejects_empty_url(mock_get_current_user):
     """PATCH /products rejects empty string URL."""
     from app.database import get_db
 
@@ -131,10 +157,8 @@ async def test_update_product_rejects_empty_url():
 
 
 @pytest.mark.asyncio
-async def test_create_product_strips_whitespace():
+async def test_create_product_strips_whitespace(mock_get_current_user):
     """POST /products strips whitespace from URL before saving."""
-    from datetime import UTC, datetime
-
     from app.database import get_db
 
     mock_result = MagicMock()
@@ -169,7 +193,7 @@ async def test_create_product_strips_whitespace():
 
 
 @pytest.mark.asyncio
-async def test_products_list_returns_pagination_metadata():
+async def test_products_list_returns_pagination_metadata(mock_get_current_user):
     """GET /products returns page, page_size, total_pages, has_next, has_prev."""
     from app.database import get_db
 
@@ -202,7 +226,7 @@ async def test_products_list_returns_pagination_metadata():
 
 
 @pytest.mark.asyncio
-async def test_products_list_page_out_of_range_returns_empty_items():
+async def test_products_list_page_out_of_range_returns_empty_items(mock_get_current_user):
     """GET /products with page beyond total returns empty items with valid metadata."""
     from app.database import get_db
 
@@ -235,7 +259,7 @@ async def test_products_list_page_out_of_range_returns_empty_items():
 
 
 @pytest.mark.asyncio
-async def test_products_list_first_page_has_no_prev():
+async def test_products_list_first_page_has_no_prev(mock_get_current_user):
     """GET /products page=1 has has_prev=False."""
     from app.database import get_db
 

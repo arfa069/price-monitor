@@ -5,11 +5,35 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import get_current_user
 from app.main import app
 
 
+def create_mock_user(user_id=1, username="testuser", role="user"):
+    """Create a mock user with minimal attributes."""
+    user = MagicMock()
+    user.id = user_id
+    user.username = username
+    user.email = f"{username}@example.com"
+    user.role = role
+    user.deleted_at = None
+    user.created_at = datetime.now(UTC)
+    user.updated_at = datetime.now(UTC)
+    return user
+
+
+@pytest.fixture
+def mock_get_current_user():
+    """Mock get_current_user to return a test user."""
+    async def _mock_get_current_user(token=None, db=None):
+        return create_mock_user()
+    app.dependency_overrides[get_current_user] = _mock_get_current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
+
+
 @pytest.mark.asyncio
-async def test_list_jobs_returns_paginated_response():
+async def test_list_jobs_returns_paginated_response(mock_get_current_user):
     """GET /jobs returns items with pagination metadata."""
     from app.database import get_db
     from app.models.job import Job

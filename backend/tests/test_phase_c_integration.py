@@ -27,7 +27,31 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
+from app.core.security import get_current_user
 from app.main import app
+
+
+def create_mock_user(user_id=1, username="testuser", role="user"):
+    """Create a mock user with minimal attributes."""
+    user = MagicMock()
+    user.id = user_id
+    user.username = username
+    user.email = f"{username}@example.com"
+    user.role = role
+    user.deleted_at = None
+    user.created_at = None
+    user.updated_at = None
+    return user
+
+
+@pytest.fixture
+def mock_get_current_user():
+    """Mock get_current_user to return a test user."""
+    async def _mock_get_current_user(token=None, db=None):
+        return create_mock_user()
+    app.dependency_overrides[get_current_user] = _mock_get_current_user
+    yield
+    app.dependency_overrides.pop(get_current_user, None)
 
 # =============================================================================
 # C-01 ~ C-02: 前端基础行为 (需要浏览器验证，pytest 无法覆盖)
@@ -48,7 +72,7 @@ class TestProductCRUD:
     """C-03: 商品 CRUD + 批量操作"""
 
     @pytest.mark.asyncio
-    async def test_c03_create_product(self):
+    async def test_c03_create_product(self, mock_get_current_user):
         """C-03a: 创建商品"""
         from datetime import datetime
 
@@ -91,7 +115,7 @@ class TestProductCRUD:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_c03_update_product(self):
+    async def test_c03_update_product(self, mock_get_current_user):
         """C-03b: 更新商品"""
         from app.database import get_db
 
@@ -131,7 +155,7 @@ class TestProductCRUD:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_c03_delete_product(self):
+    async def test_c03_delete_product(self, mock_get_current_user):
         """C-03c: 删除商品"""
         from app.database import get_db
 
@@ -169,7 +193,7 @@ class TestServerSidePagination:
     """C-04: 商品管理服务端分页，每页 15 条"""
 
     @pytest.mark.asyncio
-    async def test_c04_pagination_defaults_to_15(self):
+    async def test_c04_pagination_defaults_to_15(self, mock_get_current_user):
         """C-04a: 默认每页 15 条"""
         from app.database import get_db
 
@@ -199,7 +223,7 @@ class TestServerSidePagination:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_c04_pagination_explicit_size(self):
+    async def test_c04_pagination_explicit_size(self, mock_get_current_user):
         """C-04b: 显式 size 参数"""
         from app.database import get_db
 
@@ -228,7 +252,7 @@ class TestServerSidePagination:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_c04_pagination_with_filter(self):
+    async def test_c04_pagination_with_filter(self, mock_get_current_user):
         """C-04c: 筛选 + 分页组合"""
         from app.database import get_db
 
@@ -366,7 +390,7 @@ class TestManualCrawlRegression:
     """C-08: POST /crawl/crawl-now 仍可用"""
 
     @pytest.mark.asyncio
-    async def test_c08_crawl_now_endpoint_exists(self):
+    async def test_c08_crawl_now_endpoint_exists(self, mock_get_current_user):
         """C-08: /crawl/crawl-now 端点存在"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -433,7 +457,7 @@ class TestPageOutOfRange:
     """C-E01: page 越界返回空 items + 正常分页元信息"""
 
     @pytest.mark.asyncio
-    async def test_ce01_page_out_of_range_returns_empty_items(self):
+    async def test_ce01_page_out_of_range_returns_empty_items(self, mock_get_current_user):
         """C-E01: page=999 超范围"""
         from app.database import get_db
 
@@ -473,7 +497,7 @@ class TestFilterNoResults:
     """C-E02: 筛选无结果时 total=0"""
 
     @pytest.mark.asyncio
-    async def test_ce02_filter_no_results_total_zero(self):
+    async def test_ce02_filter_no_results_total_zero(self, mock_get_current_user):
         """C-E02: 无匹配商品时返回空列表且 total=0"""
         from app.database import get_db
 
@@ -510,7 +534,7 @@ class TestBatchCreateDeduplication:
     """C-E03: 批量新增去重（输入内重复 + 已存在重复）"""
 
     @pytest.mark.asyncio
-    async def test_ce03_batch_create_removes_input_duplicates(self):
+    async def test_ce03_batch_create_removes_input_duplicates(self, mock_get_current_user):
         """C-E03a: 输入内重复 URL 被去重"""
         from app.database import get_db
 
@@ -548,7 +572,7 @@ class TestBatchCreateDeduplication:
             app.dependency_overrides.clear()
 
     @pytest.mark.asyncio
-    async def test_ce03_batch_create_detects_existing_urls(self):
+    async def test_ce03_batch_create_detects_existing_urls(self, mock_get_current_user):
         """C-E03b: 与已存在商品重复时有明确反馈"""
         from app.database import get_db
 
@@ -589,7 +613,7 @@ class TestBatchPartialFailure:
     """C-E04: 批量操作部分失败时显示成功/失败数量与失败原因"""
 
     @pytest.mark.asyncio
-    async def test_ce04_batch_delete_partial_failure(self):
+    async def test_ce04_batch_delete_partial_failure(self, mock_get_current_user):
         """C-E04: 批量删除部分失败时返回每条结果"""
         from app.database import get_db
 

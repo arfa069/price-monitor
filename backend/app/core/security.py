@@ -1,6 +1,7 @@
 """Security utilities: password hashing and JWT token handling."""
 from datetime import UTC, datetime, timedelta
 from typing import Any
+import hashlib
 
 import redis.asyncio as redis
 from fastapi import Depends, HTTPException, status
@@ -137,6 +138,92 @@ async def get_current_user(
         raise credentials_exception
 
     return user
+
+
+def parse_device(user_agent: str) -> str:
+    """Parse browser and OS from User-Agent string."""
+    if not user_agent:
+        return "Unknown"
+    return user_agent[:200]
+
+
+async def create_session(
+    user_id: int,
+    token: str,
+    device: str,
+    ip_address: str,
+    db: AsyncSession,
+) -> Session:
+    """Create a new session for a user."""
+    from app.models.session import Session
+
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    # Check max sessions (5)
+    result = await db.execute(
+        select(Session).where(
+            Session.user_id == user_id,
+            Session.token_hash.isnot(None)
+        ).order_by(Session.created_at)
+    )
+    existing = result.scalars().all()
+    if len(existing) >= 5:
+        await db.delete(existing[0])
+
+    session = Session(
+        user_id=user_id,
+        token_hash=token_hash,
+        device=device,
+        ip_address=ip_address,
+    )
+    db.add(session)
+    await db.commit()
+    return session
+
+
+async def get_user_sessions(user_id: int, db: AsyncSession) -> list[Session]:
+    """Get all active sessions for a user."""
+    from app.models.session import Session
+
+    result = await db.execute(
+        select(Session).where(Session.user_id == user_id)
+    )
+    return list(result.scalars().all())
+
+
+async def delete_session(session_id: int, user_id: int, db: AsyncSession) -> bool:
+    """Delete a specific session."""
+    from app.models.session import Session
+
+    result = await db.execute(
+        select(Session).where(
+            Session.id == session_id,
+            Session.user_id == user_id
+        )
+    )
+    session = result.scalar_one_or_none()
+    if not session:
+        return False
+    await db.delete(session)
+    await db.commit()
+    return True
+
+
+async def delete_other_sessions(current_session_id: int, user_id: int, db: AsyncSession) -> int:
+    """Delete all sessions except the current one."""
+    from app.models.session import Session
+
+    result = await db.execute(
+        select(Session).where(
+            Session.user_id == user_id,
+            Session.id != current_session_id
+        )
+    )
+    sessions = result.scalars().all()
+    for s in sessions:
+        await db.delete(s)
+    await db.commit()
+    return len(sessions)
 
 
 def require_role(*allowed_roles: str):

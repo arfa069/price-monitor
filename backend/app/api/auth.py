@@ -10,6 +10,9 @@
 | POST | /auth/login | User login | No |
 | POST | /auth/logout | User logout | Yes |
 | GET | /auth/me | Get current user info | Yes |
+| GET | /auth/sessions | List all sessions | Yes |
+| DELETE | /auth/sessions/{id} | Delete a session | Yes |
+| DELETE | /auth/sessions | Delete other sessions | Yes |
 
 ## Error Codes
 
@@ -41,24 +44,33 @@ curl -X GET http://localhost:8000/auth/me \\
 ```
 """
 import logging
+from datetime import UTC, datetime
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
     clear_login_attempts,
     create_access_token,
+    create_session,
+    delete_other_sessions,
+    delete_session,
     get_current_user,
     get_password_hash,
+    get_user_sessions,
     is_account_locked,
+    parse_device,
     record_failed_login,
     verify_password,
 )
 from app.database import get_db
+from app.models.login_log import LoginLog
+from app.models.session import Session
 from app.models.user import User
 from app.schemas.auth import (
+    BaseModel,
     MessageResponse,
     PasswordChange,
     ProfileUpdate,
@@ -131,7 +143,7 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=TokenResponse, tags=["auth"])
-async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
+async def login(login_data: UserLogin, request: Request, db: AsyncSession = Depends(get_db)):
     """Login and get access token.
 
     Authenticates user with username and password, returns JWT token.
@@ -186,6 +198,26 @@ async def login(login_data: UserLogin, db: AsyncSession = Depends(get_db)):
         data={"sub": str(user.id), "username": user.username},
         expires_delta=timedelta(hours=TOKEN_EXPIRE_HOURS),
     )
+
+    # Create session and login log
+    device = parse_device(request.headers.get("user-agent", ""))
+    ip_address = request.client.host if request.client else ""
+
+    await create_session(
+        user_id=user.id,
+        token=access_token,
+        device=device,
+        ip_address=ip_address,
+        db=db,
+    )
+
+    login_log = LoginLog(
+        user_id=user.id,
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+    )
+    db.add(login_log)
+    await db.commit()
 
     logger.info(f"User logged in: {user.username}")
     return TokenResponse(access_token=access_token)
@@ -336,3 +368,46 @@ async def change_password(
 
     logger.info(f"Password changed for user: {current_user.username}")
     return MessageResponse(message="密码修改成功")
+
+
+class SessionResponse(BaseModel):
+    id: int
+    device: str | None
+    ip_address: str | None
+    last_active_at: datetime
+    created_at: datetime
+    model_config = {"from_attributes": True}
+
+
+@router.get("/sessions", response_model=list[SessionResponse])
+async def list_my_sessions(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get all active sessions for current user."""
+    sessions = await get_user_sessions(current_user.id, db)
+    return sessions
+
+
+@router.delete("/sessions/{session_id}", response_model=MessageResponse)
+async def delete_a_session(
+    session_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Delete a specific session (logout from a device)."""
+    deleted = await delete_session(session_id, current_user.id, db)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="会话不存在")
+    return MessageResponse(message="已登出该设备")
+
+
+@router.delete("/sessions", response_model=MessageResponse)
+async def delete_other_sessions_endpoint(
+    current_user: User = Depends(get_current_user),
+    session_id: int = Body(...),
+    db: AsyncSession = Depends(get_db),
+):
+    """Logout from all other devices."""
+    count = await delete_other_sessions(session_id, current_user.id, db)
+    return MessageResponse(message=f"已登出 {count} 个其他设备")

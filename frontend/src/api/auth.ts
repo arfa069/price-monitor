@@ -1,4 +1,5 @@
 import api from './client'
+import type { User } from '@/types'
 
 export interface LoginRequest {
   username: string
@@ -19,13 +20,6 @@ export interface AuthResponse {
   username: string
 }
 
-export interface User {
-  id: number
-  username: string
-  email: string
-  created_at?: string
-}
-
 export const authApi = {
   login: (data: LoginRequest) =>
     api.post<AuthResponse>('/auth/login', data),
@@ -35,4 +29,19 @@ export const authApi = {
 
   getMe: () =>
     api.get<User>('/auth/me'),
+
+  updateProfile: async (data: { username?: string; email?: string }) => {
+    const response = await api.patch<User>('/auth/me', data)
+    return response
+  },
+
+  changePassword: async (data: { old_password: string; new_password: string }) => {
+    const response = await api.post('/auth/me/password', data)
+    return response
+  },
+
+  updateConfig: async (data: { feishu_webhook_url?: string; data_retention_days?: number }) => {
+    const response = await api.patch('/auth/me/config', data)
+    return response
+  },
 }

@@ -1,3 +1,12 @@
+export interface User {
+  id: number
+  username: string
+  email: string
+  role: string
+  is_active?: boolean
+  created_at?: string
+}
+
 export interface Product {
   id: number
   user_id: number

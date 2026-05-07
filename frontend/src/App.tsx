@@ -1,6 +1,6 @@
 import { useCallback, type ReactNode } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { App, theme, Spin } from 'antd'
+import { App as AntdApp, theme, Spin } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
@@ -98,7 +98,7 @@ function AppRoutes() {
   }, [queryClient])
 
   return (
-      <App
+      <AntdApp
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {
@@ -197,7 +197,7 @@ function AppRoutes() {
             <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>
         </BrowserRouter>
-      </App>
+      </AntdApp>
   )
 }
 

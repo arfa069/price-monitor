@@ -74,18 +74,13 @@ class TestSendNewJobNotification:
         mock_config = MagicMock()
         mock_config.name = "Python 后端"
 
-        mock_user = MagicMock()
-        mock_user.feishu_webhook_url = "https://open.feishu.cn/hook/test"
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_user
-
-        mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(return_value=mock_result)
-        mock_db.__aenter__ = AsyncMock(return_value=mock_db)
-        mock_db.__aexit__ = AsyncMock(return_value=False)
-
-        with patch("app.services.notification.AsyncSessionLocal", return_value=mock_db):
+        with patch(
+            "app.services.notification.get_cached_user_config",
+            new_callable=AsyncMock,
+        ) as mock_get_config:
+            mock_get_config.return_value = {
+                "feishu_webhook_url": "https://open.feishu.cn/hook/test",
+            }
             with patch(
                 "app.services.notification.send_feishu_notification",
                 new_callable=AsyncMock,
@@ -108,18 +103,11 @@ class TestSendNewJobNotification:
         mock_config = MagicMock()
         mock_config.name = "Python 后端"
 
-        mock_user = MagicMock()
-        mock_user.feishu_webhook_url = ""
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_user
-
-        mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(return_value=mock_result)
-        mock_db.__aenter__ = AsyncMock(return_value=mock_db)
-        mock_db.__aexit__ = AsyncMock(return_value=False)
-
-        with patch("app.services.notification.AsyncSessionLocal", return_value=mock_db):
+        with patch(
+            "app.services.notification.get_cached_user_config",
+            new_callable=AsyncMock,
+        ) as mock_get_config:
+            mock_get_config.return_value = {"feishu_webhook_url": ""}
             result = await send_new_job_notification(mock_config, 5, 100)
 
         assert result["status"] == "skipped"
@@ -133,15 +121,11 @@ class TestSendNewJobNotification:
         mock_config = MagicMock()
         mock_config.name = "Python 后端"
 
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
-
-        mock_db = AsyncMock()
-        mock_db.execute = AsyncMock(return_value=mock_result)
-        mock_db.__aenter__ = AsyncMock(return_value=mock_db)
-        mock_db.__aexit__ = AsyncMock(return_value=False)
-
-        with patch("app.services.notification.AsyncSessionLocal", return_value=mock_db):
+        with patch(
+            "app.services.notification.get_cached_user_config",
+            new_callable=AsyncMock,
+        ) as mock_get_config:
+            mock_get_config.return_value = None
             result = await send_new_job_notification(mock_config, 5, 100)
 
         assert result["status"] == "skipped"

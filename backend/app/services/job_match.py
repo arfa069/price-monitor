@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
-from typing import Iterable
+from collections.abc import Iterable
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -12,9 +11,9 @@ from sqlalchemy.orm import selectinload
 from app.database import AsyncSessionLocal
 from app.models.job import Job, JobSearchConfig
 from app.models.job_match import MatchResult, UserResume
-from app.models.user import User
 from app.services.llm_provider import MatchAnalysis, get_llm_provider
 from app.services.notification import send_feishu_notification
+from app.services.user_config_cache import get_cached_user_config
 
 
 async def _get_jobs_needing_analysis(
@@ -100,9 +99,8 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
         task.reason = "all_up_to_date"
         return
 
-    # 3. Get user for notifications
-    user_result = await db.execute(select(User).where(User.id == 1))
-    user = user_result.scalar_one_or_none()
+    # 3. Get user for notifications (cached)
+    user = await get_cached_user_config(db)
 
     # 4. Analyze in batches of 3 (concurrent)
     BATCH_SIZE = 3
@@ -155,13 +153,14 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
                 notify_jobs.append((job, result))
 
     # 汇总飞书通知（只发一条）
-    if notify_jobs and user and user.feishu_webhook_url:
+    webhook_url = user.get("feishu_webhook_url") if user else None
+    if notify_jobs and webhook_url:
         try:
             lines = [f"职位匹配提醒（共 {len(notify_jobs)} 个高分职位）", f"简历：{resume.name}"]
             for job, analysis in sorted(notify_jobs, key=lambda x: x[1].match_score, reverse=True):
                 lines.append(f"• {job.title or '-'} / {job.company or '-'}（{analysis.match_score}分）")
             lines.append(f"结论：{analysis.apply_recommendation}")
-            await send_feishu_notification(user.feishu_webhook_url, "\n".join(lines))
+            await send_feishu_notification(webhook_url, "\n".join(lines))
         except Exception:
             pass
 
@@ -195,8 +194,8 @@ async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None =
         if not jobs:
             return {"processed": 0, "created": 0, "updated": 0, "skipped": 0, "items": []}
 
-        user_result = await db.execute(select(User).where(User.id == 1))
-        user = user_result.scalar_one_or_none()
+        user = await get_cached_user_config(db)
+        webhook_url = user.get("feishu_webhook_url") if user else None
 
         provider = get_llm_provider()
         created = 0
@@ -231,10 +230,10 @@ async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None =
                 else:
                     updated += 1
 
-                if should_notify_match(analysis.match_score) and user and user.feishu_webhook_url:
+                if should_notify_match(analysis.match_score) and webhook_url:
                     try:
                         await send_feishu_notification(
-                            user.feishu_webhook_url,
+                            webhook_url,
                             (
                                 f"职位匹配提醒\n"
                                 f"简历：{resume.name}\n"

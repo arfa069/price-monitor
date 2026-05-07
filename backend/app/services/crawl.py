@@ -25,13 +25,6 @@ async def get_active_products() -> list[Product]:
         return list(result.scalars().all())
 
 
-async def get_user_config() -> User | None:
-    """Fetch user configuration."""
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(User).where(User.id == 1))
-        return result.scalar_one_or_none()
-
-
 async def save_price_history(
     product_id: int,
     price: Decimal,
@@ -89,16 +82,18 @@ async def check_price_alerts(product_id: int, current_price: Decimal) -> None:
         if not alerts:
             return
 
-        # Get product info
-        product_result = await db.execute(select(Product).where(Product.id == product_id))
-        product = product_result.scalar_one_or_none()
+        # Get product info and user config in a single JOIN query
+        product_user_result = await db.execute(
+            select(Product, User)
+            .join(User, User.id == Product.user_id)
+            .where(Product.id == product_id)
+        )
+        row = product_user_result.one_or_none()
 
-        if not product:
+        if not row:
             return
 
-        # Get user config for webhook URL (via product's user_id)
-        user_result = await db.execute(select(User).where(User.id == product.user_id))
-        user = user_result.scalar_one_or_none()
+        product, user = row
 
         if not user or not user.feishu_webhook_url:
             return

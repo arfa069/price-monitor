@@ -1,7 +1,7 @@
 """Config API router."""
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +14,7 @@ from app.schemas.user import (
     UserConfigResponse,
     UserConfigUpdate,
 )
+from app.services.user_config_cache import invalidate_user_config_cache
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +58,7 @@ async def create_or_update_config(
 
     await db.commit()
     await db.refresh(user)
+    await invalidate_user_config_cache()
 
     return user
 
@@ -83,5 +85,6 @@ async def update_config_partial(
 
     await db.commit()
     await db.refresh(user)
+    await invalidate_user_config_cache()
 
     return user

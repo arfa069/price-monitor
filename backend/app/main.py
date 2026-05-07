@@ -13,12 +13,11 @@ if sys.platform == "win32":
 import redis.asyncio as redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import select, text
+from sqlalchemy import text
 
-from app.config import settings
-from app.database import AsyncSessionLocal, engine
-from app.models.user import User
 from app.api.auth import router as auth_router
+from app.config import settings
+from app.database import engine
 from app.routers import alerts, config, crawl, products
 from app.routers.jobs import router as jobs_router
 
@@ -42,10 +41,8 @@ async def lifespan(app: FastAPI):
 
 async def _start_scheduler(app: FastAPI) -> None:
     """Initialize APScheduler with AsyncIOScheduler and register cron job from DB config."""
-    import zoneinfo
 
     from apscheduler.schedulers.asyncio import AsyncIOScheduler
-    from apscheduler.triggers.cron import CronTrigger
 
     # Initialize concurrency lock
     app.state.crawl_lock = asyncio.Semaphore(1)
@@ -53,11 +50,6 @@ async def _start_scheduler(app: FastAPI) -> None:
     # Register state with scheduler service (shared by cron and manual crawl)
     from app.services.scheduler_service import _set_scheduler_state
     _set_scheduler_state({"crawl_lock": app.state.crawl_lock})
-
-    # Read user config
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(User).where(User.id == 1))
-        user = result.scalar_one_or_none()
 
     scheduler = AsyncIOScheduler(timezone="UTC", job_defaults={"coalesce": True, "max_instances": 1})
     app.state.scheduler = scheduler
@@ -123,21 +115,6 @@ async def get_scheduler_status():
             status_code=503,
             content={"scheduler": "not_started"},
         )
-
-    from app.database import AsyncSessionLocal
-    from app.models.user import User
-    async with AsyncSessionLocal() as db:
-        result = await db.execute(select(User).where(User.id == 1))
-        user = result.scalar_one_or_none()
-
-    def _job_info(job_id: str, cron_attr: str | None = None, default_cron: str | None = None):
-        job = scheduler.get_job(job_id)
-        cron_expr = getattr(user, cron_attr, None) if cron_attr and user else None
-        return {
-            "registered": job is not None,
-            "cron_expression": cron_expr or default_cron,
-            "next_run_at": job.next_run_time.isoformat() if (job and job.next_run_time) else None,
-        }
 
     from app.services.scheduler_job import JobConfigScheduler, ProductCronScheduler
     job_config_scheduler: JobConfigScheduler = getattr(app.state, "job_config_scheduler", None)

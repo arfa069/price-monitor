@@ -4,8 +4,8 @@ from __future__ import annotations
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-from app.database import AsyncSessionLocal
 from app.models.job import JobSearchConfig
+from app.services.user_config_cache import get_cached_user_config
 
 
 @retry(
@@ -56,14 +56,9 @@ async def send_new_job_notification(
     Returns:
         Response from Feishu API
     """
-    from app.models.user import User
-    from sqlalchemy import select
+    user = await get_cached_user_config()
 
-    async with AsyncSessionLocal() as db:
-        user_result = await db.execute(select(User).where(User.id == 1))
-        user = user_result.scalar_one_or_none()
-
-    if not user or not user.feishu_webhook_url:
+    if not user or not user.get("feishu_webhook_url"):
         return {"status": "skipped", "reason": "no_webhook"}
 
     message = f"""🔔 Boss直聘新职位提醒
@@ -74,4 +69,4 @@ async def send_new_job_notification(
 ---
 共收录职位请查看管理后台"""
 
-    return await send_feishu_notification(user.feishu_webhook_url, message)
+    return await send_feishu_notification(user["feishu_webhook_url"], message)

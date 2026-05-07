@@ -191,7 +191,7 @@ export default function AppLayout({
             >
               刷新
             </Button>
-            <Divider type="vertical" style={{ margin: '0 8px', borderColor: 'rgba(255,255,255,0.2)' }} />
+            <Divider orientation="vertical" style={{ margin: '0 8px', borderColor: 'rgba(255,255,255,0.2)' }} />
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
               <Button type="text" style={{ color: '#fff', height: 'auto', padding: '4px 8px' }}>
                 <Space>
@@ -251,7 +251,8 @@ export default function AppLayout({
           placement="left"
           onClose={() => setDrawerOpen(false)}
           open={drawerOpen}
-          width={220}
+          size="default"
+          style={{ width: 220 }}
           styles={{
             body: { padding: 0, background: '#f8fafc' },
           }}

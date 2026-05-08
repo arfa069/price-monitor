@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { Table, Button, Space, Modal, Form, Input, Select, message, Popconfirm, Switch, Tag } from 'antd'
+import { App, Table, Button, Space, Modal, Form, Input, Select, message, Popconfirm, Switch, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { adminApi, type UserCreate, type UserUpdate } from '@/api/admin'
 import type { User } from '@/types'
 
 export default function AdminUsersPage() {
+  const message = App.useApp().message
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -133,7 +134,7 @@ export default function AdminUsersPage() {
   return (
     <div>
       <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-        <Input.Search placeholder="搜索用户名或邮箱" onSearch={setSearch} style={{ width: 200 }} />
+        <Input.Search aria-label="搜索用户名或邮箱" placeholder="搜索用户名或邮箱" onSearch={setSearch} style={{ width: 200 }} />
         <Select
           placeholder="筛选角色"
           allowClear

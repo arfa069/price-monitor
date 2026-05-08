@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Empty,
@@ -21,6 +22,7 @@ interface ResumeManagerProps {
 }
 
 export default function ResumeManager({ onSelectResume, selectedResumeId }: ResumeManagerProps) {
+  const message = App.useApp().message
   const { data: resumes, isLoading, refetch } = useResumes()
   const createResume = useCreateResume()
   const deleteResume = useDeleteResume()
@@ -122,6 +124,7 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
           <div>
             <Typography.Text strong>简历名称</Typography.Text>
             <Input
+              aria-label="简历名称"
               value={resumeName}
               onChange={(e) => setResumeName(e.target.value)}
               placeholder="例如：前端简历 v1"
@@ -134,6 +137,7 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
               先用纯文本粘贴，后续如果要支持文件解析再扩展上传格式。
             </Typography.Text>
             <Input.TextArea
+              aria-label="简历内容"
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
               placeholder="粘贴完整简历内容"

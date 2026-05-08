@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Form, Input, Button, message, Descriptions } from 'antd'
+import { Card, Form, Input, Button, App, Descriptions } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { authApi } from '@/api/auth'
@@ -9,6 +9,7 @@ export default function ProfilePage() {
   const [form] = Form.useForm()
   const [passwordForm] = Form.useForm()
   const [loading, setLoading] = useState(false)
+  const message = App.useApp().message
 
   const handleProfileUpdate = async (values: { username: string; email: string }) => {
     setLoading(true)
@@ -47,7 +48,7 @@ export default function ProfilePage() {
           <Descriptions.Item label="用户名">{user.username}</Descriptions.Item>
           <Descriptions.Item label="邮箱">{user.email}</Descriptions.Item>
           <Descriptions.Item label="角色">{user.role === 'user' ? '普通用户' : user.role === 'admin' ? '管理员' : '系统管理员'}</Descriptions.Item>
-          <Descriptions.Item label="注册时间">{user.created_at ? new Date(user.created_at).toLocaleString() : '-'}</Descriptions.Item>
+          <Descriptions.Item label="注册时间">{user.created_at ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(user.created_at)) : '-'}</Descriptions.Item>
         </Descriptions>
       </Card>
 

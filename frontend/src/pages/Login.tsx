@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
-import { Form, Input, Button, message, Typography } from 'antd'
+import { Form, Input, Button, App, Typography } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 import { useAuth } from '@/contexts/AuthContext'
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { login } = useAuth()
+  const message = App.useApp().message
 
   // 获取之前尝试访问的页面，登录后跳转回去
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/jobs'
@@ -292,7 +293,7 @@ export default function LoginPage() {
           padding-left: 40px !important;
           border-radius: 10px !important;
           border-color: #e2e8f0 !important;
-          transition: all 0.3s ease !important;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
         }
 
         .auth-input .ant-input:hover {
@@ -308,7 +309,7 @@ export default function LoginPage() {
           padding-left: 40px !important;
           border-radius: 10px !important;
           border-color: #e2e8f0 !important;
-          transition: all 0.3s ease !important;
+          transition: border-color 0.3s ease, box-shadow 0.3s ease !important;
         }
 
         .auth-input .ant-input-affix-wrapper:hover {
@@ -340,7 +341,7 @@ export default function LoginPage() {
           background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
           border: none !important;
           box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4) !important;
-          transition: all 0.3s ease !important;
+          transition: background 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease !important;
         }
 
         .auth-button:hover:not(:disabled) {

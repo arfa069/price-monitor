@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, Empty, Select, Space, Spin, Table, Tag, message } from 'antd'
+import { Button, Card, Empty, Select, Space, Spin, Table, Tag, App } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useMatchResults, useResumes, useTriggerMatch } from '@/hooks/api'
 import { jobsApi } from '@/api/jobs'
 import type { MatchResultWithJob } from '@/types'
 
 export default function MatchResultList() {
+  const message = App.useApp().message
   const [resumeId, setResumeId] = useState<number | undefined>()
   const [minScore, setMinScore] = useState<number | undefined>(70)
   const [page, setPage] = useState(1)
@@ -69,7 +70,16 @@ export default function MatchResultList() {
         title: '分析时间',
         dataIndex: 'updated_at',
         width: 180,
-        render: (value: string) => new Date(value).toLocaleString('zh-CN'),
+        render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
+      },
+      {
+        title: '链接',
+        key: 'job_url',
+        width: 60,
+        render: (_: unknown, record: MatchResultWithJob) =>
+          record.job_url ? (
+            <a href={record.job_url} target="_blank" rel="noopener noreferrer">查看</a>
+          ) : null,
       },
     ],
     [],
@@ -126,10 +136,6 @@ export default function MatchResultList() {
             showSizeChanger: false,
             onChange: setPage,
           }}
-          onRow={(record) => ({
-            onClick: () => record.job_url && window.open(record.job_url, '_blank'),
-            style: { cursor: record.job_url ? 'pointer' : 'default' },
-          })}
         />
       )}
     </Card>

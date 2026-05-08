@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { SaveOutlined } from '@ant-design/icons'
-import { Alert, Button, Card, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd'
+import { Alert, App, Button, Card, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
@@ -27,6 +27,7 @@ const PLATFORM_LABELS: Record<string, string> = {
 }
 
 export default function ScheduleConfigPage() {
+  const message = App.useApp().message
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
 
@@ -264,7 +265,10 @@ export default function ScheduleConfigPage() {
       width: 200,
       render: (_, record) => {
         const schedule = platformSchedules[record.platform]
-        return schedule?.next_run_at ? new Date(schedule.next_run_at).toLocaleString('zh-CN') : <Tag>未调度</Tag>
+        const nextRun = schedule?.next_run_at
+          ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
+          : null
+        return nextRun ? nextRun : <Tag>未调度</Tag>
       },
     },
     {
@@ -315,7 +319,10 @@ export default function ScheduleConfigPage() {
       width: 200,
       render: (_, record) => {
         const schedule = configSchedules[record.id]
-        return schedule?.next_run_at ? new Date(schedule.next_run_at).toLocaleString('zh-CN') : <Tag>未调度</Tag>
+        const nextRun = schedule?.next_run_at
+          ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
+          : null
+        return nextRun ? nextRun : <Tag>未调度</Tag>
       },
     },
   ]

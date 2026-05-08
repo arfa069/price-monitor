@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Input, Modal, Select, Steps, Table, message } from 'antd'
+import { Button, Input, Modal, Select, Steps, Table, App } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import type { BatchImportRow } from '@/types'
 
@@ -45,6 +45,7 @@ export default function BatchImportModal({
   confirmLoading,
   existingUrls,
 }: Props) {
+  const message = App.useApp().message
   const [step, setStep] = useState(0)
   const [rawText, setRawText] = useState('')
   const [items, setItems] = useState<ParsedItem[]>([])
@@ -171,6 +172,7 @@ export default function BatchImportModal({
       {step === 0 ? (
         <div>
           <Input.TextArea
+            aria-label="批量粘贴 URL，每行一个"
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             placeholder={

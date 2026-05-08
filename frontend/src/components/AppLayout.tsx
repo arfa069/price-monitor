@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, message } from 'antd'
+import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, message } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -25,6 +25,7 @@ export default function AppLayout({
   children: React.ReactNode
   onRefresh?: () => void
 }) {
+  const message = App.useApp().message
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -113,6 +114,15 @@ export default function AppLayout({
       icon: <ScheduleOutlined />,
       label: '定时配置',
     },
+    ...(user?.role === 'admin' || user?.role === 'super_admin'
+      ? [
+          {
+            key: '/admin/users',
+            icon: <TeamOutlined />,
+            label: '用户管理',
+          },
+        ]
+      : []),
   ]
 
   return (
@@ -193,7 +203,7 @@ export default function AppLayout({
             </Button>
             <Divider orientation="vertical" style={{ margin: '0 8px', borderColor: 'rgba(255,255,255,0.2)' }} />
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Button type="text" style={{ color: '#fff', height: 'auto', padding: '4px 8px' }}>
+              <Button type="text" style={{ color: '#fff', height: 'auto', padding: '4px 8px' }} aria-label="用户菜单">
                 <Space>
                   <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#0ea5e9' }} />
                   <span style={{ fontSize: 14 }}>{user?.username || '用户'}</span>
@@ -205,7 +215,7 @@ export default function AppLayout({
               icon={<BarsOutlined />}
               style={{ color: '#fff' }}
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? '展开菜单' : '收起菜单'}
+              aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
             />
           </>
         )}

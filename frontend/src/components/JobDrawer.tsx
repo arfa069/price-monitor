@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, Descriptions, Drawer, Select, Space, Tag, Typography, message } from 'antd'
+import { Button, Descriptions, Drawer, Select, Space, Tag, Typography, App } from 'antd'
 import { useMatchResults, useResumes, useTriggerMatch } from '@/hooks/api'
 import type { Job } from '@/types'
 
@@ -10,6 +10,7 @@ interface JobDrawerProps {
 }
 
 export default function JobDrawer({ open, job, onClose }: JobDrawerProps) {
+  const message = App.useApp().message
   const { data: resumes } = useResumes()
   const { data: matchResults, refetch } = useMatchResults({
     job_id: job?.id,

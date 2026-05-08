@@ -20,12 +20,6 @@ Always load the `karpathy-guidelines` skill when coding.
 ### **Windows/WSL执行脚本**：WSL中优先用`powershell.exe`调用 Windows PowerShell
 /mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File
 
-### 启动前端服务器和后端服务器
-Windows环境：
-powershell -ExecutionPolicy Bypass -File ".\scripts\start_server.ps1"
-WSL环境：
-/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File "C:/Users/arfac/price-monitor/scripts/start_server.ps1"
-
 ### 安装依赖
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e ."
 

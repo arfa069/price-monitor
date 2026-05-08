@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   Alert,
+  App,
   Button,
   Card,
   Col,
@@ -12,7 +13,6 @@ import {
   Table,
   Tag,
   Tooltip,
-  message,
   notification,
 } from 'antd'
 import {
@@ -72,6 +72,7 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知错误'
 
 export default function ProductsPage() {
+  const message = App.useApp().message
   const [page, setPage] = useState(1)
   const [size] = useState(15)
   const [platform, setPlatform] = useState<string | undefined>()

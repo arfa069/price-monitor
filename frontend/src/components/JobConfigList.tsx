@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  App,
   Button,
   Card,
   Empty,
@@ -43,6 +44,7 @@ export default function JobConfigList({
   updateLoading,
   crawlLoading,
 }: JobConfigListProps) {
+  const message = App.useApp().message
   const [createOpen, setCreateOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<JobSearchConfig | null>(null)
 

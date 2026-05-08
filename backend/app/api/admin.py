@@ -11,6 +11,8 @@ from app.models.user import User
 from app.schemas.admin import UserCreate, AdminUserUpdate, AdminUserResponse, AdminUserListResponse
 from app.schemas.auth import MessageResponse
 
+from sqlalchemy.exc import IntegrityError
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/users", tags=["admin"])
@@ -206,8 +208,27 @@ async def update_user(
         if value is not None:
             setattr(user, field, value)
 
-    await db.commit()
-    await db.refresh(user)
+    try:
+        await db.commit()
+        await db.refresh(user)
+    except IntegrityError as e:
+        await db.rollback()
+        logger.error(f"IntegrityError in update_user: {e}")
+        error_msg = str(e.orig).lower()
+        if 'username' in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="用户名已存在",
+            )
+        elif 'email' in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邮箱已被使用",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="数据冲突，请检查用户名或邮箱是否已被使用",
+        )
 
     return AdminUserResponse.model_validate(user)
 

@@ -49,6 +49,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import (
@@ -325,8 +326,28 @@ async def update_me(
     if update_data.email:
         current_user.email = update_data.email
 
-    await db.commit()
-    await db.refresh(current_user)
+    try:
+        await db.commit()
+        await db.refresh(current_user)
+    except IntegrityError as e:
+        await db.rollback()
+        logger.error(f"IntegrityError in update_me: {e}")
+        error_msg = str(e.orig).lower()
+        if 'username' in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="用户名已存在",
+            )
+        elif 'email' in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="邮箱已存在",
+            )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="数据冲突，请检查用户名或邮箱是否已被使用",
+        )
+
     logger.info(f"Profile updated for user: {current_user.username}")
     return current_user
 

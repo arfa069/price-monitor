@@ -1,6 +1,7 @@
 import { useCallback, type ReactNode } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { ConfigProvider, theme, Spin } from 'antd'
+import React from 'react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { App as AntdApp, Spin, theme } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
@@ -12,6 +13,71 @@ import SettingsPage from '@/pages/Settings'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 import AdminUsersPage from '@/pages/AdminUsers'
+
+// Error Fallback component (uses hooks, must be inside Router)
+function ErrorFallback() {
+  const navigate = useNavigate()
+  return (
+    <div style={{
+      height: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#f1f5f9',
+      fontFamily: 'system-ui, sans-serif',
+    }}>
+      <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: '#1f2937', marginBottom: 8 }}>
+        页面加载失败
+      </div>
+      <div style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>
+        请刷新页面或联系管理员
+      </div>
+      <button
+        onClick={() => navigate('/login')}
+        style={{
+          padding: '8px 16px',
+          background: '#2563eb',
+          color: '#fff',
+          border: 'none',
+          borderRadius: 6,
+          cursor: 'pointer',
+          fontSize: 14,
+        }}
+      >
+        返回登录页
+      </button>
+    </div>
+  )
+}
+
+// Error Boundary component
+class ErrorBoundary extends React.Component<
+  { children: ReactNode; fallback?: ReactNode },
+  { hasError: boolean; error?: Error }
+> {
+  constructor(props: { children: ReactNode; fallback?: ReactNode }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error }
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.warn('ErrorBoundary caught:', error, errorInfo)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      if (this.props.fallback) return this.props.fallback
+      return <ErrorFallback />
+    }
+    return this.props.children
+  }
+}
 
 // 受保护的路由组件 - 需要登录才能访问
 function ProtectedRoute({ children }: { children: ReactNode }) {
@@ -99,7 +165,7 @@ function AppRoutes() {
 
   return (
     <>
-      <ConfigProvider
+      <AntdApp
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {
@@ -198,15 +264,17 @@ function AppRoutes() {
             <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>
         </BrowserRouter>
-      </ConfigProvider>
+      </AntdApp>
     </>
   )
 }
 
 export default function App() {
   return (
-    <AuthProvider>
-      <AppRoutes />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
+    </ErrorBoundary>
   )
 }

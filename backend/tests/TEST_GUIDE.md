@@ -4,7 +4,7 @@
 
 | 类型 | 执行方式 | 依赖 | 覆盖范围 |
 |------|----------|------|----------|
-| **pytest 单元/集成测试** | `pytest tests/test_api.py tests/test_phase_c_integration.py -v` | 无需真实后端（ASGITransport） | API 逻辑、schema 验证、分页计算 |
+| **pytest 单元/集成测试** | `pytest -v --tb=short` | 无需真实后端（ASGITransport） | API 逻辑、schema 验证、分页计算、权限与审计回归 |
 | **真实环境测试** | 启动后端后用 curl/浏览器 | PostgreSQL + Redis + uvicorn | CRUD 持久化、批量操作、UI 验证 |
 
 ---
@@ -19,19 +19,20 @@ cd C:\Users\arfac\price-monitor
 # 安装测试依赖（如果缺失）
 pip install pytest pytest-asyncio httpx
 
-# 运行测试
-pytest tests/test_api.py tests/test_phase_c_integration.py -v
+# 运行全量测试（与 CI 保持一致）
+pytest -v --tb=short
 ```
 
 ### 测试文件
 
-- `tests/test_api.py` — 单元测试（mock 模式）
-- `tests/test_phase_c_integration.py` — 集成测试（mock 模式）
+- `tests/` 下全部 `test_*.py` 文件（默认发现规则）
+- 重点新增：`tests/test_audit_best_effort.py`（审计日志 best-effort 语义回归）
 
 ### 预期结果
 
 ```
-35 passed
+根据当前代码基线，测试数量会增长；
+核心标准是：无失败（`0 failed`）。
 ```
 
 ---
@@ -115,5 +116,6 @@ Password: Adminf8869!
 |------|------|
 | `test_api.py` | 单元测试，使用 mock 数据库 session |
 | `test_phase_c_integration.py` | 集成测试，使用 ASGITransport 直接测试 FastAPI app |
+| `test_audit_best_effort.py` | 审计日志 best-effort 语义：审计失败不影响主业务成功 |
 | `test_integration_realdb.py` | 预留（因 pytest-asyncio 兼容性问题暂不可用） |
 | `manual_verification_checklist.md` | 浏览器手动测试清单 |

@@ -235,13 +235,13 @@ export default function ScheduleConfigPage() {
       title: '平台',
       dataIndex: 'platform',
       key: 'platform',
-      width: 120,
+      width: 200,
       render: (value: string) => PLATFORM_LABELS[value] || value,
     },
     {
       title: 'Cron 表达式',
       key: 'cron',
-      width: 340,
+      width: 450,
       render: (_: unknown, record: ProductPlatformCron) => (
         <Space.Compact style={{ width: '100%' }}>
           <Input
@@ -267,7 +267,6 @@ export default function ScheduleConfigPage() {
     {
       title: '下次执行',
       key: 'next_run',
-      width: 200,
       render: (_, record) => {
         const schedule = platformSchedules[record.platform]
         const nextRun = schedule?.next_run_at
@@ -297,13 +296,13 @@ export default function ScheduleConfigPage() {
       title: '配置名称',
       dataIndex: 'name',
       key: 'name',
-      width: 120,
+      width: 200,
       ellipsis: true,
     },
     {
       title: 'Cron 表达式',
       key: 'cron',
-      width: 340,
+      width: 450,
       render: (_, record) => (
         <Space.Compact style={{ width: '100%' }}>
           <Input
@@ -327,7 +326,6 @@ export default function ScheduleConfigPage() {
     {
       title: '下次执行',
       key: 'next_run',
-      width: 200,
       render: (_, record) => {
         const schedule = configSchedules[record.id]
         const nextRun = schedule?.next_run_at
@@ -405,7 +403,7 @@ export default function ScheduleConfigPage() {
             loading={platformLoading}
             pagination={false}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1000 }}
             locale={{ emptyText: '暂无商品定时配置' }}
           />
 
@@ -421,7 +419,7 @@ export default function ScheduleConfigPage() {
             loading={configLoading}
             pagination={false}
             size="small"
-            scroll={{ x: 'max-content' }}
+            scroll={{ x: 1000 }}
             locale={{ emptyText: '暂无职位搜索配置' }}
           />
         </div>

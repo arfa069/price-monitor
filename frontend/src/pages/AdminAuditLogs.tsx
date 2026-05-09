@@ -11,9 +11,14 @@ const ACTION_LABELS: Record<string, string> = {
   'user.wechat_bind': '绑定微信',
   'auth.login': '用户登录',
   'auth.logout': '用户登出',
+  'product.update': '更新商品',
+  'product.delete': '删除商品',
   'schedule.create': '创建定时配置',
   'schedule.update': '更新定时配置',
   'schedule.delete': '删除定时配置',
+  'job_config.create': '创建职位配置',
+  'job_config.update': '更新职位配置',
+  'job_config.delete': '删除职位配置',
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -25,9 +30,14 @@ const ACTION_COLORS: Record<string, string> = {
   'user.wechat_bind': 'cyan',
   'auth.login': 'purple',
   'auth.logout': 'default',
+  'product.update': 'blue',
+  'product.delete': 'red',
   'schedule.create': 'green',
   'schedule.update': 'blue',
   'schedule.delete': 'red',
+  'job_config.create': 'green',
+  'job_config.update': 'blue',
+  'job_config.delete': 'red',
 }
 
 export default function AdminAuditLogsPage() {

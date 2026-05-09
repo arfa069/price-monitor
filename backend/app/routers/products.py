@@ -352,12 +352,11 @@ async def get_product(
 async def update_product(
     product_id: int,
     product_data: ProductUpdate,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Update a product."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
     )
@@ -372,18 +371,32 @@ async def update_product(
 
     await db.commit()
     await db.refresh(product)
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="product.update",
+        actor_user_id=current_user.id,
+        target_type="product",
+        target_id=product_id,
+        details={"title": product.title, "platform": product.platform},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return product
 
 
 @router.delete("/{product_id}")
 async def delete_product(
     product_id: int,
+    request: Request,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a product and its related data."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
     )
@@ -392,8 +405,24 @@ async def delete_product(
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
 
+    product_info = {"title": product.title, "platform": product.platform}
     await db.delete(product)
     await db.commit()
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="product.delete",
+        actor_user_id=current_user.id,
+        target_type="product",
+        target_id=product_id,
+        details=product_info,
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return {"message": "Product deleted"}
 
 

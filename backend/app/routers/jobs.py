@@ -95,8 +95,6 @@ async def create_config(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new job search config."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     config = JobSearchConfig(
         user_id=current_user.id,
         **data.model_dump(),
@@ -110,6 +108,20 @@ async def create_config(
         scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
         if scheduler:
             scheduler.add_job(config.id, config.cron_expression, config.cron_timezone or "Asia/Shanghai")
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="job_config.create",
+        actor_user_id=current_user.id,
+        target_type="job_config",
+        target_id=config.id,
+        details={"name": config.name},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
 
     return config
 
@@ -371,8 +383,6 @@ async def update_config(
     db: AsyncSession = Depends(get_db),
 ):
     """Update a config."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
@@ -408,6 +418,20 @@ async def update_config(
             else:
                 scheduler.remove_job(config.id)
 
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="job_config.update",
+        actor_user_id=current_user.id,
+        target_type="job_config",
+        target_id=config_id,
+        details={"name": config.name, "updated_fields": list(update_data.keys())},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return config
 
 
@@ -419,8 +443,6 @@ async def delete_config(
     db: AsyncSession = Depends(get_db),
 ):
     """Delete a config (cascades to jobs)."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
@@ -431,6 +453,8 @@ async def delete_config(
     if not config:
         raise HTTPException(status_code=404, detail="Config not found")
 
+    config_info = {"name": config.name}
+
     # Remove scheduler job before deletion
     scheduler: JobConfigScheduler = getattr(request.app.state, "job_config_scheduler", None)
     if scheduler:
@@ -438,6 +462,21 @@ async def delete_config(
 
     await db.delete(config)
     await db.commit()
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="job_config.delete",
+        actor_user_id=current_user.id,
+        target_type="job_config",
+        target_id=config_id,
+        details=config_info,
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return {"message": "Config deleted"}
 
 

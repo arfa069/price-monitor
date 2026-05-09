@@ -1,12 +1,14 @@
 """Job search API router."""
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.core.audit import log_audit
+from app.core.permissions import require_permission
 from app.core.security import get_current_user
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
@@ -382,6 +384,15 @@ async def update_config(
         raise HTTPException(status_code=404, detail="Config not found")
 
     update_data = data.model_dump(exclude_unset=True)
+
+    # Only super_admin can modify cron-related fields
+    cron_fields = {"cron_expression", "cron_timezone"}
+    if cron_fields & set(update_data.keys()) and current_user.role != "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="权限不足：仅 super_admin 可修改定时配置",
+        )
+
     for field, value in update_data.items():
         setattr(config, field, value)
 
@@ -538,7 +549,9 @@ async def get_job(
 # ── Crawl Triggers ───────────────────────────────────────────────
 
 @router.post("/crawl-now")
-async def crawl_now():
+async def crawl_now(
+    current_user: User = Depends(require_permission("crawl:execute")),
+):
     """Trigger crawling all active job search configs (async)."""
     task = await crawl_all_job_searches_background()
     return JSONResponse(content={
@@ -551,7 +564,7 @@ async def crawl_now():
 @router.post("/crawl-now/{config_id}")
 async def crawl_single(
     config_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("crawl:execute")),
     db: AsyncSession = Depends(get_db),
 ):
     """Trigger crawling a single config (async)."""
@@ -630,15 +643,13 @@ async def update_config_cron(
     config_id: int,
     data: JobConfigCronUpdate,
     request: Request,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("schedule:configure")),
     db: AsyncSession = Depends(get_db),
 ):
     """Update only the cron settings for a job search config.
 
     Null cron_expression disables scheduled crawling for this config.
     """
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
         select(JobSearchConfig).where(
             JobSearchConfig.id == config_id,
@@ -662,6 +673,20 @@ async def update_config_cron(
             scheduler.add_job(config.id, config.cron_expression, config.cron_timezone)
         else:
             scheduler.remove_job(config.id)
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="schedule.update",
+        actor_user_id=current_user.id,
+        target_type="job_config",
+        target_id=config.id,
+        details={"config_name": config.name, "cron_expression": data.cron_expression},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
 
     return config
 

@@ -6,6 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit import log_audit
+from app.core.permissions import require_permission
 from app.core.security import get_current_user
 from app.database import get_db
 from app.models.price_history import PriceHistory
@@ -165,12 +167,10 @@ async def list_product_cron_configs(
 async def create_product_cron_config(
     data: ProductPlatformCronCreate,
     request: Request,
+    current_user: User = Depends(require_permission("schedule:configure")),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     """Create a new per-platform cron config for product crawling."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     if data.platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
@@ -201,6 +201,20 @@ async def create_product_cron_config(
         if scheduler:
             scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
 
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="schedule.create",
+        actor_user_id=current_user.id,
+        target_type="product_cron_config",
+        target_id=config.id,
+        details={"platform": data.platform, "cron_expression": data.cron_expression},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return config
 
 
@@ -208,12 +222,10 @@ async def create_product_cron_config(
 async def delete_product_cron_config(
     platform: str,
     request: Request,
+    current_user: User = Depends(require_permission("schedule:configure")),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     """Delete a per-platform cron config for product crawling."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     if platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
@@ -235,6 +247,21 @@ async def delete_product_cron_config(
 
     await db.delete(config)
     await db.commit()
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="schedule.delete",
+        actor_user_id=current_user.id,
+        target_type="product_cron_config",
+        target_id=config.id,
+        details={"platform": platform},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return {"message": "Platform cron config deleted"}
 
 
@@ -243,12 +270,10 @@ async def update_product_cron_config(
     platform: str,
     data: ProductPlatformCronUpdate,
     request: Request,
+    current_user: User = Depends(require_permission("schedule:configure")),
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     """Update cron expression for a product platform."""
-    if not current_user:
-        raise HTTPException(status_code=401, detail="请先登录")
     if platform not in ("taobao", "jd", "amazon"):
         raise HTTPException(status_code=400, detail="Invalid platform")
 
@@ -275,6 +300,20 @@ async def update_product_cron_config(
             scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
         else:
             scheduler.remove_job(config.platform)
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="schedule.update",
+        actor_user_id=current_user.id,
+        target_type="product_cron_config",
+        target_id=config.id,
+        details={"platform": platform, "cron_expression": data.cron_expression},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
 
     return config
 

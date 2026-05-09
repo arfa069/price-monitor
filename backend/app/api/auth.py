@@ -44,14 +44,14 @@ curl -X GET http://localhost:8000/auth/me \\
 ```
 """
 import logging
-from datetime import UTC, datetime
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.audit import log_audit
 from app.core.security import (
     clear_login_attempts,
     create_access_token,
@@ -68,7 +68,6 @@ from app.core.security import (
 )
 from app.database import get_db
 from app.models.login_log import LoginLog
-from app.models.session import Session
 from app.models.user import User
 from app.schemas.auth import (
     BaseModel,
@@ -139,6 +138,16 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+
+    await log_audit(
+        db=db,
+        action="user.register",
+        actor_user_id=new_user.id,
+        target_type="user",
+        target_id=new_user.id,
+        details={"username": new_user.username, "email": new_user.email},
+        commit=True,
+    )
 
     logger.info(f"User registered: {user_data.username}")
     return new_user
@@ -221,12 +230,28 @@ async def login(login_data: UserLogin, request: Request, db: AsyncSession = Depe
     db.add(login_log)
     await db.commit()
 
+    await log_audit(
+        db=db,
+        action="auth.login",
+        actor_user_id=user.id,
+        target_type="user",
+        target_id=user.id,
+        details={"username": user.username, "ip_address": ip_address},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     logger.info(f"User logged in: {user.username}")
     return TokenResponse(access_token=access_token)
 
 
 @router.post("/logout", response_model=MessageResponse, tags=["auth"])
-async def logout(current_user: User = Depends(get_current_user)):
+async def logout(
+    request: Request,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Logout current user.
 
     Since JWT tokens are stateless, this endpoint just returns success.
@@ -242,6 +267,17 @@ async def logout(current_user: User = Depends(get_current_user)):
         curl -X POST http://localhost:8000/auth/logout \\
             -H "Authorization: Bearer <token>"
     """
+    await log_audit(
+        db=db,
+        action="auth.logout",
+        actor_user_id=current_user.id,
+        target_type="user",
+        target_id=current_user.id,
+        details={"username": current_user.username},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
     logger.info(f"User logged out: {current_user.username}")
     return MessageResponse(message="登出成功")
 
@@ -354,6 +390,7 @@ async def update_me(
 
 @router.post("/me/password", response_model=MessageResponse, tags=["auth"])
 async def change_password(
+    request: Request,
     password_data: PasswordChange,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -389,6 +426,21 @@ async def change_password(
     await db.commit()
 
     logger.info(f"Password changed for user: {current_user.username}")
+
+    # Audit log
+    ip_address = request.client.host if request.client else ""
+    await log_audit(
+        db=db,
+        action="user.password_change",
+        actor_user_id=current_user.id,
+        target_type="user",
+        target_id=current_user.id,
+        details={"username": current_user.username},
+        ip_address=ip_address,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return MessageResponse(message="密码修改成功")
 
 

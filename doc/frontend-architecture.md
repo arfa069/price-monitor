@@ -10,7 +10,10 @@
 | 路由 | React Router DOM v6 |
 | 状态管理 | React Context（AuthContext）+ TanStack React Query |
 | HTTP 客户端 | Axios |
-| CSS | Ant Design token + 内联样式 |
+| CSS | CSS Design Tokens + Ant Design token + `components.css` 全局覆盖 |
+| 字体 | Inter（正文）+ JetBrains Mono（标签/版权）+ CSS 变量系统 |
+| 图标 | Ant Design Icons（线性风格） |
+| 设计系统 | Figma 营销风格（黑白核心 + 马卡龙色块 + 胶囊按钮） |
 
 ## 2. 项目结构
 
@@ -24,9 +27,10 @@ frontend/src/
 │   ├── crawl.ts             # 爬取 API
 │   ├── config.ts            # 配置 API
 │   ├── jobs.ts              # 职位 API
+│   ├── admin.ts            # 管理员 API
 │   └── job_match.ts         # 匹配分析 API
 ├── components/              # 可复用组件
-│   ├── AppLayout.tsx        # 布局组件（Header + Sidebar + Footer）
+│   ├── AppLayout.tsx        # 布局组件（Figma 风格：白色顶栏 + 灰卡侧栏）
 │   ├── BatchImportModal.tsx # 批量导入弹窗
 │   ├── ProductFormModal.tsx # 商品表单弹窗
 │   ├── PriceTrendModal.tsx  # 价格趋势弹窗
@@ -41,16 +45,22 @@ frontend/src/
 ├── hooks/
 │   └── api.ts               # React Query hooks（所有业务数据获取）
 ├── pages/
-│   ├── Login.tsx            # 登录页
-│   ├── Register.tsx         # 注册页
-│   ├── ProductsPage.tsx     # 商品管理页
-│   ├── JobsPage.tsx         # 职位管理页
-│   └── ScheduleConfigPage.tsx # 定时配置页
+│   ├── Login.tsx            # 登录页（Figma 风格：左侧品牌 + 右侧白卡表单）
+│   ├── Register.tsx         # 注册页（同风格）
+│   ├── ProductsPage.tsx     # 商品管理页（lime 色块标题 + 胶囊工具栏）
+│   ├── JobsPage.tsx         # 职位管理页（cream 色块标题）
+│   ├── ScheduleConfigPage.tsx # 定时配置页（lime 色块标题）
+│   ├── Profile.tsx          # 个人信息页（cream 色块）
+│   ├── Settings.tsx        # 账号设置页（mint 色块）
+│   └── AdminUsers.tsx      # 用户管理页（surface-soft 色块）
+├── styles/                  # Figma 设计系统
+│   ├── design-tokens.css   # CSS 变量（颜色/排版/间距/圆角 token）
+│   └── components.css       # Ant Design 组件全局覆盖（Figma 风格）
 ├── types/
 │   └── index.ts             # TypeScript 类型定义
 ├── App.tsx                  # 根组件 + 路由配置
 ├── main.tsx                 # 入口文件
-└── index.css                # 全局样式
+└── index.css                # 全局样式（导入 design-tokens + components）
 ```
 
 ## 3. 入口与路由（App.tsx）
@@ -86,11 +96,26 @@ frontend/src/
 - `PublicRoute` — 已登录用户访问自动跳转 `/jobs`
 - 根路径 `/` 和未知路径 `*` 重定向到 `/jobs`
 
-**Ant Design 主题配置：**
-- 主色：`#2563eb`（蓝色）
-- 背景色：`#f1f5f9`
-- 圆角：8px
-- 字体大小：14px
+**Ant Design 主题配置（ConfigProvider）：**
+- 主色：`#000000`（黑色）
+- 背景色：`#ffffff`（白色 canvas）
+- 圆角：50px（胶囊按钮）/ 8px（输入框）/ 24px（卡片）
+- 字体大小：16px
+- 字体：`'Inter', 'SF Pro Display', system-ui`
+- 组件级 token：Button borderRadius: 50, Input borderRadius: 8, Table borderRadius: 24, Card borderRadius: 24
+
+**设计系统 CSS 变量（src/styles/design-tokens.css）：**
+| Token | 值 | 用途 |
+|-------|----|------|
+| `--color-primary` | `#000000` | 主 CTA / 标题 |
+| `--color-canvas` | `#ffffff` | 页面背景 |
+| `--color-hairline` | `#e6e6e6` | 边框 |
+| `--color-surface-soft` | `#f7f7f5` | 软表面（侧栏/色块） |
+| `--color-block-lime` | `#dceeb1` | 商品页/定时配置标题 |
+| `--color-block-cream` | `#f4ecd6` | 职位页/个人信息标题 |
+| `--color-block-navy` | `#1f1d3d` | 深色块 |
+| `--radius-pill` | `50px` | 胶囊按钮 |
+| `--radius-lg` | `24px` | 卡片/色块 |
 
 ## 4. 状态管理
 
@@ -215,28 +240,38 @@ server: {
 
 ### 6.4 登录/注册页（Login.tsx / Register.tsx）
 
-- 公开路由，用户名 + 密码表单
-- 注册/登录成功后调用 `login(token, userData)` 写入 AuthContext
-- 登录失败显示错误信息
+**设计风格：Figma 营销风格左右分栏**
+
+- 左侧品牌面板：白色背景，logo + 超大 display 标题（Inter 340 字重 + 负字间距）+ feature chips（JetBrains Mono）
+- 装饰色块：`#dceeb1` lime（登录页）/ `#c5b0f4` lilac（注册页），定位在面板右侧边缘
+- 右侧表单面板：`#f7f7f5` 浅灰背景，白色圆角卡片（24px 边框半径），黑色胶囊提交按钮
+- 移动端（< 768px）：左右分栏 → 上下布局，装饰色块隐藏
+- 公开路由，注册/登录成功后调用 `login(token, userData)` 写入 AuthContext
 
 ## 7. 组件设计
 
 ### 7.1 AppLayout（布局组件）
 
+**设计风格：Figma 营销风格**
+
 **桌面端：**
-- Header（固定顶部，深色背景）：Logo + 刷新按钮 + 用户下拉菜单
-- Sider（固定左侧，可折叠）：导航菜单
-- Content（中间区域）：页面内容
-- Footer（固定底部）：版本信息
+- Header（固定顶部，白色背景，56px 高）：Logo（黑色方块 + 文字）+ 刷新按钮 + 用户下拉菜单
+- Sider（固定左侧，`#f7f7f5` 浅灰背景，`border-radius: 0 24px 24px 0`，可折叠）：导航菜单，选中态为黑色填充
+- Content（白色背景）：页面内容
+- Footer（固定底部，白色背景，JetBrains Mono 版权文字）：版本信息
 
 **移动端（< 768px）：**
-- 汉堡菜单触发侧边 Drawer 替代 Sider
+- 汉堡菜单触发侧边 Drawer 替代 Sider（`#f7f7f5` 背景）
 - Content 区域宽度 100%，无圆角/阴影
 
 **导航菜单：**
 - `/jobs` — 职位管理（TeamOutlined）
 - `/products` — 商品管理（ShoppingCartOutlined）
 - `/schedule` — 定时配置（ScheduleOutlined）
+- `/profile` — 个人信息（UserOutlined）
+- `/settings` — 账号设置（SettingOutlined）
+- `/admin/users` — 用户管理（TeamOutlined，仅 admin/super_admin）
+- `/admin/users` — 用户管理（仅 admin/super_admin 可见）
 
 ### 7.2 业务组件
 

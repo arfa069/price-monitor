@@ -13,7 +13,7 @@ Always load the `karpathy-guidelines` skill when coding.
 
 淘宝、京东、亚马逊价格监控系统 + Boss 直聘职位搜索监控。通过 Playwright 抓取商品页面/职位信息，记录价格历史，降价时通过飞书 Webhook 发送通知。
 **技术栈**：Python 3.11+ · FastAPI · PostgreSQL (async SQLAlchemy) · Redis · Playwright · 飞书 Webhook
-**前端**：React + Vite + TypeScript + Ant Design
+**前端**：React + Vite + TypeScript + Ant Design + Figma Design System（黑白核心 + 马卡龙色块 + 胶囊按钮）
 
 ## 3.常用命令
 

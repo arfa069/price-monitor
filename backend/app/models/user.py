@@ -19,6 +19,11 @@ class User(Base, TimestampMixin):
     role = Column(String(20), nullable=False, default="user")
     deleted_at = Column(DateTime(timezone=True), nullable=True)
 
+    # WeChat login fields
+    wechat_openid = Column(String(64), unique=True, nullable=True, index=True)
+    wechat_union_id = Column(String(64), nullable=True)
+    wechat_bind_at = Column(DateTime(timezone=True), nullable=True)
+
     # Legacy fields (for backward compatibility)
     feishu_webhook_url = Column(String, nullable=True)
     data_retention_days = Column(Integer, nullable=False, default=365)

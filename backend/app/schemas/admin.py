@@ -1,6 +1,31 @@
 """Admin API schemas."""
 from datetime import datetime
+from typing import Any
+
 from pydantic import BaseModel, EmailStr, Field
+
+
+class AuditLogResponse(BaseModel):
+    """Schema for audit log entries."""
+    id: int
+    actor_user_id: int | None
+    action: str
+    target_type: str | None
+    target_id: int | None
+    details: dict[str, Any] | None
+    ip_address: str | None
+    user_agent: str | None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class AuditLogListResponse(BaseModel):
+    """Schema for paginated audit log list."""
+    items: list[AuditLogResponse]
+    total: int
+    page: int
+    page_size: int
 
 
 class UserCreate(BaseModel):

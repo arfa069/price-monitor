@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import delete, desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import require_permission
 from app.core.security import get_current_user
 from app.database import AsyncSessionLocal, get_db
 from app.models.crawl_log import CrawlLog
@@ -129,7 +130,7 @@ async def get_crawl_logs(
 
 @router.post("/crawl-now")
 async def crawl_now(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("crawl:execute")),
 ):
     """Start crawling all active products immediately.
 
@@ -211,7 +212,7 @@ async def get_crawl_result(task_id: str):
 @router.post("/cleanup")
 async def cleanup_old_data(
     retention_days: int = Query(default=365, ge=1, le=3650),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_permission("crawl:execute")),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete price history and crawl logs older than retention period."""

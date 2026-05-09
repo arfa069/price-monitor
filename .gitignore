@@ -50,3 +50,8 @@ scripts/install-codex-rtk-wrapper.ps1
 backend/.coverage
 .claude/settings.local.json
 backend/app/platforms/.boss_cookies.json
+.claude/settings.local.json
+backend/uvicorn.log
+/doc/superpowers/specs
+PLAN.md
+set_password.py

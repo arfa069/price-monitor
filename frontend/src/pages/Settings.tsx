@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Form, Input, InputNumber, Button, App } from 'antd'
+import { Form, Input, InputNumber, Button, App } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
 import { configApi } from '@/api/config'
@@ -25,30 +25,65 @@ export default function SettingsPage() {
   }
 
   return (
-    <div style={{ maxWidth: 600 }}>
-      <Card title="个人设置">
-        <Form
-          form={form}
-          layout="vertical"
-          initialValues={{
-            feishu_webhook_url: user?.feishu_webhook_url || '',
-            data_retention_days: user?.data_retention_days || 365,
-          }}
-          onFinish={handleSubmit}
-        >
-          <Form.Item name="feishu_webhook_url" label="飞书 Webhook URL">
-            <Input placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx" />
-          </Form.Item>
-          <Form.Item name="data_retention_days" label="数据保留天数" rules={[{ type: 'number', min: 1, max: 3650 }]}>
-            <InputNumber min={1} max={3650} style={{ width: 200 }} />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit" loading={loading}>
-              保存
-            </Button>
-          </Form.Item>
-        </Form>
-      </Card>
+    <div>
+      {/* Page header */}
+      <div className="page-header" style={{ background: '#c8e6cd' }}>
+        <div className="page-header-inner">
+          <div>
+            <p className="page-eyebrow">偏好设置</p>
+            <h1 className="page-title">账号设置</h1>
+            <p className="page-subtitle">配置通知渠道与数据保留策略</p>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 560, marginTop: 24 }}>
+        <div className="fg-card">
+          <div className="fg-card-header">
+            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+              个人设置
+            </span>
+          </div>
+          <div style={{ padding: '20px 24px' }}>
+            <Form
+              form={form}
+              layout="vertical"
+              initialValues={{
+                feishu_webhook_url: user?.feishu_webhook_url || '',
+                data_retention_days: user?.data_retention_days || 365,
+              }}
+              onFinish={handleSubmit}
+            >
+              <Form.Item
+                name="feishu_webhook_url"
+                label="飞书 Webhook URL"
+                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+              >
+                <Input
+                  placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"
+                  style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
+                />
+              </Form.Item>
+              <Form.Item
+                name="data_retention_days"
+                label="数据保留天数"
+                rules={[{ type: 'number', min: 1, max: 3650 }]}
+              >
+                <InputNumber
+                  min={1}
+                  max={3650}
+                  style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
+                />
+              </Form.Item>
+              <Form.Item style={{ marginBottom: 0 }}>
+                <Button type="primary" htmlType="submit" loading={loading} className="fg-btn-primary">
+                  保存
+                </Button>
+              </Form.Item>
+            </Form>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

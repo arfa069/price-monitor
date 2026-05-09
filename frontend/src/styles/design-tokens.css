@@ -1,0 +1,134 @@
+/* ============================================================
+   Figma Design System — CSS Design Tokens
+   Source: C:\Users\arfac\Downloads\DESIGN.md (Figma Marketing Style)
+   ============================================================ */
+
+/* ---- Figma Design Tokens ---- */
+:root {
+  /* --- Colors: Brand & Accent --- */
+  --color-primary: #000000;
+  --color-on-primary: #ffffff;
+  --color-ink: #000000;
+  --color-canvas: #ffffff;
+  --color-inverse-canvas: #000000;
+  --color-inverse-ink: #ffffff;
+  --color-on-inverse-soft: rgba(255, 255, 255, 0.16);
+
+  /* --- Colors: Surface --- */
+  --color-hairline: #e6e6e6;
+  --color-hairline-soft: #f1f1f1;
+  --color-surface-soft: #f7f7f5;
+  --color-block-lime: #dceeb1;
+  --color-block-lilac: #c5b0f4;
+  --color-block-cream: #f4ecd6;
+  --color-block-mint: #c8e6cd;
+  --color-block-pink: #efd4d4;
+  --color-block-coral: #f3c9b6;
+  --color-block-navy: #1f1d3d;
+  --color-accent-magenta: #ff3d8b;
+  --color-success: #1ea64a;
+  --color-overlay-scrim: rgba(0, 0, 0, 0.6);
+
+  /* --- Typography --- */
+  --font-sans: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+
+  --font-size-display-xl: clamp(36px, 5vw, 64px);
+  --font-size-display-lg: clamp(28px, 4vw, 48px);
+  --font-size-headline: 26px;
+  --font-size-subhead: 26px;
+  --font-size-card-title: 24px;
+  --font-size-body-lg: 20px;
+  --font-size-body: 18px;
+  --font-size-body-sm: 16px;
+  --font-size-link: 20px;
+  --font-size-button: 20px;
+  --font-size-eyebrow: 18px;
+  --font-size-caption: 12px;
+
+  --font-weight-display: 340;
+  --font-weight-headline: 540;
+  --font-weight-subhead: 340;
+  --font-weight-card-title: 700;
+  --font-weight-body-lg: 330;
+  --font-weight-body: 320;
+  --font-weight-body-sm: 330;
+  --font-weight-link: 480;
+  --font-weight-button: 480;
+  --font-weight-eyebrow: 400;
+  --font-weight-caption: 400;
+
+  --line-height-display-xl: 1.0;
+  --line-height-display-lg: 1.1;
+  --line-height-headline: 1.35;
+  --line-height-subhead: 1.35;
+  --line-height-card-title: 1.45;
+  --line-height-body-lg: 1.40;
+  --line-height-body: 1.45;
+  --line-height-body-sm: 1.45;
+  --line-height-link: 1.40;
+  --line-height-button: 1.40;
+  --line-height-eyebrow: 1.30;
+  --line-height-caption: 1.00;
+
+  --letter-spacing-display-xl: -1.72px;
+  --letter-spacing-display-lg: -0.96px;
+  --letter-spacing-headline: -0.26px;
+  --letter-spacing-subhead: -0.26px;
+  --letter-spacing-body-lg: -0.14px;
+  --letter-spacing-body: -0.26px;
+  --letter-spacing-body-sm: -0.14px;
+  --letter-spacing-link: -0.10px;
+  --letter-spacing-button: -0.10px;
+  --letter-spacing-eyebrow: 0.54px;
+  --letter-spacing-caption: 0.60px;
+
+  /* --- Spacing --- */
+  --spacing-hair: 1px;
+  --spacing-xxs: 4px;
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-xxl: 48px;
+  --spacing-section: 96px;
+
+  /* --- Rounded Corners --- */
+  --radius-xs: 2px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-pill: 50px;
+  --radius-full: 9999px;
+
+  /* --- Elevation --- */
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.2);
+  --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.08);
+
+  /* --- Z-Index Scale --- */
+  --z-base: 0;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-fixed: 300;
+  --z-modal-backdrop: 400;
+  --z-modal: 500;
+  --z-toast: 600;
+}
+
+/* ---- Ant Design v6 Token Overrides ---- */
+/* These map Figma tokens to Ant Design's token system */
+:root {
+  --ant-color-primary: var(--color-primary);
+  --ant-color-bg-layout: var(--color-canvas);
+  --ant-color-bg-container: var(--color-canvas);
+  --ant-color-text: var(--color-ink);
+  --ant-color-text-secondary: #666666;
+  --ant-color-border: var(--color-hairline);
+  --ant-border-radius: var(--radius-pill);
+  --ant-font-size: var(--font-size-body-sm);
+  --ant-line-height: var(--line-height-body-sm);
+  --ant-font-family: var(--font-sans);
+}

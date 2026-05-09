@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { Form, Input, Button, message, Typography } from 'antd'
+import { Form, Input, Button, App, Typography } from 'antd'
 import { UserOutlined, MailOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 
-const { Title, Text } = Typography
+const { Text } = Typography
 
 interface RegisterFormValues {
   username: string
@@ -17,6 +17,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
   const navigate = useNavigate()
+  const message = App.useApp().message
 
   const handleSubmit = async (values: RegisterFormValues) => {
     if (values.password !== values.password_confirm) {
@@ -32,9 +33,7 @@ export default function RegisterPage() {
         password: values.password,
         password_confirm: values.password_confirm,
       })
-
       message.success('注册成功！请登录')
-      // 注册成功后跳转到登录页
       navigate('/login', { replace: true })
     } catch {
       message.error('注册失败，请检查输入信息')
@@ -44,52 +43,67 @@ export default function RegisterPage() {
     }
   }
 
-  // 自定义密码确认验证
   const validatePasswordConfirm = () => ({
     validator(_: unknown, value: string) {
-      if (!value) {
-        return Promise.reject(new Error('请确认密码'))
-      }
-      if (value !== form.getFieldValue('password')) {
+      if (!value) return Promise.reject(new Error('请确认密码'))
+      if (value !== form.getFieldValue('password'))
         return Promise.reject(new Error('两次输入的密码不一致'))
-      }
       return Promise.resolve()
     },
   })
 
   return (
-    <div className="auth-page">
-      <div className="auth-background">
-        <div className="auth-glow auth-glow-1" />
-        <div className="auth-glow auth-glow-2" />
-        <div className="auth-pattern" />
-      </div>
-
-      <div className="auth-container">
-        <div className="auth-card">
-          <div className="auth-header">
-            <div className="auth-logo">
-              <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                <rect width="40" height="40" rx="10" fill="url(#logoGradient)" />
+    <div className="login-root">
+      {/* Left Brand Panel */}
+      <div className="login-brand">
+        <div className="login-brand-inner">
+          {/* Logo */}
+          <div className="login-logo">
+            <div className="login-logo-mark">
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                <rect width="28" height="28" rx="7" fill="#000000" />
                 <path
-                  d="M12 20L18 26L28 14"
+                  d="M8 14L12.5 18.5L20 9"
                   stroke="white"
-                  strokeWidth="3"
+                  strokeWidth="2.5"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
-                <defs>
-                  <linearGradient id="logoGradient" x1="0" y1="0" x2="40" y2="40">
-                    <stop stopColor="#0ea5e9" />
-                    <stop offset="1" stopColor="#1e3a5f" />
-                  </linearGradient>
-                </defs>
               </svg>
             </div>
-            <Title level={3} className="auth-title">创建账号</Title>
-            <Text type="secondary" className="auth-subtitle">
-              加入价格监控系统
-            </Text>
+            <span className="login-logo-name">价格监控</span>
+          </div>
+
+          {/* Hero copy */}
+          <div className="login-hero">
+            <h1 className="login-headline">
+              加入我们<br />
+              开启监控
+            </h1>
+            <p className="login-subhead">
+              创建账号，免费开始追踪全网商品价格<br />
+              第一时间获取降价提醒
+            </p>
+          </div>
+
+          {/* Feature pills */}
+          <div className="login-features">
+            <span className="feature-chip">免费使用</span>
+            <span className="feature-chip">即时提醒</span>
+            <span className="feature-chip">数据安全</span>
+          </div>
+        </div>
+
+        {/* Decorative color block */}
+        <div className="login-brand-decoration" />
+      </div>
+
+      {/* Right Form Panel */}
+      <div className="login-form-panel">
+        <div className="login-form-card">
+          <div className="login-form-header">
+            <h2 className="login-form-title">创建账号</h2>
+            <p className="login-form-subtitle">加入价格监控系统</p>
           </div>
 
           <Form
@@ -98,7 +112,7 @@ export default function RegisterPage() {
             onFinish={handleSubmit}
             layout="vertical"
             requiredMark={false}
-            className="auth-form"
+            className="login-form"
             initialValues={{ username: '', email: '', password: '', password_confirm: '' }}
           >
             <Form.Item
@@ -107,7 +121,7 @@ export default function RegisterPage() {
                 { required: true, message: '请输入用户名' },
                 { min: 3, message: '用户名至少3个字符' },
                 { max: 20, message: '用户名最多20个字符' },
-                { pattern: /^[a-zA-Z0-9_]+$/, message: '用户名只能包含字母、数字和下划线' },
+                { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线' },
               ]}
             >
               <Input
@@ -115,7 +129,7 @@ export default function RegisterPage() {
                 placeholder="用户名"
                 size="large"
                 autoComplete="username"
-                className="auth-input"
+                className="login-input"
               />
             </Form.Item>
 
@@ -131,7 +145,7 @@ export default function RegisterPage() {
                 placeholder="邮箱"
                 size="large"
                 autoComplete="email"
-                className="auth-input"
+                className="login-input"
               />
             </Form.Item>
 
@@ -149,7 +163,7 @@ export default function RegisterPage() {
                 placeholder="密码"
                 size="large"
                 autoComplete="new-password"
-                className="auth-input"
+                className="login-input"
               />
             </Form.Item>
 
@@ -167,7 +181,7 @@ export default function RegisterPage() {
                 placeholder="确认密码"
                 size="large"
                 autoComplete="new-password"
-                className="auth-input"
+                className="login-input"
               />
             </Form.Item>
 
@@ -178,248 +192,335 @@ export default function RegisterPage() {
                 size="large"
                 loading={loading}
                 block
-                className="auth-button"
+                className="login-btn-primary"
               >
                 {loading ? '注册中...' : '注册'}
               </Button>
             </Form.Item>
           </Form>
 
-          <div className="auth-footer">
-            <Text type="secondary">
-              已有账号？{' '}
-              <Link to="/login" className="auth-link">
-                立即登录
-              </Link>
-            </Text>
+          <div className="login-form-footer">
+            <Text className="login-footer-text">已有账号？</Text>
+            <Link to="/login" className="login-footer-link">
+              立即登录
+            </Link>
           </div>
         </div>
 
-        <Text type="secondary" className="auth-copyright">
+        <Text className="login-copyright">
           价格监控系统 © 2026
         </Text>
       </div>
 
       <style>{`
-        .auth-page {
+        .login-root {
           min-height: 100vh;
+          display: flex;
+          background: #ffffff;
+        }
+
+        .login-brand {
+          flex: 1;
+          background: #ffffff;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 50%, #cbd5e1 100%);
+          padding: 48px;
           position: relative;
           overflow: hidden;
         }
 
-        .auth-background {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-        }
-
-        .auth-glow {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          opacity: 0.4;
-        }
-
-        .auth-glow-1 {
-          width: 400px;
-          height: 400px;
-          background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
-          top: -100px;
-          right: -100px;
-          animation: float 8s ease-in-out infinite;
-        }
-
-        .auth-glow-2 {
-          width: 300px;
-          height: 300px;
-          background: linear-gradient(135deg, #1e3a5f 0%, #3b82f6 100%);
-          bottom: -50px;
-          left: -50px;
-          animation: float 10s ease-in-out infinite reverse;
-        }
-
-        .auth-pattern {
-          position: absolute;
-          inset: 0;
-          background-image:
-            radial-gradient(circle at 25% 25%, rgba(14, 165, 233, 0.05) 0%, transparent 50%),
-            radial-gradient(circle at 75% 75%, rgba(30, 58, 95, 0.05) 0%, transparent 50%);
-        }
-
-        @keyframes float {
-          0%, 100% { transform: translate(0, 0); }
-          50% { transform: translate(20px, -20px); }
-        }
-
-        .auth-container {
-          position: relative;
+        .login-brand-inner {
+          max-width: 480px;
+          width: 100%;
           z-index: 1;
+        }
+
+        .login-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 64px;
+        }
+
+        .login-logo-mark {
+          animation: scaleIn 0.5s ease-out 0.1s both;
+        }
+
+        .login-logo-name {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 18px;
+          font-weight: 480;
+          color: #000000;
+          letter-spacing: -0.2px;
+        }
+
+        .login-headline {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: clamp(40px, 5vw, 64px);
+          font-weight: 340;
+          line-height: 1.05;
+          letter-spacing: -1.72px;
+          color: #000000;
+          margin: 0 0 24px 0;
+          animation: fadeUp 0.6s ease-out 0.2s both;
+        }
+
+        .login-subhead {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 18px;
+          font-weight: 320;
+          line-height: 1.6;
+          color: #000000;
+          margin: 0 0 40px 0;
+          animation: fadeUp 0.6s ease-out 0.35s both;
+        }
+
+        .login-features {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          animation: fadeUp 0.6s ease-out 0.5s both;
+        }
+
+        .feature-chip {
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 12px;
+          font-weight: 400;
+          letter-spacing: 0.6px;
+          text-transform: uppercase;
+          color: #000000;
+          background: #f7f7f5;
+          border: 1px solid #e6e6e6;
+          border-radius: 50px;
+          padding: 6px 14px;
+        }
+
+        .login-brand-decoration {
+          position: absolute;
+          right: -60px;
+          top: 50%;
+          transform: translateY(-50%) rotate(-4deg);
+          width: 320px;
+          height: 320px;
+          background: #c5b0f4;
+          border-radius: 24px;
+          z-index: 0;
+        }
+
+        .login-form-panel {
+          width: 480px;
+          min-width: 380px;
+          background: #f7f7f5;
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 20px;
-          animation: slideUp 0.6s ease-out;
+          justify-content: center;
+          padding: 48px 40px;
+          gap: 24px;
         }
 
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .auth-card {
-          background: white;
-          border-radius: 16px;
-          padding: 40px;
+        .login-form-card {
           width: 100%;
-          max-width: 400px;
-          box-shadow:
-            0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -2px rgba(0, 0, 0, 0.1),
-            0 0 0 1px rgba(0, 0, 0, 0.05);
+          max-width: 360px;
+          background: #ffffff;
+          border-radius: 24px;
+          padding: 40px;
+          border: 1px solid #e6e6e6;
+          animation: fadeUp 0.6s ease-out 0.2s both;
         }
 
-        .auth-header {
-          text-align: center;
+        .login-form-header {
           margin-bottom: 32px;
         }
 
-        .auth-logo {
-          margin-bottom: 20px;
-          animation: scaleIn 0.5s ease-out 0.2s both;
+        .login-form-title {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 26px;
+          font-weight: 540;
+          line-height: 1.35;
+          letter-spacing: -0.26px;
+          color: #000000;
+          margin: 0 0 6px 0;
         }
 
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+        .login-form-subtitle {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 16px;
+          font-weight: 330;
+          color: #666666;
+          margin: 0;
         }
 
-        .auth-title {
-          margin: 0 0 8px 0 !important;
-          color: #1e3a5f !important;
-          animation: fadeIn 0.5s ease-out 0.3s both;
+        .login-form {
+          animation: fadeUp 0.6s ease-out 0.35s both;
         }
 
-        .auth-subtitle {
-          display: block;
-          animation: fadeIn 0.5s ease-out 0.4s both;
+        .login-form .ant-form-item {
+          margin-bottom: 16px;
         }
 
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+        .login-form .ant-form-item-label > label {
+          font-family: 'Inter', system-ui, sans-serif;
+          font-size: 14px;
+          font-weight: 330;
+          color: #000000;
+          line-height: 1.45;
+          padding-bottom: 6px;
         }
 
-        .auth-form {
-          animation: fadeIn 0.5s ease-out 0.5s both;
+        .login-input .ant-input {
+          padding: 11px 14px !important;
+          border-radius: 8px !important;
+          border: 1px solid #e6e6e6 !important;
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-size: 16px !important;
+          font-weight: 320 !important;
+          background: #ffffff !important;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
-        .auth-input .ant-input {
-          padding-left: 40px !important;
-          border-radius: 10px !important;
-          border-color: #e2e8f0 !important;
-          transition: all 0.3s ease !important;
+        .login-input .ant-input:hover {
+          border-color: #999 !important;
         }
 
-        .auth-input .ant-input:hover {
-          border-color: #94a3b8 !important;
+        .login-input .ant-input:focus {
+          border-color: #000000 !important;
+          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
         }
 
-        .auth-input .ant-input:focus {
-          border-color: #0ea5e9 !important;
-          box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+        .login-input .ant-input-affix-wrapper {
+          padding: 11px 14px !important;
+          border-radius: 8px !important;
+          border: 1px solid #e6e6e6 !important;
+          background: #ffffff !important;
+          transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
-        .auth-input .ant-input-affix-wrapper {
-          padding-left: 40px !important;
-          border-radius: 10px !important;
-          border-color: #e2e8f0 !important;
-          transition: all 0.3s ease !important;
+        .login-input .ant-input-affix-wrapper:hover {
+          border-color: #999 !important;
         }
 
-        .auth-input .ant-input-affix-wrapper:hover {
-          border-color: #94a3b8 !important;
-        }
-
-        .auth-input .ant-input-affix-wrapper:focus,
-        .auth-input .ant-input-affix-wrapper-focused {
-          border-color: #0ea5e9 !important;
-          box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1) !important;
+        .login-input .ant-input-affix-wrapper:focus,
+        .login-input .ant-input-affix-wrapper-focused {
+          border-color: #000000 !important;
+          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
         }
 
         .input-icon {
-          color: #94a3b8;
-          transition: color 0.3s ease;
+          color: #999;
+          font-size: 14px;
+          transition: color 0.2s ease;
         }
 
-        .auth-input .ant-input:focus + .ant-input-suffix .input-icon,
-        .auth-input .ant-input-focused + .ant-input-suffix .input-icon,
-        .auth-input:hover .input-icon {
-          color: #0ea5e9;
+        .login-input .ant-input:focus ~ .ant-input-suffix .input-icon,
+        .login-input:hover .input-icon {
+          color: #000000;
         }
 
-        .auth-button {
-          height: 48px !important;
-          border-radius: 10px !important;
+        .login-btn-primary {
+          height: auto !important;
+          padding: 12px 24px !important;
+          border-radius: 50px !important;
+          font-family: 'Inter', system-ui, sans-serif !important;
           font-size: 16px !important;
-          font-weight: 500 !important;
-          background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%) !important;
+          font-weight: 480 !important;
+          letter-spacing: -0.1px !important;
+          background: #000000 !important;
           border: none !important;
-          box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4) !important;
-          transition: all 0.3s ease !important;
+          color: #ffffff !important;
+          width: 100%;
+          transition: background 0.2s ease, transform 0.15s ease !important;
+          margin-top: 8px;
         }
 
-        .auth-button:hover:not(:disabled) {
-          background: linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%) !important;
-          transform: translateY(-2px);
-          box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5) !important;
+        .login-btn-primary:hover:not(:disabled) {
+          background: #222222 !important;
+          transform: translateY(-1px);
         }
 
-        .auth-button:active:not(:disabled) {
+        .login-btn-primary:active:not(:disabled) {
           transform: translateY(0);
         }
 
-        .auth-button:disabled {
-          opacity: 0.7;
+        .login-btn-primary:disabled {
+          opacity: 0.6;
         }
 
-        .auth-footer {
+        .login-form-footer {
           text-align: center;
           margin-top: 24px;
           padding-top: 24px;
-          border-top: 1px solid #f1f5f9;
-          animation: fadeIn 0.5s ease-out 0.6s both;
+          border-top: 1px solid #f1f1f1;
+          animation: fadeUp 0.6s ease-out 0.5s both;
         }
 
-        .auth-link {
-          color: #0ea5e9 !important;
-          font-weight: 500;
-          transition: color 0.3s ease;
+        .login-footer-text {
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-size: 14px !important;
+          font-weight: 330 !important;
+          color: #666666 !important;
         }
 
-        .auth-link:hover {
-          color: #0284c7 !important;
+        .login-footer-link {
+          font-family: 'Inter', system-ui, sans-serif !important;
+          font-size: 14px !important;
+          font-weight: 480 !important;
+          color: #000000 !important;
+          transition: opacity 0.2s ease;
+          padding: 4px 8px;
+          border-radius: 50px;
         }
 
-        .auth-copyright {
-          margin-top: 24px;
-          font-size: 12px;
-          animation: fadeIn 0.5s ease-out 0.7s both;
+        .login-footer-link:hover {
+          background: #f7f7f5;
+          opacity: 0.8;
+        }
+
+        .login-copyright {
+          font-family: 'JetBrains Mono', monospace !important;
+          font-size: 11px !important;
+          font-weight: 400 !important;
+          letter-spacing: 0.6px !important;
+          text-transform: uppercase !important;
+          color: #999 !important;
+          animation: fadeUp 0.6s ease-out 0.6s both;
+        }
+
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.85); }
+          to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+          .login-root {
+            flex-direction: column;
+          }
+
+          .login-brand {
+            flex: none;
+            padding: 40px 24px 32px;
+            min-height: auto;
+          }
+
+          .login-brand-decoration {
+            display: none;
+          }
+
+          .login-logo {
+            margin-bottom: 32px;
+          }
+
+          .login-form-panel {
+            width: 100%;
+            min-width: 0;
+            padding: 32px 24px 40px;
+          }
         }
       `}</style>
     </div>

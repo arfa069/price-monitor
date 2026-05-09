@@ -20,7 +20,9 @@
       "Bash(cat)",
       "Bash(python3 /tmp/test_redis.py)",
       "Bash(python3 *)",
-      "Skill(browse)"
+      "Skill(browse)",
+      "Bash(powershell.exe *)",
+      "mcp__MiniMax__understand_image"
     ]
   }
 }

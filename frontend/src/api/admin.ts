@@ -22,6 +22,25 @@ export interface UserListResponse {
   page_size: number
 }
 
+export interface AuditLog {
+  id: number
+  actor_user_id: number | null
+  action: string
+  target_type: string | null
+  target_id: number | null
+  details: Record<string, unknown> | null
+  ip_address: string | null
+  user_agent: string | null
+  created_at: string
+}
+
+export interface AuditLogListResponse {
+  items: AuditLog[]
+  total: number
+  page: number
+  page_size: number
+}
+
 export const adminApi = {
   listUsers: async (params: {
     page?: number
@@ -45,5 +64,15 @@ export const adminApi = {
 
   deleteUser: async (id: number): Promise<void> => {
     await api.delete(`/admin/users/${id}`)
+  },
+
+  getAuditLogs: async (params: {
+    page?: number
+    page_size?: number
+    actor_user_id?: number
+    action?: string
+  }): Promise<AuditLogListResponse> => {
+    const response = await api.get<AuditLogListResponse>('/admin/audit-logs', { params })
+    return response.data
   },
 }

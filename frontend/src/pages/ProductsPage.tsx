@@ -3,7 +3,6 @@ import {
   Alert,
   App,
   Button,
-  Card,
   Col,
   Input,
   Popconfirm,
@@ -37,7 +36,6 @@ import {
   useAllAlerts,
   useBatchCreate,
   useBatchDelete,
-  useBatchUpdate,
   type CrawlNowMutationResult,
   useCreateAlert,
   useCreateProduct,
@@ -48,6 +46,7 @@ import {
   useUpdateAlert,
   useUpdateProduct,
 } from '@/hooks/api'
+import { useAuth } from '@/contexts/AuthContext'
 import type {
   BatchCreateItem,
   BatchImportRow,
@@ -72,6 +71,8 @@ const getErrorMessage = (error: unknown) =>
   error instanceof Error ? error.message : '未知错误'
 
 export default function ProductsPage() {
+  const { user } = useAuth()
+  const canCrawl = user?.role !== 'admin'
   const message = App.useApp().message
   const [page, setPage] = useState(1)
   const [size] = useState(15)
@@ -106,7 +107,6 @@ export default function ProductsPage() {
   const deleteMutation = useDeleteProduct()
   const batchCreate = useBatchCreate()
   const batchDelete = useBatchDelete()
-  const batchUpdate = useBatchUpdate()
   const crawlNow = useCrawlNow()
   const createAlertMutation = useCreateAlert()
   const updateAlertMutation = useUpdateAlert()
@@ -175,20 +175,6 @@ export default function ProductsPage() {
       },
       onError: (error) => message.error(`批量操作失败: ${getErrorMessage(error)}`),
     })
-  }
-
-  const handleBatchUpdate = (nextActive: boolean) => {
-    if (selectedRowKeys.length === 0) return
-    batchUpdate.mutate(
-      { ids: selectedRowKeys as number[], active: nextActive },
-      {
-        onSuccess: (response) => {
-          showBatchResult(nextActive ? '批量启用' : '批量停用', response.data)
-          setSelectedRowKeys([])
-        },
-        onError: (error) => message.error(`批量操作失败: ${getErrorMessage(error)}`),
-      },
-    )
   }
 
   const handleFormSubmit = async (values: ProductFormSubmitValues) => {
@@ -422,32 +408,37 @@ export default function ProductsPage() {
   ]
 
   return (
-    <div>
-      <h1
-        style={{
-          fontSize: 24,
-          color: '#1f2937',
-          marginBottom: 24,
-          fontWeight: 500,
-        }}
-      >
-        商品管理
-      </h1>
-
+    <div className="page-root">
+      {/* Page header — lime color block */}
+      <div className="page-header">
+        <div className="page-header-inner">
+          <div>
+            <p className="page-eyebrow">数据管理</p>
+            <h1 className="page-title">商品管理</h1>
+            <p className="page-subtitle">追踪淘宝、京东、亚马逊商品价格变化</p>
+          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined style={{ fontSize: 14 }} />}
+            onClick={() => setCreateFormOpen(true)}
+            className="header-cta"
+          >
+            新增商品
+          </Button>
+        </div>
+      </div>
 
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
-        <Card size="small">
-          <Row gutter={[8, 8]} align="middle">
+        {/* Toolbar card */}
+        <div className="fg-card fg-card-toolbar">
+          <Row gutter={[12, 12]} align="middle">
             <Col flex="auto">
-              <Space>
+              <Space wrap size={8}>
                 <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setCreateFormOpen(true)}
+                  icon={<ImportOutlined style={{ fontSize: 14 }} />}
+                  onClick={() => setBatchImportOpen(true)}
+                  className="fg-btn-secondary"
                 >
-                  新增
-                </Button>
-                <Button icon={<ImportOutlined />} onClick={() => setBatchImportOpen(true)}>
                   批量导入
                 </Button>
                 <Popconfirm
@@ -457,67 +448,62 @@ export default function ProductsPage() {
                 >
                   <Button
                     danger
-                    icon={<DeleteOutlined />}
+                    icon={<DeleteOutlined style={{ fontSize: 14 }} />}
                     disabled={selectedRowKeys.length === 0}
+                    className="fg-btn-danger"
                   >
                     批量删除
                   </Button>
                 </Popconfirm>
-                <Button
-                  onClick={() => handleBatchUpdate(true)}
-                  disabled={selectedRowKeys.length === 0}
-                >
-                  批量启用
-                </Button>
-                <Button
-                  onClick={() => handleBatchUpdate(false)}
-                  disabled={selectedRowKeys.length === 0}
-                >
-                  批量停用
-                </Button>
-                <Button
-                  icon={<RocketOutlined />}
-                  onClick={handleCrawlNow}
-                  loading={crawlNow.isPending}
-                >
-                  手动爬取
-                </Button>
+                {canCrawl && (
+                  <Button
+                    icon={<RocketOutlined style={{ fontSize: 14 }} />}
+                    onClick={handleCrawlNow}
+                    loading={crawlNow.isPending}
+                    className="fg-btn-secondary"
+                  >
+                    手动爬取
+                  </Button>
+                )}
               </Space>
             </Col>
             <Col>
-              <Space>
+              <Space size={8}>
                 <Input
                   placeholder="搜索标题或 URL"
-                  prefix={<SearchOutlined />}
+                  prefix={<SearchOutlined style={{ fontSize: 13, color: '#999' }} />}
                   allowClear
-                  style={{ width: 200 }}
+                  style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
                   onChange={(e) => setKeyword(e.target.value)}
+                  className="fg-input"
                 />
                 <Select
                   placeholder="平台"
                   allowClear
-                  style={{ width: 120 }}
+                  style={{ width: 110, fontFamily: "'Inter', system-ui, sans-serif" }}
                   options={[
                     { label: '淘宝', value: 'taobao' },
                     { label: '京东', value: 'jd' },
                     { label: '亚马逊', value: 'amazon' },
                   ]}
                   onChange={(value) => setPlatform(value)}
+                  className="fg-select"
                 />
                 <Select
                   placeholder="状态"
                   allowClear
-                  style={{ width: 100 }}
+                  style={{ width: 95, fontFamily: "'Inter', system-ui, sans-serif" }}
                   options={[
                     { label: '启用', value: true },
                     { label: '停用', value: false },
                   ]}
                   onChange={(value) => setActive(value)}
+                  className="fg-select"
                 />
               </Space>
             </Col>
           </Row>
-        </Card>
+        </div>
 
         {isError && (
           <Alert
@@ -552,12 +538,15 @@ export default function ProductsPage() {
           }}
           locale={{
             emptyText: (
-              <div style={{ padding: '40px 0' }}>
-                <p style={{ color: '#64748b', marginBottom: 16 }}>暂无商品</p>
+              <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 16, fontWeight: 330, color: '#666', marginBottom: 16 }}>
+                  暂无商品，点击添加第一个
+                </p>
                 <Button
                   type="primary"
-                  icon={<PlusOutlined />}
+                  icon={<PlusOutlined style={{ fontSize: 14 }} />}
                   onClick={() => setCreateFormOpen(true)}
+                  className="fg-btn-primary"
                 >
                   添加第一个商品
                 </Button>
@@ -573,33 +562,36 @@ export default function ProductsPage() {
         )}
       </Space>
 
-      <Card
-        size="small"
-        title={
+      <div
+        className="fg-card"
+        style={{ marginTop: 16 }}
+      >
+        <div className="fg-card-header">
           <Space>
-            <HistoryOutlined />
-            最近爬取记录
+            <HistoryOutlined style={{ fontSize: 14 }} />
+            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+              最近爬取记录
+            </span>
             {crawlLogItems.length > 0 && (
-              <span style={{ fontSize: 12, color: '#64748b' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#999', letterSpacing: '0.4px' }}>
                 ({crawlLogItems.length} 条)
               </span>
             )}
           </Space>
-        }
-        extra={
           <Button
             size="small"
-            icon={<ReloadOutlined />}
+            icon={<ReloadOutlined style={{ fontSize: 13 }} />}
             onClick={() => refetchLogs()}
             loading={logsLoading}
+            className="fg-btn-secondary fg-btn-sm"
           >
             刷新
           </Button>
-        }
-        style={{ marginTop: 16 }}
-      >
+        </div>
         {logsLoading && crawlLogItems.length === 0 ? (
-          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>加载中…</div>
+          <div style={{ padding: 20, textAlign: 'center', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#666' }}>
+            加载中…
+          </div>
         ) : crawlLogItems.length > 0 ? (
           <Table
             size="small"
@@ -610,11 +602,11 @@ export default function ProductsPage() {
             columns={crawlLogColumns}
           />
         ) : (
-          <div style={{ padding: 20, textAlign: 'center', color: '#64748b' }}>
+          <div style={{ padding: 20, textAlign: 'center', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#666' }}>
             暂无爬取记录
           </div>
         )}
-      </Card>
+      </div>
 
       <ProductFormModal
         key={editModal.record?.id ?? 'new'}

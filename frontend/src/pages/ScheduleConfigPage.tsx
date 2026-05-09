@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { SaveOutlined } from '@ant-design/icons'
-import { Alert, App, Button, Card, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag, message } from 'antd'
+import { Alert, App, Button, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
 import { jobsApi } from '@/api/jobs'
 import { productsApi } from '@/api/products'
+import { useAuth } from '@/contexts/AuthContext'
 import type {
   JobConfigScheduleInfo,
   JobSearchConfig,
@@ -27,6 +28,8 @@ const PLATFORM_LABELS: Record<string, string> = {
 }
 
 export default function ScheduleConfigPage() {
+  const { user } = useAuth()
+  const isReadOnly = user?.role === 'admin'
   const message = App.useApp().message
   const { data: config, isLoading, isError, refetch } = useConfig()
   const updateMutation = useUpdateConfig()
@@ -239,7 +242,7 @@ export default function ScheduleConfigPage() {
       title: 'Cron 表达式',
       key: 'cron',
       width: 340,
-      render: (_, record) => (
+      render: (_: unknown, record: ProductPlatformCron) => (
         <Space.Compact style={{ width: '100%' }}>
           <Input
             value={platformCronInputs[record.platform] ?? ''}
@@ -248,11 +251,13 @@ export default function ScheduleConfigPage() {
             }
             placeholder="0 9 * * *"
             style={{ width: 220 }}
+            disabled={isReadOnly}
           />
           <Button
             type="primary"
             onClick={() => void handleSavePlatformCron(record.platform)}
             loading={platformSaving[record.platform]}
+            disabled={isReadOnly}
           >
             保存
           </Button>
@@ -271,17 +276,21 @@ export default function ScheduleConfigPage() {
         return nextRun ? nextRun : <Tag>未调度</Tag>
       },
     },
-    {
-      title: '操作',
-      key: 'action',
-      width: 90,
-      render: (_, record) => (
-        <Button danger size="small" onClick={() => void handleDeletePlatformCron(record.platform)}>
-          删除
-        </Button>
-      ),
-    },
-  ]
+    ...(isReadOnly
+      ? []
+      : [
+          {
+            title: '操作',
+            key: 'action',
+            width: 90,
+            render: (_: unknown, record: ProductPlatformCron) => (
+              <Button danger size="small" onClick={() => void handleDeletePlatformCron(record.platform)}>
+                删除
+              </Button>
+            ),
+          },
+        ]),
+  ] as ColumnsType<ProductPlatformCron>
 
   const configColumns: ColumnsType<JobSearchConfig> = [
     {
@@ -302,11 +311,13 @@ export default function ScheduleConfigPage() {
             onChange={(e) => setCronInputs((prev) => ({ ...prev, [record.id]: e.target.value }))}
             placeholder="0 9 * * *"
             style={{ width: 220 }}
+            disabled={isReadOnly}
           />
           <Button
             type="primary"
             onClick={() => void handleSaveConfigCron(record.id)}
             loading={savingCron[record.id]}
+            disabled={isReadOnly}
           >
             保存
           </Button>
@@ -329,7 +340,35 @@ export default function ScheduleConfigPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, color: '#1f2937', marginBottom: 24, fontWeight: 500 }}>定时配置</h1>
+      {/* Page header — lime color block */}
+      <div className="page-header">
+        <div className="page-header-inner">
+          <div>
+            <p className="page-eyebrow">自动化</p>
+            <h1 className="page-title">定时配置</h1>
+            <p className="page-subtitle">配置商品和职位的定时爬取计划与通知渠道</p>
+          </div>
+          {!isReadOnly && (
+            <Button
+              type="primary"
+              onClick={() => setAddModalOpen(true)}
+              className="header-cta"
+            >
+              新增定时器
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {isReadOnly && (
+        <Alert
+          type="warning"
+          message="只读模式"
+          description="管理员账号无权修改定时配置，请联系系统管理员。"
+          style={{ marginBottom: 24 }}
+          showIcon
+        />
+      )}
 
       {isError && !isLoading && (
         <Alert
@@ -337,7 +376,7 @@ export default function ScheduleConfigPage() {
           message="加载失败"
           description="无法获取配置，请稍后重试。"
           action={
-            <Button size="small" onClick={() => void refetch()}>
+            <Button size="small" onClick={() => void refetch()} className="fg-btn-secondary fg-btn-sm">
               重试
             </Button>
           }
@@ -345,67 +384,112 @@ export default function ScheduleConfigPage() {
         />
       )}
 
-      <Card title="Cron 定时配置" style={{ marginTop: 24 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-          <h4 style={{ margin: 0, color: '#1f2937' }}>商品抓取定时配置</h4>
-          <Button type="primary" size="small" onClick={() => setAddModalOpen(true)}>
-            新增定时器
-          </Button>
-        </div>
-        <Table
-          dataSource={platformConfigs}
-          columns={platformColumns}
-          rowKey="platform"
-          loading={platformLoading}
-          pagination={false}
-          size="small"
-          locale={{ emptyText: '暂无商品定时配置' }}
-        />
-
-        <Divider style={{ margin: '16px 0' }} />
-
-        <h4 style={{ marginBottom: 12, color: '#1f2937' }}>职位抓取定时配置</h4>
-        <Table
-          dataSource={configList}
-          columns={configColumns}
-          rowKey="id"
-          loading={configLoading}
-          pagination={false}
-          size="small"
-          locale={{ emptyText: '暂无职位搜索配置' }}
-        />
-      </Card>
-
-      <Card title="数据保留与通知配置" style={{ marginTop: 24 }}>
-        <div style={{ marginBottom: 20 }}>
-          <div style={{ marginBottom: 4, color: '#666' }}>飞书 Webhook URL</div>
-          <Space.Compact style={{ width: '100%', maxWidth: 560 }}>
-            <Input
-              value={feishuWebhookUrl}
-              onChange={(e) => setFeishuWebhookUrl(e.target.value)}
-              placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
-            />
-            <Button type="primary" onClick={() => void handleSaveWebhook()} loading={updateMutation.isPending}>
-              保存
-            </Button>
-          </Space.Compact>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: '#666', whiteSpace: 'nowrap' }}>数据保留天数</span>
-          <Space.Compact>
-            <InputNumber min={1} max={3650} value={retentionDays} onChange={(v) => setRetentionDays(v ?? 365)} style={{ width: 160 }} />
+      {/* Cron config card */}
+      <div className="fg-card" style={{ marginTop: 24 }}>
+        <div className="fg-card-header">
+          <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+            Cron 定时配置
+          </span>
+          {!isReadOnly && (
             <Button
               type="primary"
-              icon={<SaveOutlined />}
-              onClick={() => void handleSaveRetention()}
-              loading={updateMutation.isPending}
+              size="small"
+              onClick={() => setAddModalOpen(true)}
+              className="fg-btn-primary fg-btn-sm"
             >
-              保存
+              新增定时器
             </Button>
-          </Space.Compact>
+          )}
         </div>
-      </Card>
+        <div style={{ padding: '20px 24px' }}>
+          <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: '0 0 12px' }}>
+            商品抓取定时配置
+          </h4>
+          <Table
+            dataSource={platformConfigs}
+            columns={platformColumns}
+            rowKey="platform"
+            loading={platformLoading}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: '暂无商品定时配置' }}
+          />
+
+          <Divider style={{ margin: '16px 0' }} />
+
+          <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: '0 0 12px' }}>
+            职位抓取定时配置
+          </h4>
+          <Table
+            dataSource={configList}
+            columns={configColumns}
+            rowKey="id"
+            loading={configLoading}
+            pagination={false}
+            size="small"
+            locale={{ emptyText: '暂无职位搜索配置' }}
+          />
+        </div>
+      </div>
+
+      {/* Data & notification card */}
+      <div className="fg-card" style={{ marginTop: 16 }}>
+        <div className="fg-card-header">
+          <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+            数据保留与通知配置
+          </span>
+        </div>
+        <div style={{ padding: '20px 24px' }}>
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ marginBottom: 6, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+              飞书 Webhook URL
+            </div>
+            <Space.Compact style={{ width: '100%', maxWidth: 560 }}>
+              <Input
+                value={feishuWebhookUrl}
+                onChange={(e) => setFeishuWebhookUrl(e.target.value)}
+                placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
+                style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
+              />
+              <Button
+                type="primary"
+                onClick={() => void handleSaveWebhook()}
+                loading={updateMutation.isPending}
+                disabled={isReadOnly}
+                className="fg-btn-primary"
+              >
+                保存
+              </Button>
+            </Space.Compact>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666', whiteSpace: 'nowrap' }}>
+              数据保留天数
+            </span>
+            <Space.Compact>
+              <InputNumber
+                min={1}
+                max={3650}
+                value={retentionDays}
+                onChange={(v) => setRetentionDays(v ?? 365)}
+                style={{ width: 160, fontFamily: "'Inter', system-ui, sans-serif" }}
+                disabled={isReadOnly}
+              />
+              <Button
+                type="primary"
+                icon={<SaveOutlined style={{ fontSize: 13 }} />}
+                onClick={() => void handleSaveRetention()}
+                loading={updateMutation.isPending}
+                disabled={isReadOnly}
+                className="fg-btn-primary"
+              >
+                保存
+              </Button>
+            </Space.Compact>
+          </div>
+        </div>
+      </div>
 
       <Modal
         title="新增商品抓取定时器"
@@ -421,12 +505,14 @@ export default function ScheduleConfigPage() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
           <div>
-            <div style={{ marginBottom: 4, color: '#666' }}>平台</div>
+            <div style={{ marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+              平台
+            </div>
             <Select
               value={addPlatform}
               onChange={setAddPlatform}
               placeholder="选择平台"
-              style={{ width: '100%' }}
+              style={{ width: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}
               options={[
                 { value: 'taobao', label: '淘宝' },
                 { value: 'jd', label: '京东' },
@@ -435,8 +521,15 @@ export default function ScheduleConfigPage() {
             />
           </div>
           <div>
-            <div style={{ marginBottom: 4, color: '#666' }}>Cron 表达式</div>
-            <Input value={addCron} onChange={(e) => setAddCron(e.target.value)} placeholder="0 9 * * *" />
+            <div style={{ marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+              Cron 表达式
+            </div>
+            <Input
+              value={addCron}
+              onChange={(e) => setAddCron(e.target.value)}
+              placeholder="0 9 * * *"
+              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}
+            />
           </div>
         </div>
       </Modal>

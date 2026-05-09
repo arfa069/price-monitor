@@ -15,9 +15,12 @@ import JobDrawer from '@/components/JobDrawer'
 import JobList from '@/components/JobList'
 import MatchResultList from '@/components/MatchResultList'
 import ResumeManager from '@/components/ResumeManager'
+import { useAuth } from '@/contexts/AuthContext'
 import type { Job, JobSearchConfigCreate } from '@/types'
 
 export default function JobsPage() {
+  const { user } = useAuth()
+  const canCrawl = user?.role !== 'admin'
   const [page, setPage] = useState(1)
   const [pageSize] = useState(20)
   const [keyword, setKeyword] = useState('')
@@ -101,7 +104,7 @@ export default function JobsPage() {
               onCreate={handleCreateConfig}
               onUpdate={handleUpdateConfig}
               onDelete={handleDeleteConfig}
-              onCrawl={handleCrawlSingle}
+              onCrawl={canCrawl ? handleCrawlSingle : undefined}
               createLoading={createConfig.isPending}
               updateLoading={updateConfig.isPending}
               crawlLoading={crawlSingle.isPending}
@@ -113,7 +116,7 @@ export default function JobsPage() {
             total={jobsResp?.total || 0}
             isLoading={jobsLoading}
             onViewDetail={handleViewDetail}
-            onCrawlAll={handleCrawlAll}
+            onCrawlAll={canCrawl ? handleCrawlAll : undefined}
             crawlAllLoading={crawlAll.isPending}
             filters={{ keyword, is_active: isActive }}
             onFilterChange={handleFilterChange}
@@ -139,8 +142,26 @@ export default function JobsPage() {
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, color: '#1f2937', marginBottom: 24, fontWeight: 500 }}>职位管理</h1>
-      <Tabs activeKey={activeTab} onChange={setActiveTab} items={items} />
+      {/* Page header — cream color block */}
+      <div className="page-header" style={{ background: '#f4ecd6' }}>
+        <div className="page-header-inner">
+          <div>
+            <p className="page-eyebrow">职位搜索</p>
+            <h1 className="page-title">职位管理</h1>
+            <p className="page-subtitle">配置 Boss 直聘职位搜索规则，智能匹配候选人</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab sections */}
+      <div style={{ marginTop: 24 }}>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={items}
+        />
+      </div>
+
       <JobDrawer open={drawerOpen} job={selectedJob} onClose={() => setDrawerOpen(false)} />
     </div>
   )

@@ -56,6 +56,12 @@ class Settings(BaseSettings):
     app_name: str = "Price Monitor"
     debug: bool = False
 
+    # WeChat login settings
+    wechat_login_enabled: bool = False
+    wechat_app_id: str | None = None
+    wechat_app_secret: str | None = None
+    wechat_redirect_uri: str | None = None
+
     # LLM job match settings
     job_match_provider: str = "minimax"
     job_match_model: str = "MiniMax-M2.7"

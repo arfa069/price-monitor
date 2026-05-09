@@ -1,21 +1,33 @@
 """Admin API routes for user management."""
 import logging
 from datetime import UTC, datetime
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select, func, delete, and_, or_
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from sqlalchemy import and_, delete, func, or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import get_current_user, require_role, get_password_hash
+from app.core.audit import log_audit
+from app.core.security import get_password_hash, require_role
 from app.database import get_db
+from app.models.audit_log import UserAuditLog
 from app.models.user import User
-from app.schemas.admin import UserCreate, AdminUserUpdate, AdminUserResponse, AdminUserListResponse
+from app.schemas.admin import (
+    AdminUserListResponse,
+    AdminUserResponse,
+    AdminUserUpdate,
+    AuditLogListResponse,
+    AuditLogResponse,
+    UserCreate,
+)
 from app.schemas.auth import MessageResponse
-
-from sqlalchemy.exc import IntegrityError
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/admin/users", tags=["admin"])
+
+# Second router for non-user-specific admin endpoints
+admin_router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("", response_model=AdminUserListResponse)
@@ -69,6 +81,7 @@ async def list_users(
 @router.post("", response_model=AdminUserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
+    request: Request,
     current_user: User = Depends(require_role("admin", "super_admin")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -95,6 +108,13 @@ async def create_user(
             detail="邮箱已被使用",
         )
 
+    # Role boundary: admin cannot create super_admin
+    if current_user.role == "admin" and user_data.role == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="权限不足：仅 super_admin 可创建 super_admin 用户",
+        )
+
     # Create user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
@@ -107,6 +127,22 @@ async def create_user(
     db.add(new_user)
     await db.commit()
     await db.refresh(new_user)
+
+    await log_audit(
+        db=db,
+        action="user.create",
+        actor_user_id=current_user.id,
+        target_type="user",
+        target_id=new_user.id,
+        details={
+            "username": new_user.username,
+            "email": new_user.email,
+            "role": new_user.role,
+        },
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
 
     logger.info(f"Admin {current_user.username} created user: {user_data.username}")
     return AdminUserResponse.model_validate(new_user)
@@ -138,6 +174,7 @@ async def get_user(
 async def update_user(
     user_id: int,
     update_data: AdminUserUpdate,
+    request: Request,
     current_user: User = Depends(require_role("admin", "super_admin")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -190,9 +227,45 @@ async def update_user(
     # Apply updates
     update_dict = update_data.model_dump(exclude_unset=True)
 
+    # Role boundary checks for admin
+    if current_user.role == "admin":
+        # Admin cannot modify super_admin users
+        if user.role == "super_admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="权限不足：不能修改 super_admin 用户",
+            )
+        # Admin cannot promote any user to super_admin
+        if update_dict.get("role") == "super_admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="权限不足：不能将用户提升为 super_admin",
+            )
+        # Admin cannot promote themselves to super_admin
+        if current_user.id == user_id and "role" in update_dict:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="权限不足：不能修改自己的角色",
+            )
+
     # Handle is_active special case (soft delete / restore)
     if "is_active" in update_dict:
         if update_data.is_active is False:
+            # Prevent disabling the last active super_admin
+            if user.role == "super_admin":
+                active_super_count_result = await db.execute(
+                    select(func.count(User.id)).where(
+                        User.role == "super_admin",
+                        User.is_active.is_(True),
+                        User.deleted_at.is_(None),
+                    )
+                )
+                active_super_count = active_super_count_result.scalar_one_or_none() or 0
+                if active_super_count <= 1:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="不能禁用最后一个活跃的 super_admin",
+                    )
             # Soft delete
             user.deleted_at = datetime.now(UTC)
             user.is_active = False
@@ -230,12 +303,25 @@ async def update_user(
             detail="数据冲突，请检查用户名或邮箱是否已被使用",
         )
 
+    await log_audit(
+        db=db,
+        action="user.update",
+        actor_user_id=current_user.id,
+        target_type="user",
+        target_id=user.id,
+        details={"changed_fields": list(update_dict.keys())},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     return AdminUserResponse.model_validate(user)
 
 
 @router.delete("/{user_id}", response_model=MessageResponse)
 async def delete_user(
     user_id: int,
+    request: Request,
     current_user: User = Depends(require_role("admin", "super_admin")),
     db: AsyncSession = Depends(get_db),
 ):
@@ -260,6 +346,29 @@ async def delete_user(
             detail="用户不存在",
         )
 
+    # Role boundary: admin cannot delete super_admin
+    if current_user.role == "admin" and user.role == "super_admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="权限不足：不能删除 super_admin 用户",
+        )
+
+    # Prevent deleting the last active super_admin
+    if user.role == "super_admin":
+        active_super_count_result = await db.execute(
+            select(func.count(User.id)).where(
+                User.role == "super_admin",
+                User.is_active.is_(True),
+                User.deleted_at.is_(None),
+            )
+        )
+        active_super_count = active_super_count_result.scalar_one_or_none() or 0
+        if active_super_count <= 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="不能删除最后一个活跃的 super_admin",
+            )
+
     # Soft delete user
     user.deleted_at = datetime.now(UTC)
     user.is_active = False
@@ -274,5 +383,59 @@ async def delete_user(
 
     await db.commit()
 
+    await log_audit(
+        db=db,
+        action="user.delete",
+        actor_user_id=current_user.id,
+        target_type="user",
+        target_id=user.id,
+        details={"username": user.username},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
     logger.info(f"Admin {current_user.username} deleted user: {user.username}")
     return MessageResponse(message="用户已删除")
+
+
+# ── Audit Log Endpoints ───────────────────────────────────────────
+
+@admin_router.get("/audit-logs", response_model=AuditLogListResponse)
+async def list_audit_logs(
+    page: int = Query(1, ge=1, description="页码"),
+    page_size: int = Query(20, ge=1, le=100, description="每页数量"),
+    actor_user_id: int | None = Query(None, description="按操作者过滤"),
+    action: str | None = Query(None, description="按操作类型过滤"),
+    current_user: User = Depends(require_role("admin", "super_admin")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get paginated audit logs."""
+    query = select(UserAuditLog)
+
+    if actor_user_id is not None:
+        query = query.where(UserAuditLog.actor_user_id == actor_user_id)
+    if action is not None:
+        query = query.where(UserAuditLog.action == action)
+
+    # Count total
+    count_query = select(func.count(UserAuditLog.id)).select_from(query.subquery())
+    count_result = await db.execute(count_query)
+    total = count_result.scalar_one_or_none() or 0
+
+    # Paginated list
+    offset = (page - 1) * page_size
+    list_query = (
+        query.order_by(UserAuditLog.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    list_result = await db.execute(list_query)
+    logs = list_result.scalars().all()
+
+    return AuditLogListResponse(
+        items=[AuditLogResponse.model_validate(log) for log in logs],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )

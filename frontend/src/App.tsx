@@ -1,7 +1,7 @@
 import { useCallback, type ReactNode } from 'react'
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { App as AntdApp, Spin, theme } from 'antd'
+import { App as AntdApp, ConfigProvider, Spin, theme } from 'antd'
 import { useQueryClient } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
@@ -13,6 +13,7 @@ import SettingsPage from '@/pages/Settings'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 import AdminUsersPage from '@/pages/AdminUsers'
+import AdminAuditLogsPage from '@/pages/AdminAuditLogs'
 
 // Error Fallback component (uses hooks, must be inside Router)
 function ErrorFallback() {
@@ -24,7 +25,7 @@ function ErrorFallback() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#f1f5f9',
+      background: '#ffffff',
       fontFamily: 'system-ui, sans-serif',
     }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
@@ -165,19 +166,44 @@ function AppRoutes() {
 
   return (
     <>
-      <AntdApp
+      <ConfigProvider
         theme={{
           algorithm: theme.defaultAlgorithm,
           token: {
-            colorPrimary: '#2563eb',
-            colorBgLayout: '#f1f5f9',
-            colorTextSecondary: '#64748b',
-            borderRadius: 8,
-            fontSize: 14,
+            colorPrimary: '#000000',
+            colorBgLayout: '#ffffff',
+            colorBgContainer: '#ffffff',
+            colorText: '#000000',
+            colorTextSecondary: '#666666',
+            colorBorder: '#e6e6e6',
+            colorBorderSecondary: '#f1f1f1',
+            borderRadius: 50,
+            fontSize: 16,
+            fontFamily: "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+          },
+          components: {
+            Button: {
+              borderRadius: 50,
+              paddingInline: 20,
+            },
+            Input: {
+              borderRadius: 8,
+              paddingInline: 14,
+            },
+            Select: {
+              borderRadius: 8,
+            },
+            Table: {
+              borderRadius: 24,
+            },
+            Card: {
+              borderRadius: 24,
+            },
           },
         }}
       >
-        <BrowserRouter>
+        <AntdApp>
+          <BrowserRouter>
           <Routes>
             {/* 公开路由 */}
             <Route
@@ -258,13 +284,24 @@ function AppRoutes() {
                 </AdminRoute>
               }
             />
+            <Route
+              path="/admin/audit-logs"
+              element={
+                <AdminRoute>
+                  <AppLayout onRefresh={handleRefresh}>
+                    <AdminAuditLogsPage />
+                  </AppLayout>
+                </AdminRoute>
+              }
+            />
 
             {/* 默认路由 */}
             <Route path="/" element={<Navigate to="/jobs" replace />} />
             <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>
         </BrowserRouter>
-      </AntdApp>
+        </AntdApp>
+      </ConfigProvider>
     </>
   )
 }

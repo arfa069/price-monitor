@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar, Space, Divider, message } from 'antd'
+import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar, Space } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -14,8 +14,6 @@ import {
 } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 
-const { Sider, Header, Footer } = Layout
-
 const MOBILE_BREAKPOINT = 768
 
 export default function AppLayout({
@@ -25,7 +23,7 @@ export default function AppLayout({
   children: React.ReactNode
   onRefresh?: () => void
 }) {
-  const message = App.useApp().message
+  const appMessage = App.useApp().message
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
@@ -35,20 +33,20 @@ export default function AppLayout({
 
   const handleLogout = () => {
     logout()
-    message.success('已退出登录')
+    appMessage.success('已退出登录')
     navigate('/login', { replace: true })
   }
 
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
-      icon: <UserOutlined />,
+      icon: <UserOutlined style={{ fontSize: 14 }} />,
       label: '个人信息',
       onClick: () => navigate('/profile'),
     },
     {
       key: 'settings',
-      icon: <SettingOutlined />,
+      icon: <SettingOutlined style={{ fontSize: 14 }} />,
       label: '账号设置',
       onClick: () => navigate('/settings'),
     },
@@ -56,27 +54,30 @@ export default function AppLayout({
       ? [
           {
             key: 'admin/users',
-            icon: <TeamOutlined />,
+            icon: <TeamOutlined style={{ fontSize: 14 }} />,
             label: '用户管理',
             onClick: () => navigate('/admin/users'),
           },
+          {
+            key: 'admin/audit-logs',
+            icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
+            label: '审计日志',
+            onClick: () => navigate('/admin/audit-logs'),
+          },
         ]
       : []),
-    { type: 'divider' },
+    { type: 'divider' as const },
     {
       key: 'logout',
-      icon: <LogoutOutlined />,
+      icon: <LogoutOutlined style={{ fontSize: 14 }} />,
       label: '退出登录',
       danger: true,
       onClick: handleLogout,
     },
   ]
 
-  // Detect mobile viewport
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
-    }
+    const checkMobile = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -86,107 +87,110 @@ export default function AppLayout({
     ? '/schedule'
     : location.pathname.startsWith('/jobs')
     ? '/jobs'
+    : location.pathname.startsWith('/products')
+    ? '/products'
+    : location.pathname.startsWith('/admin')
+    ? location.pathname
     : '/products'
 
-  const siderWidth = collapsed ? 60 : 180
+  const siderWidth = collapsed ? 60 : 200
 
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key)
-    // Close drawer on mobile after navigation
-    if (isMobile) {
-      setDrawerOpen(false)
-    }
+    if (isMobile) setDrawerOpen(false)
   }
 
   const menuItems = [
     {
       key: '/jobs',
-      icon: <TeamOutlined />,
+      icon: <TeamOutlined style={{ fontSize: 14 }} />,
       label: '职位管理',
     },
     {
       key: '/products',
-      icon: <ShoppingCartOutlined />,
+      icon: <ShoppingCartOutlined style={{ fontSize: 14 }} />,
       label: '商品管理',
     },
     {
       key: '/schedule',
-      icon: <ScheduleOutlined />,
+      icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
       label: '定时配置',
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
       ? [
           {
             key: '/admin/users',
-            icon: <TeamOutlined />,
+            icon: <TeamOutlined style={{ fontSize: 14 }} />,
             label: '用户管理',
+          },
+          {
+            key: '/admin/audit-logs',
+            icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
+            label: '审计日志',
           },
         ]
       : []),
   ]
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#f1f5f9' }}>
-      {/* Header - 固定在顶部 */}
-      <Header
+    <Layout style={{ minHeight: '100vh', background: '#ffffff' }}>
+      {/* Top Nav — white, 56px, Figma style */}
+      <Layout.Header
         style={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          zIndex: 1000,
+          zIndex: 300,
           display: 'flex',
           alignItems: 'center',
           padding: '0 24px',
           height: 56,
-          background: '#0f172a',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          background: '#ffffff',
+          borderBottom: '1px solid #e6e6e6',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
-        {/* Logo - 品牌标识 */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 10,
-          }}
-        >
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div
             style={{
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%)',
+              background: '#000000',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#fff',
-              fontSize: 18,
-              fontWeight: 800,
-              fontFamily: 'system-ui, sans-serif',
-              boxShadow: '0 2px 8px rgba(59, 130, 246, 0.4)',
+              fontSize: 15,
+              fontWeight: 700,
+              fontFamily: "'Inter', system-ui, sans-serif",
+              letterSpacing: '-0.5px',
             }}
           >
             价
           </div>
           <div
             style={{
-              color: '#fff',
-              fontSize: 22,
-              fontWeight: 700,
-              letterSpacing: '-0.5px',
+              color: '#000000',
+              fontSize: 18,
+              fontWeight: 480,
+              letterSpacing: '-0.2px',
+              fontFamily: "'Inter', system-ui, sans-serif",
             }}
           >
-            价格监控系统
+            价格监控
           </div>
         </div>
+
         <div style={{ flex: 1 }} />
-        {/* 移动端始终显示汉堡菜单按钮 */}
+
         {isMobile ? (
           <Button
             type="text"
             icon={<BarsOutlined />}
-            style={{ color: '#fff' }}
+            style={{ color: '#000000', fontSize: 16 }}
             onClick={() => setDrawerOpen(true)}
             aria-label="打开菜单"
           />
@@ -194,36 +198,76 @@ export default function AppLayout({
           <>
             <Button
               type="text"
-              icon={<ReloadOutlined />}
-              style={{ color: '#fff' }}
+              icon={<ReloadOutlined style={{ fontSize: 14 }} />}
+              style={{
+                color: '#000000',
+                fontFamily: "'Inter', system-ui, sans-serif",
+                fontSize: 14,
+                fontWeight: 330,
+                borderRadius: 50,
+                padding: '4px 12px',
+                height: 36,
+              }}
               onClick={onRefresh}
               aria-label="刷新页面数据"
             >
               刷新
             </Button>
-            <Divider orientation="vertical" style={{ margin: '0 8px', borderColor: 'rgba(255,255,255,0.2)' }} />
-            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight" trigger={['click']}>
-              <Button type="text" style={{ color: '#fff', height: 'auto', padding: '4px 8px' }} aria-label="用户菜单">
-                <Space>
-                  <Avatar size="small" icon={<UserOutlined />} style={{ backgroundColor: '#0ea5e9' }} />
-                  <span style={{ fontSize: 14 }}>{user?.username || '用户'}</span>
+            <Dropdown
+              menu={{ items: userMenuItems }}
+              placement="bottomRight"
+              trigger={['click']}
+            >
+              <Button
+                type="text"
+                style={{
+                  color: '#000000',
+                  height: 'auto',
+                  padding: '4px 8px',
+                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontSize: 14,
+                  fontWeight: 330,
+                  borderRadius: 50,
+                }}
+                aria-label="用户菜单"
+              >
+                <Space size={6}>
+                  <Avatar
+                    size={28}
+                    icon={<UserOutlined />}
+                    style={{
+                      backgroundColor: '#f7f7f5',
+                      color: '#000000',
+                      fontSize: 12,
+                      border: '1px solid #e6e6e6',
+                    }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 330 }}>
+                    {user?.username || '用户'}
+                  </span>
                 </Space>
               </Button>
             </Dropdown>
             <Button
               type="text"
-              icon={<BarsOutlined />}
-              style={{ color: '#fff' }}
+              icon={<BarsOutlined style={{ fontSize: 14 }} />}
+              style={{
+                color: '#000000',
+                fontFamily: "'Inter', system-ui, sans-serif",
+                borderRadius: 50,
+                padding: '4px 10px',
+                height: 36,
+              }}
               onClick={() => setCollapsed(!collapsed)}
               aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
             />
           </>
         )}
-      </Header>
+      </Layout.Header>
 
-      {/* Desktop Sidebar - 固定在左侧，不超出 footer */}
+      {/* Desktop Sidebar — surface-soft, rounded-lg card style */}
       {!isMobile && (
-        <Sider
+        <Layout.Sider
           collapsible
           collapsed={collapsed}
           onCollapse={setCollapsed}
@@ -231,13 +275,16 @@ export default function AppLayout({
             position: 'fixed',
             top: 56,
             left: 0,
-            bottom: 40,
+            bottom: 48,
             zIndex: 100,
-            background: '#f8fafc',
-            boxShadow: '1px 0 3px rgba(0,0,0,0.04)',
+            background: '#f7f7f5',
             overflow: 'auto',
+            borderRadius: '0 24px 24px 0',
+            borderRight: '1px solid #e6e6e6',
+            marginTop: 8,
+            marginBottom: 8,
           }}
-          width={180}
+          width={200}
           collapsedWidth={60}
           trigger={null}
         >
@@ -248,11 +295,12 @@ export default function AppLayout({
             style={{
               border: 'none',
               background: 'transparent',
-              marginTop: 8,
+              marginTop: 12,
+              padding: '0 8px',
             }}
             items={menuItems}
           />
-        </Sider>
+        </Layout.Sider>
       )}
 
       {/* Mobile Drawer */}
@@ -263,13 +311,15 @@ export default function AppLayout({
           open={drawerOpen}
           width={220}
           styles={{
-            body: { padding: 0, background: '#f8fafc' },
+            body: { padding: 0, background: '#f7f7f5' },
+            header: { display: 'none' },
           }}
         >
+          {/* Drawer header */}
           <div
             style={{
-              padding: '20px 16px',
-              borderBottom: '1px solid #e2e8f0',
+              padding: '16px',
+              borderBottom: '1px solid #e6e6e6',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
@@ -280,18 +330,27 @@ export default function AppLayout({
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                background: 'linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%)',
+                background: '#000000',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                fontSize: 14,
-                fontWeight: 800,
+                fontSize: 13,
+                fontWeight: 700,
               }}
             >
               价
             </div>
-            <span style={{ fontWeight: 600, color: '#334155' }}>价格监控系统</span>
+            <span
+              style={{
+                fontWeight: 480,
+                fontSize: 15,
+                color: '#000000',
+                fontFamily: "'Inter', system-ui, sans-serif",
+              }}
+            >
+              价格监控
+            </span>
           </div>
           <Menu
             mode="inline"
@@ -301,6 +360,7 @@ export default function AppLayout({
               border: 'none',
               background: 'transparent',
               marginTop: 8,
+              padding: '0 8px',
             }}
             items={menuItems}
           />
@@ -313,50 +373,52 @@ export default function AppLayout({
                 setDrawerOpen(false)
               }}
               block
+              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
             >
-              刷新
+              刷新数据
             </Button>
           </div>
         </Drawer>
       )}
 
-      {/* Content - 在 sidebar 和 footer 之间 */}
+      {/* Main Content */}
       <div
         style={{
           flex: 1,
           marginTop: 56,
-          marginBottom: 56,
+          marginBottom: 48,
           marginLeft: isMobile ? 0 : siderWidth,
-          padding: 20,
-          background: '#fff',
-          borderRadius: isMobile ? 0 : 8,
-          boxShadow: isMobile ? 'none' : '0 1px 3px rgba(0,0,0,0.04)',
-          minHeight: 'calc(100vh - 112px)',
+          padding: '24px',
+          background: '#ffffff',
+          minHeight: 'calc(100vh - 104px)',
           overflow: 'auto',
         }}
       >
         {children}
       </div>
 
-      {/* Footer - 固定在底部 */}
-      <Footer
+      {/* Footer */}
+      <Layout.Footer
         style={{
           position: 'fixed',
           bottom: 0,
           left: 0,
           right: 0,
-          zIndex: 1000,
+          zIndex: 300,
           textAlign: 'center',
           padding: '12px 24px',
-          height: 40,
-          background: '#fff',
-          color: '#94a3b8',
+          height: 48,
+          background: '#ffffff',
+          color: '#000000',
           fontSize: 12,
-          borderTop: '1px solid #e2e8f0',
+          fontFamily: "'JetBrains Mono', monospace",
+          letterSpacing: '0.6px',
+          textTransform: 'uppercase',
+          borderTop: '1px solid #e6e6e6',
         }}
       >
-        价格监控系统 v1.0
-      </Footer>
+        价格监控系统 © 2026
+      </Layout.Footer>
     </Layout>
   )
 }

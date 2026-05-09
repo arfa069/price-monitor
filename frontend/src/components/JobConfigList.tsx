@@ -10,7 +10,6 @@ import {
   Switch,
   Tag,
   Typography,
-  message,
 } from 'antd'
 import {
   DeleteOutlined,
@@ -27,7 +26,7 @@ interface JobConfigListProps {
   onCreate: (data: JobSearchConfigCreate) => Promise<void>
   onUpdate: (id: number, data: Partial<JobSearchConfigCreate>) => Promise<void>
   onDelete: (id: number) => Promise<void>
-  onCrawl: (id: number) => Promise<void>
+  onCrawl?: (id: number) => Promise<void>
   createLoading?: boolean
   updateLoading?: boolean
   crawlLoading?: boolean
@@ -113,13 +112,15 @@ export default function JobConfigList({
                 {config.url}
               </Typography.Paragraph>
               <Space wrap size={8}>
-                <Button
-                  icon={<PlayCircleOutlined />}
-                  loading={crawlLoading}
-                  onClick={() => onCrawl(config.id)}
-                >
-                  抓取
-                </Button>
+                {onCrawl && (
+                  <Button
+                    icon={<PlayCircleOutlined />}
+                    loading={crawlLoading}
+                    onClick={() => onCrawl(config.id)}
+                  >
+                    抓取
+                  </Button>
+                )}
                 <Button icon={<EditOutlined />} onClick={() => setEditRecord(config)}>
                   编辑
                 </Button>

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
-import { App, Table, Button, Space, Modal, Form, Input, Select, message, Popconfirm, Switch, Tag } from 'antd'
+import { App, Table, Button, Space, Modal, Form, Input, Select, Popconfirm, Switch, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { adminApi, type UserCreate, type UserUpdate } from '@/api/admin'
+import { useAuth } from '@/contexts/AuthContext'
 import type { User } from '@/types'
 
 export default function AdminUsersPage() {
   const message = App.useApp().message
+  const { user: currentUser } = useAuth()
+  const isSuperAdmin = currentUser?.role === 'super_admin'
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
@@ -117,37 +120,71 @@ export default function AdminUsersPage() {
     { title: '注册时间', dataIndex: 'created_at', render: (v: string) => new Date(v).toLocaleString() },
     {
       title: '操作',
-      render: (_: any, record: User) => (
-        <Space>
-          <Button size="small" icon={<EditOutlined />} onClick={() => handleEdit(record)} />
-          <Popconfirm
-            title={`确定删除用户 ${record.username}？此操作不可恢复。`}
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button size="small" danger icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      render: (_: any, record: User) => {
+        // Admin cannot edit/delete super_admin users
+        const canEdit = isSuperAdmin || record.role !== 'super_admin'
+        return (
+          <Space>
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => handleEdit(record)}
+              disabled={!canEdit}
+            />
+            <Popconfirm
+              title={`确定删除用户 ${record.username}？此操作不可恢复。`}
+              onConfirm={() => handleDelete(record.id)}
+              disabled={!canEdit}
+            >
+              <Button size="small" danger icon={<DeleteOutlined />} disabled={!canEdit} />
+            </Popconfirm>
+          </Space>
+        )
+      },
     },
   ]
 
   return (
     <div>
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
-        <Input.Search aria-label="搜索用户名或邮箱" placeholder="搜索用户名或邮箱" onSearch={setSearch} style={{ width: 200 }} />
+      {/* Page header — surface-soft for admin section */}
+      <div className="page-header" style={{ background: '#f7f7f5' }}>
+        <div className="page-header-inner">
+          <div>
+            <p className="page-eyebrow">系统管理</p>
+            <h1 className="page-title">用户管理</h1>
+            <p className="page-subtitle">管理系统用户账号、角色与访问权限</p>
+          </div>
+          <Button
+            type="primary"
+            icon={<PlusOutlined style={{ fontSize: 14 }} />}
+            onClick={handleCreate}
+            className="header-cta"
+          >
+            新建用户
+          </Button>
+        </div>
+      </div>
+
+      {/* Toolbar */}
+      <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <Input.Search
+          aria-label="搜索用户名或邮箱"
+          placeholder="搜索用户名或邮箱"
+          onSearch={setSearch}
+          style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
+          className="fg-input"
+        />
         <Select
           placeholder="筛选角色"
           allowClear
-          style={{ width: 120 }}
+          style={{ width: 120, fontFamily: "'Inter', system-ui, sans-serif" }}
           onChange={setRoleFilter}
+          className="fg-select"
         >
           <Select.Option value="user">普通用户</Select.Option>
           <Select.Option value="admin">管理员</Select.Option>
         </Select>
         <div style={{ flex: 1 }} />
-        <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-          新建用户
-        </Button>
       </div>
 
       <Table
@@ -188,6 +225,7 @@ export default function AdminUsersPage() {
             <Select>
               <Select.Option value="user">普通用户</Select.Option>
               <Select.Option value="admin">管理员</Select.Option>
+              {isSuperAdmin && <Select.Option value="super_admin">系统管理员</Select.Option>}
             </Select>
           </Form.Item>
           {editingUser && (

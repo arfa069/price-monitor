@@ -9,7 +9,7 @@ interface JobListProps {
   total: number
   isLoading?: boolean
   onViewDetail: (job: Job) => void
-  onCrawlAll: () => Promise<void>
+  onCrawlAll?: () => Promise<void>
   crawlAllLoading?: boolean
   filters: { keyword?: string; is_active?: boolean }
   onFilterChange: (filters: { keyword?: string; is_active?: boolean }) => void
@@ -125,9 +125,11 @@ export default function JobList({
             { label: '失效', value: 'inactive' },
           ]}
         />
-        <Button icon={<ReloadOutlined />} loading={crawlAllLoading} onClick={onCrawlAll}>
-          全量抓取
-        </Button>
+        {onCrawlAll && (
+          <Button icon={<ReloadOutlined />} loading={crawlAllLoading} onClick={onCrawlAll}>
+            全量抓取
+          </Button>
+        )}
       </Space>
 
       <Table

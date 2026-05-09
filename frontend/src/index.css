@@ -16,7 +16,9 @@
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   width: 100%;
 }
@@ -110,21 +112,59 @@ body {
 }
 
 /* Color block backgrounds */
-.bg-lime { background: var(--color-block-lime); }
-.bg-lilac { background: var(--color-block-lilac); }
-.bg-cream { background: var(--color-block-cream); }
-.bg-mint { background: var(--color-block-mint); }
-.bg-pink { background: var(--color-block-pink); }
-.bg-coral { background: var(--color-block-coral); }
-.bg-navy { background: var(--color-block-navy); color: var(--color-inverse-ink); }
-.bg-surface-soft { background: var(--color-surface-soft); }
+.bg-lime {
+  background: var(--color-block-lime);
+}
+
+.bg-lilac {
+  background: var(--color-block-lilac);
+}
+
+.bg-cream {
+  background: var(--color-block-cream);
+}
+
+.bg-mint {
+  background: var(--color-block-mint);
+}
+
+.bg-pink {
+  background: var(--color-block-pink);
+}
+
+.bg-coral {
+  background: var(--color-block-coral);
+}
+
+.bg-navy {
+  background: var(--color-block-navy);
+  color: var(--color-inverse-ink);
+}
+
+.bg-surface-soft {
+  background: var(--color-surface-soft);
+}
 
 /* Rounded corners */
-.rounded-md { border-radius: var(--radius-md); }
-.rounded-lg { border-radius: var(--radius-lg); }
-.rounded-xl { border-radius: var(--radius-xl); }
-.rounded-pill { border-radius: var(--radius-pill); }
-.rounded-full { border-radius: var(--radius-full); }
+.rounded-md {
+  border-radius: var(--radius-md);
+}
+
+.rounded-lg {
+  border-radius: var(--radius-lg);
+}
+
+.rounded-xl {
+  border-radius: var(--radius-xl);
+}
+
+.rounded-pill {
+  border-radius: var(--radius-pill);
+}
+
+.rounded-full {
+  border-radius: var(--radius-full);
+}
 
 /* ---- Ant Design Table override ---- */
 .ant-table-wrapper {

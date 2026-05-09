@@ -168,7 +168,7 @@ export default function LoginPage() {
               style={{
                 borderRadius: 50,
                 background: '#f7f7f5',
-                borderColor: '#e6e6e6',
+                borderColor: '#bfbfbf',
                 color: '#999',
                 fontFamily: "'Inter', system-ui, sans-serif",
               }}
@@ -275,7 +275,7 @@ export default function LoginPage() {
           text-transform: uppercase;
           color: #000000;
           background: #f7f7f5;
-          border: 1px solid #e6e6e6;
+          border: 1px solid #bfbfbf;
           border-radius: 50px;
           padding: 6px 14px;
         }
@@ -312,7 +312,7 @@ export default function LoginPage() {
           background: #ffffff;
           border-radius: 24px;
           padding: 40px;
-          border: 1px solid #e6e6e6;
+          border: 1px solid #bfbfbf;
           animation: fadeUp 0.6s ease-out 0.2s both;
         }
 
@@ -359,7 +359,7 @@ export default function LoginPage() {
         .login-input .ant-input {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #e6e6e6 !important;
+          border: 1px solid #bfbfbf !important;
           font-family: 'Inter', system-ui, sans-serif !important;
           font-size: 16px !important;
           font-weight: 320 !important;
@@ -379,7 +379,7 @@ export default function LoginPage() {
         .login-input .ant-input-affix-wrapper {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #e6e6e6 !important;
+          border: 1px solid #bfbfbf !important;
           background: #ffffff !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
@@ -440,7 +440,7 @@ export default function LoginPage() {
           text-align: center;
           margin-top: 24px;
           padding-top: 24px;
-          border-top: 1px solid #f1f1f1;
+          border-top: 1px solid #d9d9d9;
           animation: fadeUp 0.6s ease-out 0.5s both;
         }
 

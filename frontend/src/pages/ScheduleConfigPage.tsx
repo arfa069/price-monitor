@@ -339,7 +339,7 @@ export default function ScheduleConfigPage() {
   return (
     <div>
       {/* Page header — lime color block */}
-      <div className="page-header bg-lime">
+      <div className="page-header bg-lilac">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">自动化</p>

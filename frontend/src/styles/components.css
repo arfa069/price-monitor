@@ -155,7 +155,7 @@
   color: var(--color-ink) !important;
 }
 
-.ant-table-thead > tr > th {
+.ant-table-thead>tr>th {
   background: var(--color-surface-soft) !important;
   color: var(--color-ink) !important;
   font-weight: var(--font-weight-button) !important;
@@ -165,13 +165,13 @@
   padding: var(--spacing-sm) var(--spacing-md) !important;
 }
 
-.ant-table-tbody > tr > td {
+.ant-table-tbody>tr>td {
   border-bottom: 1px solid var(--color-hairline-soft) !important;
   padding: var(--spacing-sm) var(--spacing-md) !important;
   color: var(--color-ink) !important;
 }
 
-.ant-table-tbody > tr:hover > td {
+.ant-table-tbody>tr:hover>td {
   background: var(--color-surface-soft) !important;
 }
 
@@ -272,7 +272,7 @@
 }
 
 /* ---- Form Labels ---- */
-.ant-form-item-label > label {
+.ant-form-item-label>label {
   font-family: var(--font-sans) !important;
   font-size: var(--font-size-body-sm) !important;
   font-weight: var(--font-weight-body-sm) !important;
@@ -581,7 +581,7 @@
 /* ---- Figma Card ---- */
 .fg-card {
   background: #ffffff;
-  border: 1px solid #e6e6e6;
+  border: 1px solid var(--color-hairline);
   border-radius: 24px;
   overflow: hidden;
 }
@@ -591,7 +591,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid #f1f1f1;
+  border-bottom: 1px solid var(--color-hairline-soft);
 }
 
 .fg-card-toolbar {
@@ -627,7 +627,7 @@
   font-size: 14px !important;
   font-weight: 330 !important;
   background: #f7f7f5 !important;
-  border: 1px solid #e6e6e6 !important;
+  border: 1px solid var(--color-hairline) !important;
   color: #000 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -648,7 +648,7 @@
   font-size: 14px !important;
   font-weight: 330 !important;
   background: transparent !important;
-  border: 1px solid #e6e6e6 !important;
+  border: 1px solid var(--color-hairline) !important;
   color: #ef4444 !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -669,7 +669,7 @@
 /* ---- Figma Input ---- */
 .fg-input .ant-input {
   border-radius: 50px !important;
-  border: 1px solid #e6e6e6 !important;
+  border: 1px solid var(--color-hairline) !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 14px !important;
   padding: 7px 14px !important;
@@ -690,7 +690,7 @@
 /* ---- Figma Select ---- */
 .fg-select .ant-select-selector {
   border-radius: 50px !important;
-  border: 1px solid #e6e6e6 !important;
+  border: 1px solid var(--color-hairline) !important;
   font-family: 'Inter', system-ui, sans-serif !important;
   font-size: 14px !important;
   padding: 4px 12px !important;
@@ -744,6 +744,7 @@
 
 /* ---- Respect reduced motion ---- */
 @media (prefers-reduced-motion: reduce) {
+
   *,
   *::before,
   *::after {

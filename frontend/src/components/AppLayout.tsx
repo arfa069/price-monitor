@@ -52,19 +52,19 @@ export default function AppLayout({
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
       ? [
-          {
-            key: 'admin/users',
-            icon: <TeamOutlined style={{ fontSize: 14 }} />,
-            label: '用户管理',
-            onClick: () => navigate('/admin/users'),
-          },
-          {
-            key: 'admin/audit-logs',
-            icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
-            label: '审计日志',
-            onClick: () => navigate('/admin/audit-logs'),
-          },
-        ]
+        {
+          key: 'admin/users',
+          icon: <TeamOutlined style={{ fontSize: 14 }} />,
+          label: '用户管理',
+          onClick: () => navigate('/admin/users'),
+        },
+        {
+          key: 'admin/audit-logs',
+          icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
+          label: '审计日志',
+          onClick: () => navigate('/admin/audit-logs'),
+        },
+      ]
       : []),
     { type: 'divider' as const },
     {
@@ -86,12 +86,12 @@ export default function AppLayout({
   const selectedKey = location.pathname.startsWith('/schedule')
     ? '/schedule'
     : location.pathname.startsWith('/jobs')
-    ? '/jobs'
-    : location.pathname.startsWith('/products')
-    ? '/products'
-    : location.pathname.startsWith('/admin')
-    ? location.pathname
-    : '/products'
+      ? '/jobs'
+      : location.pathname.startsWith('/products')
+        ? '/products'
+        : location.pathname.startsWith('/admin')
+          ? location.pathname
+          : '/products'
 
   const siderWidth = collapsed ? 60 : 200
 
@@ -118,17 +118,17 @@ export default function AppLayout({
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
       ? [
-          {
-            key: '/admin/users',
-            icon: <TeamOutlined style={{ fontSize: 14 }} />,
-            label: '用户管理',
-          },
-          {
-            key: '/admin/audit-logs',
-            icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
-            label: '审计日志',
-          },
-        ]
+        {
+          key: '/admin/users',
+          icon: <TeamOutlined style={{ fontSize: 14 }} />,
+          label: '用户管理',
+        },
+        {
+          key: '/admin/audit-logs',
+          icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
+          label: '审计日志',
+        },
+      ]
       : []),
   ]
 
@@ -147,7 +147,7 @@ export default function AppLayout({
           padding: '0 24px',
           height: 56,
           background: '#ffffff',
-          borderBottom: '1px solid #e6e6e6',
+          borderBottom: '1px solid #bfbfbf',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
@@ -239,7 +239,7 @@ export default function AppLayout({
                       backgroundColor: '#f7f7f5',
                       color: '#000000',
                       fontSize: 12,
-                      border: '1px solid #e6e6e6',
+                      border: '1px solid #bfbfbf',
                     }}
                   />
                   <span style={{ fontSize: 14, fontWeight: 330 }}>
@@ -280,7 +280,7 @@ export default function AppLayout({
             background: '#f7f7f5',
             overflow: 'auto',
             borderRadius: '0 24px 24px 0',
-            borderRight: '1px solid #e6e6e6',
+            borderRight: '1px solid #bfbfbf',
             marginTop: 8,
             marginBottom: 8,
           }}
@@ -319,7 +319,7 @@ export default function AppLayout({
           <div
             style={{
               padding: '16px',
-              borderBottom: '1px solid #e6e6e6',
+              borderBottom: '1px solid #bfbfbf',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
@@ -414,7 +414,7 @@ export default function AppLayout({
           fontFamily: "'JetBrains Mono', monospace",
           letterSpacing: '0.6px',
           textTransform: 'uppercase',
-          borderTop: '1px solid #e6e6e6',
+          borderTop: '1px solid #bfbfbf',
         }}
       >
         价格监控系统 © 2026

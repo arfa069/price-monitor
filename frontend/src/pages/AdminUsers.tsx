@@ -147,21 +147,13 @@ export default function AdminUsersPage() {
   return (
     <div>
       {/* Page header — surface-soft for admin section */}
-      <div className="page-header" style={{ background: '#f7f7f5' }}>
+      <div className="page-header bg-surface-soft">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">系统管理</p>
             <h1 className="page-title">用户管理</h1>
             <p className="page-subtitle">管理系统用户账号、角色与访问权限</p>
           </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined style={{ fontSize: 14 }} />}
-            onClick={handleCreate}
-            className="header-cta"
-          >
-            新建用户
-          </Button>
         </div>
       </div>
 
@@ -184,6 +176,14 @@ export default function AdminUsersPage() {
           <Select.Option value="user">普通用户</Select.Option>
           <Select.Option value="admin">管理员</Select.Option>
         </Select>
+        <Button
+          type="primary"
+          icon={<PlusOutlined style={{ fontSize: 14 }} />}
+          onClick={handleCreate}
+          className="fg-btn-primary"
+        >
+          新建用户
+        </Button>
         <div style={{ flex: 1 }} />
       </div>
 

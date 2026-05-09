@@ -75,7 +75,7 @@ export default function ProductsPage() {
   const canCrawl = user?.role !== 'admin'
   const message = App.useApp().message
   const [page, setPage] = useState(1)
-  const [size] = useState(15)
+  const [size, setSize] = useState(15)
   const [platform, setPlatform] = useState<string | undefined>()
   const [active, setActive] = useState<boolean | undefined>()
   const [keyword, setKeyword] = useState('')
@@ -410,21 +410,13 @@ export default function ProductsPage() {
   return (
     <div className="page-root">
       {/* Page header — lime color block */}
-      <div className="page-header">
+      <div className="page-header bg-lime">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">数据管理</p>
             <h1 className="page-title">商品管理</h1>
             <p className="page-subtitle">追踪淘宝、京东、亚马逊商品价格变化</p>
           </div>
-          <Button
-            type="primary"
-            icon={<PlusOutlined style={{ fontSize: 14 }} />}
-            onClick={() => setCreateFormOpen(true)}
-            className="header-cta"
-          >
-            新增商品
-          </Button>
         </div>
       </div>
 
@@ -455,6 +447,14 @@ export default function ProductsPage() {
                     批量删除
                   </Button>
                 </Popconfirm>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined style={{ fontSize: 14 }} />}
+                  onClick={() => setCreateFormOpen(true)}
+                  className="fg-btn-primary"
+                >
+                  新增商品
+                </Button>
                 {canCrawl && (
                   <Button
                     icon={<RocketOutlined style={{ fontSize: 14 }} />}
@@ -532,9 +532,12 @@ export default function ProductsPage() {
             current: page,
             pageSize: size,
             total: data?.total ?? 0,
+            showSizeChanger: true,
             showTotal: (totalCount) => `共 ${totalCount} 条`,
-            onChange: (nextPage) => setPage(nextPage),
-            showSizeChanger: false,
+            onChange: (nextPage, nextSize) => {
+              setPage(nextPage)
+              if (nextSize) setSize(nextSize)
+            },
           }}
           locale={{
             emptyText: (

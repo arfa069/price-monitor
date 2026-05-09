@@ -22,7 +22,7 @@ export default function JobsPage() {
   const { user } = useAuth()
   const canCrawl = user?.role !== 'admin'
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
+  const [pageSize, setPageSize] = useState(20)
   const [keyword, setKeyword] = useState('')
   const [isActive, setIsActive] = useState<boolean | undefined>(undefined)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -123,6 +123,7 @@ export default function JobsPage() {
             page={page}
             pageSize={pageSize}
             onPageChange={setPage}
+            onPageSizeChange={setPageSize}
             matchScores={matchScores}
           />
         </>
@@ -143,7 +144,7 @@ export default function JobsPage() {
   return (
     <div>
       {/* Page header — cream color block */}
-      <div className="page-header" style={{ background: '#f4ecd6' }}>
+      <div className="page-header bg-cream">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">职位搜索</p>

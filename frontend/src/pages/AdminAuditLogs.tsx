@@ -99,7 +99,7 @@ export default function AdminAuditLogsPage() {
 
   return (
     <div>
-      <div className="page-header" style={{ background: '#f7f7f5' }}>
+      <div className="page-header bg-surface-soft">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">系统管理</p>

@@ -235,7 +235,8 @@ export default function ScheduleConfigPage() {
       title: '平台',
       dataIndex: 'platform',
       key: 'platform',
-      width: 120,
+      width: 160,
+      ellipsis: true,
       render: (value: string) => PLATFORM_LABELS[value] || value,
     },
     {
@@ -297,7 +298,7 @@ export default function ScheduleConfigPage() {
       title: '配置名称',
       dataIndex: 'name',
       key: 'name',
-      width: 160,
+      width: 180,
       ellipsis: true,
     },
     {
@@ -341,22 +342,13 @@ export default function ScheduleConfigPage() {
   return (
     <div>
       {/* Page header — lime color block */}
-      <div className="page-header">
+      <div className="page-header bg-lime">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">自动化</p>
             <h1 className="page-title">定时配置</h1>
             <p className="page-subtitle">配置商品和职位的定时爬取计划与通知渠道</p>
           </div>
-          {!isReadOnly && (
-            <Button
-              type="primary"
-              onClick={() => setAddModalOpen(true)}
-              className="header-cta"
-            >
-              新增定时器
-            </Button>
-          )}
         </div>
       </div>
 
@@ -390,21 +382,23 @@ export default function ScheduleConfigPage() {
           <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
             Cron 定时配置
           </span>
-          {!isReadOnly && (
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => setAddModalOpen(true)}
-              className="fg-btn-primary fg-btn-sm"
-            >
-              新增定时器
-            </Button>
-          )}
         </div>
         <div style={{ padding: '20px 24px' }}>
-          <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: '0 0 12px' }}>
-            商品抓取定时配置
-          </h4>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
+            <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: 0 }}>
+              商品抓取定时配置
+            </h4>
+            {!isReadOnly && (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => setAddModalOpen(true)}
+                className="fg-btn-primary fg-btn-sm"
+              >
+                新增商品定时器
+              </Button>
+            )}
+          </div>
           <Table
             dataSource={platformConfigs}
             columns={platformColumns}

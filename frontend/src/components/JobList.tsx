@@ -16,6 +16,7 @@ interface JobListProps {
   page: number
   pageSize: number
   onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
   matchScores?: Record<number, number>
 }
 
@@ -33,6 +34,7 @@ export default function JobList({
   page,
   pageSize,
   onPageChange,
+  onPageSizeChange,
   matchScores,
 }: JobListProps) {
   const statusValue: StatusFilterValue =
@@ -141,8 +143,11 @@ export default function JobList({
           current: page,
           pageSize,
           total,
-          onChange: (next) => onPageChange(next),
-          showSizeChanger: false,
+          showSizeChanger: true,
+          onChange: (next, nextSize) => {
+            onPageChange(next)
+            if (nextSize && nextSize !== pageSize) onPageSizeChange?.(nextSize)
+          },
         }}
       />
     </Card>

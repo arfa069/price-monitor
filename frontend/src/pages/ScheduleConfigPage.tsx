@@ -235,8 +235,7 @@ export default function ScheduleConfigPage() {
       title: '平台',
       dataIndex: 'platform',
       key: 'platform',
-      width: 160,
-      ellipsis: true,
+      width: 120,
       render: (value: string) => PLATFORM_LABELS[value] || value,
     },
     {
@@ -298,7 +297,7 @@ export default function ScheduleConfigPage() {
       title: '配置名称',
       dataIndex: 'name',
       key: 'name',
-      width: 180,
+      width: 120,
       ellipsis: true,
     },
     {
@@ -406,6 +405,7 @@ export default function ScheduleConfigPage() {
             loading={platformLoading}
             pagination={false}
             size="small"
+            scroll={{ x: 'max-content' }}
             locale={{ emptyText: '暂无商品定时配置' }}
           />
 
@@ -421,6 +421,7 @@ export default function ScheduleConfigPage() {
             loading={configLoading}
             pagination={false}
             size="small"
+            scroll={{ x: 'max-content' }}
             locale={{ emptyText: '暂无职位搜索配置' }}
           />
         </div>

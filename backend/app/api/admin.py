@@ -3,7 +3,7 @@ import logging
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
-from sqlalchemy import and_, delete, func, or_, select
+from sqlalchemy import and_, delete, func, or_, select, true
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -411,22 +411,21 @@ async def list_audit_logs(
     db: AsyncSession = Depends(get_db),
 ):
     """Get paginated audit logs."""
-    query = select(UserAuditLog)
-
+    base_filter = true()
     if actor_user_id is not None:
-        query = query.where(UserAuditLog.actor_user_id == actor_user_id)
+        base_filter = and_(base_filter, UserAuditLog.actor_user_id == actor_user_id)
     if action is not None:
-        query = query.where(UserAuditLog.action == action)
+        base_filter = and_(base_filter, UserAuditLog.action == action)
 
-    # Count total
-    count_query = select(func.count(UserAuditLog.id)).select_from(query.subquery())
+    count_query = select(func.count(UserAuditLog.id)).where(base_filter)
     count_result = await db.execute(count_query)
     total = count_result.scalar_one_or_none() or 0
 
-    # Paginated list
     offset = (page - 1) * page_size
     list_query = (
-        query.order_by(UserAuditLog.created_at.desc())
+        select(UserAuditLog)
+        .where(base_filter)
+        .order_by(UserAuditLog.created_at.desc())
         .offset(offset)
         .limit(page_size)
     )

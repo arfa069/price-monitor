@@ -196,23 +196,7 @@ export default function AppLayout({
           />
         ) : (
           <>
-            <Button
-              type="text"
-              icon={<ReloadOutlined style={{ fontSize: 14 }} />}
-              style={{
-                color: '#000000',
-                fontFamily: "'Inter', system-ui, sans-serif",
-                fontSize: 14,
-                fontWeight: 330,
-                borderRadius: 50,
-                padding: '4px 12px',
-                height: 36,
-              }}
-              onClick={onRefresh}
-              aria-label="刷新页面数据"
-            >
-              刷新
-            </Button>
+
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
@@ -364,20 +348,7 @@ export default function AppLayout({
             }}
             items={menuItems}
           />
-          <div style={{ padding: '16px' }}>
-            <Button
-              type="primary"
-              icon={<ReloadOutlined />}
-              onClick={() => {
-                onRefresh?.()
-                setDrawerOpen(false)
-              }}
-              block
-              style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
-            >
-              刷新数据
-            </Button>
-          </div>
+
         </Drawer>
       )}
 

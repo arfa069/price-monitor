@@ -524,6 +524,7 @@ export default function ProductsPage() {
           columns={columns}
           dataSource={productItems}
           loading={isLoading}
+          scroll={{ x: 'max-content' }}
           rowSelection={{
             selectedRowKeys,
             onChange: (keys) => setSelectedRowKeys(keys),

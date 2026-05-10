@@ -124,19 +124,21 @@ export default function AdminUsersPage() {
         // Admin cannot edit/delete super_admin users
         const canEdit = isSuperAdmin || record.role !== 'super_admin'
         return (
-          <Space>
+          <Space size={4}>
             <Button
               size="small"
               icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
               disabled={!canEdit}
-            />
+            >
+              编辑
+            </Button>
             <Popconfirm
               title={`确定删除用户 ${record.username}？此操作不可恢复。`}
               onConfirm={() => handleDelete(record.id)}
               disabled={!canEdit}
             >
-              <Button size="small" danger icon={<DeleteOutlined />} disabled={!canEdit} />
+              <Button size="small" danger icon={<DeleteOutlined />} disabled={!canEdit}>删除</Button>
             </Popconfirm>
           </Space>
         )
@@ -192,6 +194,7 @@ export default function AdminUsersPage() {
         dataSource={users}
         rowKey="id"
         loading={loading}
+        scroll={{ x: 'max-content' }}
         pagination={{
           current: page,
           pageSize,

@@ -139,6 +139,7 @@ export default function JobList({
         loading={isLoading}
         columns={columns}
         dataSource={jobs || []}
+        scroll={{ x: 'max-content' }}
         pagination={{
           current: page,
           pageSize,

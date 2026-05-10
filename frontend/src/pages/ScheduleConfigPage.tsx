@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, SaveOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
@@ -243,7 +243,7 @@ export default function ScheduleConfigPage() {
       key: 'cron',
       width: 450,
       render: (_: unknown, record: ProductPlatformCron) => (
-        <Space.Compact style={{ width: '100%' }}>
+        <Space>
           <Input
             value={platformCronInputs[record.platform] ?? ''}
             onChange={(e) =>
@@ -261,7 +261,7 @@ export default function ScheduleConfigPage() {
           >
             保存
           </Button>
-        </Space.Compact>
+        </Space>
       ),
     },
     {
@@ -283,7 +283,7 @@ export default function ScheduleConfigPage() {
             key: 'action',
             width: 90,
             render: (_: unknown, record: ProductPlatformCron) => (
-              <Button danger size="small" onClick={() => void handleDeletePlatformCron(record.platform)}>
+              <Button danger size="small" icon={<DeleteOutlined />} onClick={() => void handleDeletePlatformCron(record.platform)}>
                 删除
               </Button>
             ),
@@ -304,7 +304,7 @@ export default function ScheduleConfigPage() {
       key: 'cron',
       width: 450,
       render: (_, record) => (
-        <Space.Compact style={{ width: '100%' }}>
+        <Space>
           <Input
             value={cronInputs[record.id] ?? ''}
             onChange={(e) => setCronInputs((prev) => ({ ...prev, [record.id]: e.target.value }))}
@@ -320,7 +320,7 @@ export default function ScheduleConfigPage() {
           >
             保存
           </Button>
-        </Space.Compact>
+        </Space>
       ),
     },
     {
@@ -437,12 +437,12 @@ export default function ScheduleConfigPage() {
             <div style={{ marginBottom: 6, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
               飞书 Webhook URL
             </div>
-            <Space.Compact style={{ width: '100%', maxWidth: 560 }}>
+            <Space>
               <Input
                 value={feishuWebhookUrl}
                 onChange={(e) => setFeishuWebhookUrl(e.target.value)}
                 placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
-                style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
+                style={{ width: 420, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
               />
               <Button
                 type="primary"
@@ -453,14 +453,14 @@ export default function ScheduleConfigPage() {
               >
                 保存
               </Button>
-            </Space.Compact>
+            </Space>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666', whiteSpace: 'nowrap' }}>
               数据保留天数
             </span>
-            <Space.Compact>
+            <Space>
               <InputNumber
                 min={1}
                 max={3650}
@@ -479,7 +479,7 @@ export default function ScheduleConfigPage() {
               >
                 保存
               </Button>
-            </Space.Compact>
+            </Space>
           </div>
         </div>
       </div>

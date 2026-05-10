@@ -44,7 +44,7 @@ curl -X GET http://localhost:8000/auth/me \\
 ```
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy import select
@@ -84,9 +84,6 @@ from app.schemas.auth import (
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-# Token expiration time
-TOKEN_EXPIRE_HOURS = 1
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED, tags=["auth"])
@@ -207,7 +204,6 @@ async def login(login_data: UserLogin, request: Request, db: AsyncSession = Depe
     # Create access token
     access_token = create_access_token(
         data={"sub": str(user.id), "username": user.username},
-        expires_delta=timedelta(hours=TOKEN_EXPIRE_HOURS),
     )
 
     # Create session and login log

@@ -138,37 +138,31 @@ async def get_scheduler_status():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint with database and Redis checks."""
-    checks = {"database": "unknown", "redis": "unknown", "scheduler": "unknown"}
+    """Public health check. Returns only overall status to avoid leaking internals.
+
+    Detailed component status is intentionally not exposed; admins should
+    inspect logs / /scheduler/status (admin-gated) instead.
+    """
+    healthy = True
 
     # Database check
     try:
         async with engine.connect() as conn:
             await conn.execute(text("SELECT 1"))
-        checks["database"] = "healthy"
-    except Exception as e:
-        checks["database"] = f"unhealthy: {e}"
+    except Exception:
+        healthy = False
 
     # Redis check
     try:
         redis_client = getattr(app.state, "redis_client", None)
-        if redis_client is not None:
-            await redis_client.ping()
-            checks["redis"] = "healthy"
+        if redis_client is None:
+            healthy = False
         else:
-            checks["redis"] = "unhealthy: redis client not initialized"
-    except Exception as e:
-        checks["redis"] = f"unhealthy: {e}"
+            await redis_client.ping()
+    except Exception:
+        healthy = False
 
-    # Scheduler check
-    scheduler = getattr(app.state, "scheduler", None)
-    if scheduler is not None and scheduler.running:
-        checks["scheduler"] = "running"
-    else:
-        checks["scheduler"] = "not_running"
-
-    overall = "healthy" if all(v == "healthy" or v == "running" or v == "not_running" for v in checks.values()) else "unhealthy"
-    return {"status": overall, "checks": checks}
+    return {"status": "healthy" if healthy else "unhealthy"}
 
 
 if __name__ == "__main__":

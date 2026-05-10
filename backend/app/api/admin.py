@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_audit
 from app.core.permissions import require_permission
-from app.core.security import get_password_hash, require_role
+from app.core.security import get_password_hash
 from app.database import get_db
 from app.models.audit_log import UserAuditLog
 from app.models.user import User
@@ -408,7 +408,7 @@ async def list_audit_logs(
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     actor_user_id: int | None = Query(None, description="按操作者过滤"),
     action: str | None = Query(None, description="按操作类型过滤"),
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Get paginated audit logs."""

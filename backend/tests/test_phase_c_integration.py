@@ -368,19 +368,29 @@ class TestSchedulerTriggerAndHotUpdate:
 
     @pytest.mark.asyncio
     async def test_c06_c07_scheduler_status_endpoint_exists(self):
-        """C-06/C-07: scheduler status 端点存在且返回正确"""
+        """C-06/C-07: scheduler status 端点存在且返回正确（admin only）"""
         mock_state = MagicMock()
         mock_state.scheduler = None
 
-        with patch.object(app, "state", mock_state):
-            transport = ASGITransport(app=app)
-            async with AsyncClient(transport=transport, base_url="http://test") as client:
-                response = await client.get("/scheduler/status")
-            # endpoint exists, returns 503 when scheduler not initialized
-            assert response.status_code in [200, 503]
-            data = response.json()
-            assert "scheduler" in data
-            print(f"[C-06/C-07] PASS: /scheduler/status endpoint exists, returns {response.status_code}")
+        async def _admin():
+            return create_mock_user(role="admin")
+        app.dependency_overrides[get_current_user] = _admin
+
+        try:
+            with patch.object(app, "state", mock_state):
+                transport = ASGITransport(app=app)
+                async with AsyncClient(transport=transport, base_url="http://test") as client:
+                    response = await client.get(
+                        "/scheduler/status",
+                        headers={"Authorization": "Bearer fake"},
+                    )
+                # endpoint exists, returns 503 when scheduler not initialized
+                assert response.status_code in [200, 503]
+                data = response.json()
+                assert "scheduler" in data
+                print(f"[C-06/C-07] PASS: /scheduler/status endpoint exists, returns {response.status_code}")
+        finally:
+            app.dependency_overrides.pop(get_current_user, None)
 
 
 # =============================================================================
@@ -434,9 +444,8 @@ class TestHealthCheckRegression:
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "healthy"
-        assert "checks" in data
-        assert "database" in data["checks"]
-        assert "scheduler" in data["checks"]
+        # /health is redacted: only the overall status is exposed. Component
+        # details (database/redis/scheduler) are intentionally not returned.
         print(f"[C-09] PASS: /health returns {data['status']}")
 
 

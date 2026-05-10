@@ -11,7 +11,7 @@ if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 import redis.asyncio as redis
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
@@ -20,6 +20,7 @@ from app.api.admin import router as admin_users_router
 from app.api.auth import router as auth_router
 from app.api.wechat import router as wechat_router
 from app.config import settings
+from app.core.security import require_role
 from app.database import engine
 from app.routers import alerts, config, crawl, products
 from app.routers.jobs import router as jobs_router
@@ -112,7 +113,9 @@ app.include_router(admin_router)
 
 # Scheduler status endpoint
 @app.get("/scheduler/status", tags=["scheduler"])
-async def get_scheduler_status():
+async def get_scheduler_status(
+    current_user=Depends(require_role("admin", "super_admin")),
+):
     """Get APScheduler status and next run times for all cron jobs."""
     scheduler = getattr(app.state, "scheduler", None)
 

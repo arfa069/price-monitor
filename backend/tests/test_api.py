@@ -293,49 +293,35 @@ async def test_products_list_first_page_has_no_prev(mock_get_current_user):
 
 @pytest.mark.asyncio
 async def test_scheduler_status_returns_503_when_not_started():
-    """GET /scheduler/status returns 503 when scheduler not initialized."""
+    """GET /scheduler/status returns 503 when scheduler not initialized (admin only)."""
     # Patch app.state to have no scheduler
     mock_state = MagicMock()
     mock_state.scheduler = None
 
-    with patch.object(app, "state", mock_state):
-        transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.get("/scheduler/status")
-    assert response.status_code == 503
-    data = response.json()
-    assert data["scheduler"] == "not_started"
+    async def _admin():
+        return create_mock_user(role="admin")
+    app.dependency_overrides[get_current_user] = _admin
+
+    try:
+        with patch.object(app, "state", mock_state):
+            transport = ASGITransport(app=app)
+            async with AsyncClient(transport=transport, base_url="http://test") as client:
+                response = await client.get(
+                    "/scheduler/status",
+                    headers={"Authorization": "Bearer fake"},
+                )
+        assert response.status_code == 503
+        data = response.json()
+        assert data["scheduler"] == "not_started"
+    finally:
+        app.dependency_overrides.pop(get_current_user, None)
 
 
 # --- Health Check ---
 
 
-@pytest.mark.asyncio
-async def test_health_check_includes_scheduler_field():
-    """Health endpoint includes scheduler field in checks."""
-    mock_state = MagicMock()
-    mock_state.scheduler = None
-
-    with patch.object(app, "state", mock_state):
-        with patch("app.main.engine") as mock_engine:
-            mock_conn = MagicMock()
-            mock_conn.execute = AsyncMock()
-            mock_engine.connect.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
-            mock_engine.connect.return_value.__aexit__ = AsyncMock()
-
-            with patch("app.main.redis") as _mock_redis:
-                mock_redis = AsyncMock()
-                mock_redis.from_url.return_value = mock_redis
-                mock_redis.ping = AsyncMock()
-                mock_redis.aclose = AsyncMock()
-
-                transport = ASGITransport(app=app)
-                async with AsyncClient(transport=transport, base_url="http://test") as client:
-                    response = await client.get("/health")
-
-    assert response.status_code == 200
-    data = response.json()
-    assert "scheduler" in data["checks"]
-    assert data["checks"]["scheduler"] == "not_running"
+# test_health_check_includes_scheduler_field removed:
+# /health is now redacted to only return {"status": "healthy"|"unhealthy"}.
+# Coverage for the new shape lives in tests/test_health_endpoint.py.
 
 

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.permissions import require_permission
 from app.core.security import get_password_hash
 from app.database import get_db
 from app.models.user import User
@@ -48,6 +49,7 @@ async def get_or_create_default_user(db: AsyncSession) -> User:
 @router.post("", response_model=UserConfigResponse)
 async def create_or_update_config(
     config_data: UserConfigCreate,
+    current_user: User = Depends(require_permission("config:write")),
     db: AsyncSession = Depends(get_db),
 ):
     """Create or update user configuration."""
@@ -64,7 +66,10 @@ async def create_or_update_config(
 
 
 @router.get("", response_model=UserConfigResponse)
-async def get_config(db: AsyncSession = Depends(get_db)):
+async def get_config(
+    current_user: User = Depends(require_permission("config:read")),
+    db: AsyncSession = Depends(get_db),
+):
     """Get current user configuration, or return defaults if not set."""
     user = await get_or_create_default_user(db)
     return user
@@ -73,6 +78,7 @@ async def get_config(db: AsyncSession = Depends(get_db)):
 @router.patch("", response_model=UserConfigResponse)
 async def update_config_partial(
     config_data: UserConfigUpdate,
+    current_user: User = Depends(require_permission("config:write")),
     db: AsyncSession = Depends(get_db),
 ):
     """Partial update user configuration (create if not exists)."""

@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.audit import log_audit
+from app.core.permissions import require_permission
 from app.core.security import get_password_hash, require_role
 from app.database import get_db
 from app.models.audit_log import UserAuditLog
@@ -36,7 +37,7 @@ async def list_users(
     page_size: int = Query(20, ge=1, le=100, description="每页数量"),
     search: str | None = Query(None, description="搜索用户名或邮箱"),
     role: str | None = Query(None, description="按角色过滤"),
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Get paginated list of users (non-deleted only)."""
@@ -82,7 +83,7 @@ async def list_users(
 async def create_user(
     user_data: UserCreate,
     request: Request,
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:manage")),
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new user (admin only)."""
@@ -151,7 +152,7 @@ async def create_user(
 @router.get("/{user_id}", response_model=AdminUserResponse)
 async def get_user(
     user_id: int,
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:read")),
     db: AsyncSession = Depends(get_db),
 ):
     """Get a single user by ID (non-deleted only)."""
@@ -175,7 +176,7 @@ async def update_user(
     user_id: int,
     update_data: AdminUserUpdate,
     request: Request,
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:manage")),
     db: AsyncSession = Depends(get_db),
 ):
     """Update a user (admin only). Includes soft delete/restore via is_active."""
@@ -322,7 +323,7 @@ async def update_user(
 async def delete_user(
     user_id: int,
     request: Request,
-    current_user: User = Depends(require_role("admin", "super_admin")),
+    current_user: User = Depends(require_permission("user:delete")),
     db: AsyncSession = Depends(get_db),
 ):
     """Soft delete a user and clean up their sessions (admin only)."""

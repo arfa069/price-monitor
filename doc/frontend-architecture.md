@@ -105,6 +105,7 @@ frontend/src/
 - 组件级 token：Button borderRadius: 50, Input borderRadius: 8, Table borderRadius: 24, Card borderRadius: 24
 
 **设计系统 CSS 变量（src/styles/design-tokens.css）：**
+
 | Token | 值 | 用途 |
 |-------|----|------|
 | `--color-primary` | `#000000` | 主 CTA / 标题 |
@@ -116,6 +117,17 @@ frontend/src/
 | `--color-block-navy` | `#1f1d3d` | 深色块 |
 | `--radius-pill` | `50px` | 胶囊按钮 |
 | `--radius-lg` | `24px` | 卡片/色块 |
+
+**字体 Token（2026-05-11 从营销风调小到后台管理标准）：**
+
+| Token | 值 | 用途 |
+|-------|----|------|
+| `--font-size-headline` | `20px` | 页面标题 |
+| `--font-size-body` | `14px` | 正文（原 18px） |
+| `--font-size-body-sm` | `13px` | 小号正文（原 16px） |
+| `--font-size-button` | `14px` | 按钮文字（原 20px） |
+| `--font-size-link` | `14px` | 链接（原 20px） |
+| `--font-size-card-title` | `16px` | 卡片标题（原 24px） |
 
 ## 4. 状态管理
 

@@ -44,7 +44,7 @@ export default function ProfilePage() {
   return (
     <div>
       {/* Page header — cream color block */}
-      <div className="page-header" style={{ background: '#f4ecd6' }}>
+      <div className="page-header bg-cream">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">账户</p>

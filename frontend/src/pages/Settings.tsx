@@ -27,7 +27,7 @@ export default function SettingsPage() {
   return (
     <div>
       {/* Page header */}
-      <div className="page-header" style={{ background: '#c8e6cd' }}>
+      <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">偏好设置</p>

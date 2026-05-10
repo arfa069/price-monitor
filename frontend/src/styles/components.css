@@ -508,10 +508,39 @@
 }
 
 .page-header {
-  background: #dceeb1;
+  background: var(--color-block-lime);
   border-radius: 24px;
   padding: 40px 40px 36px;
   margin-bottom: 24px;
+}
+
+/* ---- Page Header Color Block Variants ---- */
+.page-header.bg-lime {
+  background: var(--color-block-lime);        /* #dceeb1 — 商品管理 */
+}
+
+.page-header.bg-cream {
+  background: var(--color-block-cream);       /* #f4ecd6 — 职位管理 / 个人信息 */
+}
+
+.page-header.bg-lilac {
+  background: var(--color-block-lilac);       /* #c5b0f4 — 定时配置 */
+}
+
+.page-header.bg-mint {
+  background: var(--color-block-mint);        /* #c8e6cd — 账号设置 */
+}
+
+.page-header.bg-pink {
+  background: var(--color-block-pink);        /* #efd4d4 */
+}
+
+.page-header.bg-coral {
+  background: var(--color-block-coral);       /* #f3c9b6 */
+}
+
+.page-header.bg-surface-soft {
+  background: var(--color-surface-soft);      /* #f7f7f5 — 管理员页面 */
 }
 
 .page-header-inner {

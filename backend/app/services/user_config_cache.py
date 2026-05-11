@@ -5,6 +5,7 @@ Cache invalidation happens automatically on config updates via /config endpoints
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Any
@@ -19,16 +20,19 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 _redis_client: redis.Redis | None = None
+_redis_loop: asyncio.AbstractEventLoop | None = None
 
 CACHE_KEY = "user:config:1"
 CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 async def _get_redis() -> redis.Redis:
-    """Get or create shared Redis client."""
-    global _redis_client
-    if _redis_client is None:
+    """Get or create shared Redis client (per event loop)."""
+    global _redis_client, _redis_loop
+    current_loop = asyncio.get_running_loop()
+    if _redis_client is None or _redis_loop is not current_loop:
         _redis_client = redis.from_url(settings.redis_url_with_password)
+        _redis_loop = current_loop
     return _redis_client
 
 

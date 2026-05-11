@@ -1,4 +1,5 @@
 """Security utilities: password hashing and JWT token handling."""
+import asyncio
 from datetime import UTC, datetime, timedelta
 from typing import Any
 import hashlib
@@ -28,13 +29,16 @@ MAX_LOGIN_ATTEMPTS = 5
 LOCKOUT_DURATION_SECONDS = 900  # 15 minutes
 
 _redis_client: redis.Redis | None = None
+_redis_loop: asyncio.AbstractEventLoop | None = None
 
 
 async def _get_redis() -> redis.Redis:
-    """Get or create Redis client (connection reused)."""
-    global _redis_client
-    if _redis_client is None:
+    """Get or create Redis client (connection reused per event loop)."""
+    global _redis_client, _redis_loop
+    current_loop = asyncio.get_running_loop()
+    if _redis_client is None or _redis_loop is not current_loop:
         _redis_client = redis.from_url(settings.redis_url_with_password)
+        _redis_loop = current_loop
     return _redis_client
 
 

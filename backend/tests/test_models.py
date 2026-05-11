@@ -1,5 +1,5 @@
 """Model unit tests."""
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal
 
 from app.models.alert import Alert
@@ -28,7 +28,7 @@ def test_price_history_requires_price():
         product_id=1,
         price=Decimal("99.99"),
         currency="CNY",
-        scraped_at=datetime.utcnow(),
+        scraped_at=datetime.now(UTC),
     )
     assert history.price == Decimal("99.99")
     assert history.currency == "CNY"
@@ -40,7 +40,7 @@ def test_crawl_log_platform_nullable():
         id=1,
         platform=None,
         status="SUCCESS",
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
     assert log.platform is None
 
@@ -53,7 +53,7 @@ def test_crawl_log_product_nullable():
         platform="taobao",
         status="ERROR",
         error_message="Network timeout",
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
     )
     assert log.product_id is None
     assert log.error_message == "Network timeout"
@@ -72,7 +72,7 @@ def test_user_feishu_webhook_nullable():
 
 def test_price_history_scraped_at_not_nullable():
     """PriceHistory.scraped_at is not nullable."""
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     history = PriceHistory(
         id=1,
         product_id=1,

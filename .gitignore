@@ -55,3 +55,4 @@ backend/uvicorn.log
 /doc/superpowers/specs
 PLAN.md
 set_password.py
+.worktrees/

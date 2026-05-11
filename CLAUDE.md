@@ -41,6 +41,7 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
 
 ## 6.关键约定
 - user_id 硬编码为 1（单用户系统）已添加多用户认证，原有 user_id=1 硬编码仍适用于商品/职位爬取
+- 系统的测试用户: default123 密码:123456
 - 所有时间戳字段使用 UTC 时区（`datetime.now(timezone.utc)`）
 - 价格比较使用 Decimal 避免浮点误差
 - LLM provider 通过 `LLMProviderFactory` 切换，支持 Anthropic/OpenAI/Ollama
@@ -48,3 +49,9 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
 ## 7.本地开发及验证流程
 - 「改 → 构建 → 启动 → 验证」完整闭环
 - 所有测试必须先重启前后端
+
+## 8. Design System
+Always read DESIGN.md before making any visual or UI decisions.
+All font choices, colors, spacing, and aesthetic direction are defined there.
+Do not deviate without explicit user approval.
+In QA mode, flag any code that doesn't match DESIGN.md.

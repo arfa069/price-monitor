@@ -24,5 +24,14 @@
       "Bash(powershell.exe *)",
       "mcp__MiniMax__understand_image"
     ]
+  },
+  "skillOverrides": {
+    "design-html": "off",
+    "design-shotgun": "off",
+    "document-release": "off",
+    "office-hours": "off",
+    "connect-chrome": "off",
+    "open-gstack-browser": "off",
+    "pair-agent": "off"
   }
 }

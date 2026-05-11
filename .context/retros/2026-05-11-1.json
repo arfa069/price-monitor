@@ -1,0 +1,72 @@
+{
+  "date": "2026-05-11",
+  "window": "7d",
+  "metrics": {
+    "commits": 69,
+    "contributors": 1,
+    "prs_merged": 0,
+    "insertions": 23239,
+    "deletions": 9598,
+    "net_loc": 13641,
+    "test_loc": 5123,
+    "test_ratio": 0.22,
+    "active_days": 8,
+    "sessions": 24,
+    "deep_sessions": 3,
+    "medium_sessions": 3,
+    "micro_sessions": 18,
+    "avg_session_minutes": 18,
+    "active_coding_minutes": 429,
+    "loc_per_session_hour": 3250,
+    "feat_pct": 0.28,
+    "fix_pct": 0.36,
+    "refactor_pct": 0.04,
+    "test_pct": 0.12,
+    "chore_pct": 0.04,
+    "docs_pct": 0.06,
+    "style_pct": 0.04,
+    "peak_hours": [0, 1],
+    "ai_assisted_commits": 31
+  },
+  "authors": {
+    "arfac": {
+      "commits": 69,
+      "insertions": 23239,
+      "deletions": 9598,
+      "test_ratio": 0.22,
+      "top_area": "backend/app + frontend/src"
+    }
+  },
+  "hotspots": {
+    "frontend/src/App.tsx": 11,
+    "frontend/src/pages/ScheduleConfigPage.tsx": 10,
+    "frontend/src/components/AppLayout.tsx": 9,
+    "backend/app/api/auth.py": 9,
+    "frontend/src/pages/Settings.tsx": 7,
+    "frontend/src/pages/Profile.tsx": 7,
+    "backend/app/routers/jobs.py": 7,
+    "backend/app/main.py": 7,
+    "backend/app/core/security.py": 7
+  },
+  "biggest_ships": [
+    { "hash": "afe6b6de4", "subject": "feat: add audit and admin updates", "loc": 4247, "files": 37 },
+    { "hash": "6b98875a6", "subject": "feat(auth): 添加用户认证系统", "loc": 3432, "files": 21 },
+    { "hash": "f7bd8db79", "subject": "fix(auth): unify dual authentication systems", "loc": 3747, "files": 9 },
+    { "hash": "ca0acd42a", "subject": "安全与质量修复：登录安全强化 + 测试覆盖 + 性能优化", "loc": 2126, "files": 15 },
+    { "hash": "16682bc36", "subject": "feat(job-match): add batch concurrent analysis (batch=3)", "loc": 1735, "files": 2 }
+  ],
+  "focus_score": {
+    "top_top_level_dir": "backend",
+    "top_top_level_pct": 0.49,
+    "top_second_level": "frontend/src",
+    "top_second_level_pct": 0.40
+  },
+  "version_range": null,
+  "streak_days": 8,
+  "test_health": {
+    "total_test_files": 8,
+    "tests_added_this_period_files": 30,
+    "regression_test_commits": 0
+  },
+  "tweetable": "Week of May 4 (price-monitor): 69 commits, +13.6k LOC, 22% tests, 0 PRs, peak: midnight | Streak: 8d"
+}

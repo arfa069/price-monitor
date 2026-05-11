@@ -3,7 +3,7 @@
 此文件为 Claude Code (claude.ai/code) 提供代码库操作指南。
 
 # 执行任何命令前必读⚠️ 
-在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 X 节的"常用命令"，
+在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 3 节的"常用命令"，
 确认正确的执行方式。默认不在 PATH 中的工具，必须通过 `powershell.exe` 调用。
 
 ## 1.始终加载Karpathy编码准则⚠️ 
@@ -17,20 +17,14 @@ Always load the `karpathy-guidelines` skill when coding.
 
 ## 3.常用命令
 
-### **Windows/WSL执行脚本**：WSL中优先用`powershell.exe`调用 Windows PowerShell
-/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File
-
 ### 安装依赖
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e ."
 
 ### 运行数据库迁移
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; alembic upgrade head"
 
-### 启动前端开发服务器
-powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; npm run dev“
-
-### 启动后端开发服务器 **注意：Windows 上不要用 --reload，会导致 Playwright 子进程报错**
-powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+### 启动前端服务器和后端服务器
+powershell.exe -Command "cd C:/Users/arfac/price-monitor; powershell -ExecutionPolicy Bypass -File 'scripts/start_server.ps1'"
 
 ### 运行测试
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pytest"
@@ -40,6 +34,7 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
 
 ## 4.后端架构
 → 详见 doc/backend-architecture.md
+→ 权限架构详见 doc/permission-architecture.md
 
 ## 5.前端架构
 → 详见 doc/frontend-architecture.md

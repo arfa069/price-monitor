@@ -3,28 +3,18 @@
 此文件为提供代码库操作指南。
 
 # 执行任何命令前必读⚠️ 
-在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 X 节的"常用命令"，
+在运行任何 shell / test / lint 命令之前，**必须**先查看本文件第 3 节的"常用命令"，
 确认正确的执行方式。默认不在 PATH 中的工具，必须通过 `powershell.exe` 调用。
 
 ## 1.始终加载Karpathy编码准则⚠️ 
 Always load the `karpathy-guidelines` skill when coding.
 
 ## 2.项目概览
-
 淘宝、京东、亚马逊价格监控系统 + Boss 直聘职位搜索监控。通过 Playwright 抓取商品页面/职位信息，记录价格历史，降价时通过飞书 Webhook 发送通知。
 **技术栈**：Python 3.11+ · FastAPI · PostgreSQL (async SQLAlchemy) · Redis · Playwright · 飞书 Webhook
 **前端**：React + Vite + TypeScript + Ant Design + Figma Design System（黑白核心 + 马卡龙色块 + 胶囊按钮）
 
 ## 3.常用命令
-
-### **Windows/WSL执行脚本**：WSL中优先用`powershell.exe`调用 Windows PowerShell
-/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File
-
-### 启动前端服务器和后端服务器
-Windows环境：
-powershell -ExecutionPolicy Bypass -File ".\scripts\start_server.ps1"
-WSL环境：
-/mnt/c/WINDOWS/System32/WindowsPowerShell/v1.0/powershell.exe -ExecutionPolicy Bypass -File "C:/Users/arfac/price-monitor/scripts/start_server.ps1"
 
 ### 安装依赖
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e ."
@@ -32,11 +22,8 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e
 ### 运行数据库迁移
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; alembic upgrade head"
 
-### 启动前端开发服务器
-powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; npm run dev“
-
-### 启动后端开发服务器 **注意：Windows 上不要用 --reload，会导致 Playwright 子进程报错**
-powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; python -m uvicorn app.main:app --host 0.0.0.0 --port 8000"
+### 启动前端服务器和后端服务器
+powershell.exe -Command "cd C:/Users/arfac/price-monitor; powershell -ExecutionPolicy Bypass -File 'scripts/start_server.ps1'"
 
 ### 运行测试
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pytest"
@@ -49,6 +36,7 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
 
 ## 5.前端架构
 → 详见 doc/frontend-architecture.md
+→ 权限架构详见 doc/permission-architecture.md
 
 ## 6.关键约定
 - user_id 硬编码为 1（单用户系统）已添加多用户认证，原有 user_id=1 硬编码仍适用于商品/职位爬取

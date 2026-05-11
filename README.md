@@ -167,6 +167,21 @@ curl -X GET http://localhost:8000/auth/me \
 - **数据隔离**：所有数据按 `user_id` 隔离，用户只能访问自己的数据
 - **强制认证**：除 `/auth/register` 和 `/auth/login` 外，所有接口均需认证
 
+## Admin API
+
+> 详见 `doc/permission-architecture.md` 完整权限矩阵。
+
+| Method | Path | 说明 | 所需权限 |
+|--------|------|------|----------|
+| GET | /admin/users | 列出所有用户 | admin/super_admin |
+| POST | /admin/users | 创建用户 | admin/super_admin |
+| GET | /admin/users/{id} | 获取用户详情 | admin/super_admin |
+| PATCH | /admin/users/{id} | 更新用户信息 | admin/super_admin |
+| DELETE | /admin/users/{id} | 软删除用户 | admin/super_admin |
+| GET | /admin/audit-logs | 查询审计日志 | admin/super_admin |
+
+**角色边界**：admin 不能创建/修改/删除 super_admin；super_admin 不能删除自己或最后一个活跃的 super_admin。
+
 ## Development
 
 ```powershell

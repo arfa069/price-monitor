@@ -26,18 +26,27 @@ backend/
 │   ├── config.py               # Pydantic Settings（环境变量）
 │   ├── database.py             # 异步 SQLAlchemy 引擎 + 会话
 │   ├── api/
-│   │   └── auth.py             # 认证 API（注册/登录/登出）
+│   │   ├── auth.py             # 认证 API（注册/登录/登出/会话）
+│   │   ├── admin.py            # 用户管理 + 审计日志 API
+│   │   └── wechat.py           # 微信登录（feature flag，默认关闭）
 │   ├── core/
-│   │   └── security.py         # JWT / 密码加密工具
+│   │   ├── security.py         # JWT / 密码加密 / 会话管理
+│   │   ├── permissions.py      # 细粒度权限矩阵 + require_permission
+│   │   └── audit.py            # 审计日志写入工具
 │   ├── models/
 │   │   ├── base.py             # SQLAlchemy Base
 │   │   ├── user.py             # User 模型
+│   │   ├── session.py          # 用户会话（token_hash 绑定）
+│   │   ├── audit_log.py        # 审计日志（user_audit_logs）
+│   │   ├── login_log.py        # 登录历史
 │   │   ├── product.py          # Product / ProductPlatformCron 模型
 │   │   ├── price_history.py    # PriceHistory 模型
 │   │   ├── alert.py            # Alert 模型
 │   │   ├── crawl_log.py        # CrawlLog 模型
 │   │   ├── job.py              # Job / JobSearchConfig 模型
-│   │   └── job_match.py        # UserResume / MatchResult 模型
+│   │   ├── job_match.py        # UserResume / MatchResult 模型
+│   │   ├── permission.py       # 权限定义表（保留，未接入）
+│   │   └── role.py             # 角色定义表（保留，未接入）
 │   ├── platforms/
 │   │   ├── base.py             # BasePlatformAdapter（ABC）
 │   │   ├── taobao.py           # TaobaoAdapter
@@ -69,7 +78,8 @@ backend/
 │       ├── llm_provider.py     # LLM Provider 工厂
 │       ├── llm_anthropic.py    # Anthropic Claude
 │       ├── llm_openai.py       # OpenAI GPT
-│       └── llm_ollama.py       # Ollama 本地模型
+│       ├── llm_ollama.py       # Ollama 本地模型
+│       └── user_config_cache.py # Redis TTL 缓存用户配置（5min）
 └── tests/                     # 单元/集成测试
 ```
 
@@ -172,13 +182,15 @@ User (1) ──────< Product (多)
 | `/alerts` | routers/alerts.py | 告警管理 |
 | `/crawl` | routers/crawl.py | 爬取触发 + 日志查询 |
 | `/jobs` | routers/jobs.py | 职位搜索配置 + 爬取 + 匹配分析 |
-| `/scheduler/status` | main.py | APScheduler 状态（不在路由文件中） |
+| `/admin` | api/admin.py | 用户管理 + 审计日志（admin/super_admin） |
+| `/scheduler/status` | main.py | APScheduler 状态（admin/super_admin） |
 
 ### 6.2 认证系统
 - `POST /auth/register` — 用户注册
-- `POST /auth/login` — 用户登录（JWT token，1小时有效期）
+- `POST /auth/login` — 用户登录（JWT token，60 分钟有效期）
 - `POST /auth/logout` — 登出
 - `GET /auth/me` — 获取当前用户信息
+- `GET /auth/sessions` — 获取当前用户活跃会话列表
 - 密码 bcrypt 加密，登录失败锁定（5次失败锁定15分钟，Redis 持久化，重启不丢失）
 - 前端 AuthContext 状态管理，路由守卫（PublicRoute/ProtectedRoute）
 - 请求拦截器自动添加 Token
@@ -350,7 +362,7 @@ _shared_context: BrowserContext
 ## 9. 安全设计
 
 ### 9.1 认证与授权
-- JWT Token：24 小时有效期
+- JWT Token：60 分钟有效期（`ACCESS_TOKEN_EXPIRE_MINUTES = 60`）
 - 密码：bcrypt 加密
 - 登录失败锁定：5 次失败后锁定 15 分钟（Redis 持久化，重启不丢失）
 

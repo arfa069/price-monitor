@@ -352,6 +352,8 @@ async def test_me_with_valid_token_returns_user_info(test_user, mock_get_db):
     mock_user.username = test_user["username"]
     mock_user.email = test_user["email"]
     mock_user.is_active = True
+    mock_user.role = "user"
+    mock_user.deleted_at = None
     mock_user.created_at = datetime.now(UTC)
 
     mock_result = MagicMock()

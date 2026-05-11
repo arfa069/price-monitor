@@ -247,6 +247,8 @@ class TestGetMe:
         mock_user.email = "test@example.com"
         mock_user.hashed_password = get_password_hash("password123")
         mock_user.is_active = True
+        mock_user.role = "user"
+        mock_user.deleted_at = None
         mock_user.created_at = datetime.now(UTC)
 
         mock_session = AsyncMock()
@@ -307,11 +309,16 @@ class TestLogout:
     @pytest.mark.asyncio
     async def test_logout_success(self):
         """Test successful logout."""
+        from app.core.security import get_password_hash
+
         mock_user = MagicMock(spec=User)
         mock_user.id = 1
         mock_user.username = "testuser"
         mock_user.email = "test@example.com"
+        mock_user.hashed_password = get_password_hash("password123")
         mock_user.is_active = True
+        mock_user.role = "user"
+        mock_user.deleted_at = None
         mock_user.created_at = datetime.now(UTC)
 
         mock_session = AsyncMock()

@@ -1,6 +1,5 @@
 """Unit tests for job match service helpers."""
 
-from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -21,13 +20,22 @@ async def test_upsert_match_result_creates_new_record():
     from app.services.job_match import upsert_match_result
     from app.services.llm_provider import MatchAnalysis
 
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = None
+    # SELECT existence → not found
+    select_result = MagicMock()
+    select_result.scalar_one_or_none.return_value = None
+
+    # INSERT RETURNING id → returns new id 42
+    insert_result = MagicMock()
+    insert_result.scalar.return_value = 42
 
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(return_value=mock_result)
-    mock_db.add = MagicMock()
-    mock_db.flush = AsyncMock()
+    mock_db.execute = AsyncMock(side_effect=[select_result, insert_result])
+
+    # db.get(MatchResult, 42) → returns the freshly-loaded row
+    fresh_row = MagicMock()
+    fresh_row.match_score = 83
+    fresh_row.resume_id = 2
+    mock_db.get = AsyncMock(return_value=fresh_row)
 
     analysis = MatchAnalysis(
         match_score=83,
@@ -47,7 +55,9 @@ async def test_upsert_match_result_creates_new_record():
     assert was_created is True
     assert result.match_score == 83
     assert result.resume_id == 2
-    mock_db.add.assert_called_once()
+    # SELECT existence + INSERT
+    assert mock_db.execute.await_count == 2
+    mock_db.get.assert_awaited_once()
 
 
 @pytest.mark.asyncio
@@ -56,18 +66,21 @@ async def test_upsert_match_result_updates_existing_record():
     from app.services.job_match import upsert_match_result
     from app.services.llm_provider import MatchAnalysis
 
-    existing = MagicMock()
-    existing.match_score = 50
-    existing.match_reason = "Old"
-    existing.apply_recommendation = "不太匹配"
-    existing.llm_model_used = "old-model"
-    existing.updated_at = datetime.now(UTC)
+    # SELECT existence → returns id 17
+    select_result = MagicMock()
+    select_result.scalar_one_or_none.return_value = 17
 
-    mock_result = MagicMock()
-    mock_result.scalar_one_or_none.return_value = existing
+    # UPDATE returns nothing useful, just a mock
+    update_result = MagicMock()
 
     mock_db = AsyncMock()
-    mock_db.execute = AsyncMock(return_value=mock_result)
+    mock_db.execute = AsyncMock(side_effect=[select_result, update_result])
+
+    # db.get(MatchResult, 17) → returns row with updated fields
+    refreshed = MagicMock()
+    refreshed.match_score = 92
+    refreshed.apply_recommendation = "强烈推荐"
+    mock_db.get = AsyncMock(return_value=refreshed)
 
     analysis = MatchAnalysis(
         match_score=92,
@@ -85,6 +98,9 @@ async def test_upsert_match_result_updates_existing_record():
     )
 
     assert was_created is False
-    assert result is existing
-    assert existing.match_score == 92
-    assert existing.apply_recommendation == "强烈推荐"
+    assert result is refreshed
+    assert result.match_score == 92
+    assert result.apply_recommendation == "强烈推荐"
+    # SELECT existence + UPDATE
+    assert mock_db.execute.await_count == 2
+    mock_db.get.assert_awaited_once()

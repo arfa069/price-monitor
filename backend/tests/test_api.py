@@ -57,7 +57,12 @@ async def test_get_config_returns_user_config():
     async def _override_get_db():
         yield mock_session
 
+    async def _override_get_current_user():
+        # /config requires "config:read" which is admin/super_admin only
+        return create_mock_user(role="admin")
+
     app.dependency_overrides[get_db] = _override_get_db
+    app.dependency_overrides[get_current_user] = _override_get_current_user
     try:
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:

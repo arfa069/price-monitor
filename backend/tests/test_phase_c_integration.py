@@ -309,7 +309,12 @@ class TestScheduleConfigRealReadWrite:
         async def _override():
             yield mock_session
 
+        async def _override_user():
+            # /config GET requires config:read (admin/super_admin)
+            return create_mock_user(role="admin")
+
         app.dependency_overrides[get_db] = _override
+        app.dependency_overrides[get_current_user] = _override_user
         try:
             transport = ASGITransport(app=app)
             async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -345,7 +350,12 @@ class TestScheduleConfigRealReadWrite:
         async def _override():
             yield mock_session
 
+        async def _override_user():
+            # /config PATCH requires config:write (user/admin/super_admin)
+            return create_mock_user(role="user")
+
         app.dependency_overrides[get_db] = _override
+        app.dependency_overrides[get_current_user] = _override_user
         try:
             transport = ASGITransport(app=app)
             async with AsyncClient(transport=transport, base_url="http://test") as client:

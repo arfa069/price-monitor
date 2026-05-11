@@ -36,9 +36,9 @@
   --color-info: #3b82f6;
 
   /* --- Typography --- */
-  --font-sans: 'General Sans', 'DM Sans', 'SF Pro Display', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', 'Geist Mono', 'SF Mono', 'Menlo', monospace;
-  --font-data: 'Geist', 'SF Mono', 'Menlo', monospace;
+  --font-display: 'Outfit', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', 'SF Pro Text', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
 
   --font-size-display-xl: clamp(32px, 5vw, 48px);
   --font-size-display-lg: clamp(22px, 3vw, 36px);
@@ -118,6 +118,13 @@
   --radius-pill: 50px;
   --radius-full: 9999px;
 
+  /* --- Interaction --- */
+  --color-primary-hover: #222222;
+  --color-border-hover: #999999;
+  --color-focus-ring: rgba(0, 0, 0, 0.08);
+  --color-danger-bg-hover: #fef2f2;
+  --color-scrollbar-hover: #cccccc;
+
   /* --- Elevation --- */
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -187,6 +194,11 @@
   --color-block-coral: #4a2a18;
   --color-block-navy: #e8e6f5;
   --color-muted: #888888;
+  --color-primary-hover: #eeeeee;
+  --color-border-hover: #666666;
+  --color-focus-ring: rgba(255, 255, 255, 0.08);
+  --color-danger-bg-hover: #4a2020;
+  --color-scrollbar-hover: #555555;
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
   --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -203,5 +215,5 @@
   --ant-border-radius: var(--radius-pill);
   --ant-font-size: var(--font-size-body);
   --ant-line-height: var(--line-height-body);
-  --ant-font-family: var(--font-sans);
+  --ant-font-family: var(--font-body);
 }

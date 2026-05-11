@@ -2,30 +2,44 @@
    Self-hosted Fonts
    ============================================================ */
 
-/* ---- General Sans ---- */
+/* ---- Outfit (Display) ---- */
 @font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/GeneralSans-400.woff2') format('woff2');
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/GeneralSans-500.woff2') format('woff2');
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/GeneralSans-600.woff2') format('woff2');
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'Outfit';
+  src: url('/fonts/Outfit-latin.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
 
-/* ---- DM Sans ---- */
+/* ---- DM Sans (Body) ---- */
 @font-face {
   font-family: 'DM Sans';
   src: url('/fonts/DMSans-400.woff2') format('woff2');
@@ -52,22 +66,6 @@
 @font-face {
   font-family: 'JetBrains Mono';
   src: url('/fonts/JetBrainsMono-500.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* ---- Geist ---- */
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-400.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Geist';
-  src: url('/fonts/Geist-500.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;

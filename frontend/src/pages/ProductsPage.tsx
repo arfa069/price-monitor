@@ -399,7 +399,7 @@ export default function ProductsPage() {
       render: (value: string | null) =>
         value ? (
           <Tooltip title={value}>
-            <span style={{ color: '#dc2626' }}>{value}</span>
+            <span style={{ color: 'var(--color-error)' }}>{value}</span>
           </Tooltip>
         ) : (
           '-'
@@ -471,16 +471,16 @@ export default function ProductsPage() {
               <Space size={8}>
                 <Input
                   placeholder="搜索标题或 URL"
-                  prefix={<SearchOutlined style={{ fontSize: 13, color: '#999' }} />}
+                  prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
                   allowClear
-                  style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
+                  style={{ width: 200, fontFamily: 'var(--font-body)' }}
                   onChange={(e) => setKeyword(e.target.value)}
                   className="fg-input"
                 />
                 <Select
                   placeholder="平台"
                   allowClear
-                  style={{ width: 110, fontFamily: "'Inter', system-ui, sans-serif" }}
+                  style={{ width: 110, fontFamily: 'var(--font-body)' }}
                   options={[
                     { label: '淘宝', value: 'taobao' },
                     { label: '京东', value: 'jd' },
@@ -492,7 +492,7 @@ export default function ProductsPage() {
                 <Select
                   placeholder="状态"
                   allowClear
-                  style={{ width: 95, fontFamily: "'Inter', system-ui, sans-serif" }}
+                  style={{ width: 95, fontFamily: 'var(--font-body)' }}
                   options={[
                     { label: '启用', value: true },
                     { label: '停用', value: false },
@@ -543,7 +543,7 @@ export default function ProductsPage() {
           locale={{
             emptyText: (
               <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <p style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 16, fontWeight: 330, color: '#666', marginBottom: 16 }}>
+                <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 330, color: 'var(--color-muted)', marginBottom: 16 }}>
                   暂无商品，点击添加第一个
                 </p>
                 <Button
@@ -560,7 +560,7 @@ export default function ProductsPage() {
         />
 
         {selectedRowKeys.length > 0 && (
-          <div style={{ color: '#64748b', fontSize: 12 }}>
+          <div style={{ color: 'var(--color-muted)', fontSize: 12 }}>
             已选择 {selectedRowKeys.length} 项（仅当前页有效）
           </div>
         )}
@@ -573,11 +573,11 @@ export default function ProductsPage() {
         <div className="fg-card-header">
           <Space>
             <HistoryOutlined style={{ fontSize: 14 }} />
-            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
               最近爬取记录
             </span>
             {crawlLogItems.length > 0 && (
-              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: '#999', letterSpacing: '0.4px' }}>
+              <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--color-muted)', letterSpacing: '0.4px' }}>
                 ({crawlLogItems.length} 条)
               </span>
             )}
@@ -593,7 +593,7 @@ export default function ProductsPage() {
           </Button>
         </div>
         {logsLoading && crawlLogItems.length === 0 ? (
-          <div style={{ padding: 20, textAlign: 'center', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#666' }}>
+          <div style={{ padding: 20, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--color-muted)' }}>
             加载中…
           </div>
         ) : crawlLogItems.length > 0 ? (
@@ -606,7 +606,7 @@ export default function ProductsPage() {
             columns={crawlLogColumns}
           />
         ) : (
-          <div style={{ padding: 20, textAlign: 'center', fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, color: '#666' }}>
+          <div style={{ padding: 20, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--color-muted)' }}>
             暂无爬取记录
           </div>
         )}

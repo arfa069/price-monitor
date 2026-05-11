@@ -181,7 +181,7 @@ export default function BatchImportModal({
             rows={8}
             allowClear
           />
-          <div style={{ color: '#64748b', fontSize: 12, marginTop: 8 }}>
+          <div style={{ color: 'var(--color-muted)', fontSize: 12, marginTop: 8 }}>
             支持 `jd.com`、`taobao.com`、`tmall.com`、`amazon.`，每次最多 100 条
           </div>
         </div>

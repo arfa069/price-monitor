@@ -167,10 +167,10 @@ export default function LoginPage() {
               block
               style={{
                 borderRadius: 50,
-                background: '#f7f7f5',
-                borderColor: '#bfbfbf',
-                color: '#999',
-                fontFamily: "'Inter', system-ui, sans-serif",
+                background: 'var(--color-surface-soft)',
+                borderColor: 'var(--color-hairline)',
+                color: 'var(--color-muted)',
+                fontFamily: 'var(--font-body)',
               }}
             >
               微信登录（暂不可用）
@@ -196,13 +196,13 @@ export default function LoginPage() {
         .login-root {
           min-height: 100vh;
           display: flex;
-          background: #ffffff;
+          background: var(--color-canvas);
         }
 
         /* ---- Left Brand Panel ---- */
         .login-brand {
           flex: 1;
-          background: #ffffff;
+          background: var(--color-canvas);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -230,31 +230,31 @@ export default function LoginPage() {
         }
 
         .login-logo-name {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 18px;
           font-weight: 480;
-          color: #000000;
+          color: var(--color-ink);
           letter-spacing: -0.2px;
         }
 
         /* Hero */
         .login-headline {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-display);
           font-size: clamp(40px, 5vw, 64px);
           font-weight: 340;
           line-height: 1.05;
           letter-spacing: -1.72px;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 24px 0;
           animation: fadeUp 0.6s ease-out 0.2s both;
         }
 
         .login-subhead {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 18px;
           font-weight: 320;
           line-height: 1.6;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 40px 0;
           animation: fadeUp 0.6s ease-out 0.35s both;
         }
@@ -273,9 +273,9 @@ export default function LoginPage() {
           font-weight: 400;
           letter-spacing: 0.6px;
           text-transform: uppercase;
-          color: #000000;
-          background: #f7f7f5;
-          border: 1px solid #bfbfbf;
+          color: var(--color-ink);
+          background: var(--color-surface-soft);
+          border: 1px solid var(--color-hairline);
           border-radius: 50px;
           padding: 6px 14px;
         }
@@ -288,7 +288,7 @@ export default function LoginPage() {
           transform: translateY(-50%) rotate(3deg);
           width: 320px;
           height: 320px;
-          background: #dceeb1;
+          background: var(--color-block-lime);
           border-radius: 24px;
           z-index: 0;
         }
@@ -297,7 +297,7 @@ export default function LoginPage() {
         .login-form-panel {
           width: 480px;
           min-width: 380px;
-          background: #f7f7f5;
+          background: var(--color-surface-soft);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -309,10 +309,10 @@ export default function LoginPage() {
         .login-form-card {
           width: 100%;
           max-width: 360px;
-          background: #ffffff;
+          background: var(--color-canvas);
           border-radius: 24px;
           padding: 40px;
-          border: 1px solid #bfbfbf;
+          border: 1px solid var(--color-hairline);
           animation: fadeUp 0.6s ease-out 0.2s both;
         }
 
@@ -321,20 +321,20 @@ export default function LoginPage() {
         }
 
         .login-form-title {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-display);
           font-size: 26px;
           font-weight: 540;
           line-height: 1.35;
           letter-spacing: -0.26px;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 6px 0;
         }
 
         .login-form-subtitle {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 16px;
           font-weight: 330;
-          color: #666666;
+          color: var(--color-muted);
           margin: 0;
         }
 
@@ -348,10 +348,10 @@ export default function LoginPage() {
         }
 
         .login-form .ant-form-item-label > label {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 14px;
           font-weight: 330;
-          color: #000000;
+          color: var(--color-ink);
           line-height: 1.45;
           padding-bottom: 6px;
         }
@@ -359,50 +359,50 @@ export default function LoginPage() {
         .login-input .ant-input {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #bfbfbf !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
+          border: 1px solid var(--color-hairline) !important;
+          font-family: var(--font-body) !important;
           font-size: 16px !important;
           font-weight: 320 !important;
-          background: #ffffff !important;
+          background: var(--color-canvas) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
         .login-input .ant-input:hover {
-          border-color: #999 !important;
+          border-color: var(--color-border-hover) !important;
         }
 
         .login-input .ant-input:focus {
-          border-color: #000000 !important;
-          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
         }
 
         .login-input .ant-input-affix-wrapper {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #bfbfbf !important;
-          background: #ffffff !important;
+          border: 1px solid var(--color-hairline) !important;
+          background: var(--color-canvas) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
         .login-input .ant-input-affix-wrapper:hover {
-          border-color: #999 !important;
+          border-color: var(--color-border-hover) !important;
         }
 
         .login-input .ant-input-affix-wrapper:focus,
         .login-input .ant-input-affix-wrapper-focused {
-          border-color: #000000 !important;
-          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
         }
 
         .input-icon {
-          color: #999;
+          color: var(--color-muted);
           font-size: 14px;
           transition: color 0.2s ease;
         }
 
         .login-input .ant-input:focus ~ .ant-input-suffix .input-icon,
         .login-input:hover .input-icon {
-          color: #000000;
+          color: var(--color-ink);
         }
 
         /* Primary pill button */
@@ -410,20 +410,20 @@ export default function LoginPage() {
           height: auto !important;
           padding: 12px 24px !important;
           border-radius: 50px !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 16px !important;
           font-weight: 480 !important;
           letter-spacing: -0.1px !important;
-          background: #000000 !important;
+          background: var(--color-primary) !important;
           border: none !important;
-          color: #ffffff !important;
+          color: var(--color-on-primary) !important;
           width: 100%;
           transition: background 0.2s ease, transform 0.15s ease !important;
           margin-top: 4px;
         }
 
         .login-btn-primary:hover:not(:disabled) {
-          background: #222222 !important;
+          background: var(--color-primary-hover) !important;
           transform: translateY(-1px);
         }
 
@@ -440,29 +440,29 @@ export default function LoginPage() {
           text-align: center;
           margin-top: 24px;
           padding-top: 24px;
-          border-top: 1px solid #d9d9d9;
+          border-top: 1px solid var(--color-hairline-soft);
           animation: fadeUp 0.6s ease-out 0.5s both;
         }
 
         .login-footer-text {
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 14px !important;
           font-weight: 330 !important;
-          color: #666666 !important;
+          color: var(--color-muted) !important;
         }
 
         .login-footer-link {
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 14px !important;
           font-weight: 480 !important;
-          color: #000000 !important;
+          color: var(--color-ink) !important;
           transition: opacity 0.2s ease;
           padding: 4px 8px;
           border-radius: 50px;
         }
 
         .login-footer-link:hover {
-          background: #f7f7f5;
+          background: var(--color-surface-soft);
           opacity: 0.8;
         }
 
@@ -472,7 +472,7 @@ export default function LoginPage() {
           font-weight: 400 !important;
           letter-spacing: 0.6px !important;
           text-transform: uppercase !important;
-          color: #999 !important;
+          color: var(--color-muted) !important;
           animation: fadeUp 0.6s ease-out 0.6s both;
         }
 

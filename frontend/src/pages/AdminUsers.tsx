@@ -165,13 +165,13 @@ export default function AdminUsersPage() {
           aria-label="搜索用户名或邮箱"
           placeholder="搜索用户名或邮箱"
           onSearch={setSearch}
-          style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
+          style={{ width: 200, fontFamily: 'var(--font-body)' }}
           className="fg-input"
         />
         <Select
           placeholder="筛选角色"
           allowClear
-          style={{ width: 120, fontFamily: "'Inter', system-ui, sans-serif" }}
+          style={{ width: 120, fontFamily: 'var(--font-body)' }}
           onChange={setRoleFilter}
           className="fg-select"
         >

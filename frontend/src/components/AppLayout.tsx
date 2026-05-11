@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar, Space } from 'antd'
+import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -164,7 +164,7 @@ export default function AppLayout({
               color: 'var(--color-on-primary)',
               fontSize: 15,
               fontWeight: 700,
-              fontFamily: "var(--font-sans)",
+              fontFamily: "var(--font-body)",
               letterSpacing: '-0.5px',
             }}
           >
@@ -176,7 +176,7 @@ export default function AppLayout({
               fontSize: 18,
               fontWeight: 480,
               letterSpacing: '-0.2px',
-              fontFamily: "var(--font-sans)",
+              fontFamily: "var(--font-body)",
             }}
           >
             价格监控
@@ -201,7 +201,7 @@ export default function AppLayout({
               onClick={toggleTheme}
               style={{
                 color: 'var(--color-ink)',
-                fontFamily: "var(--font-sans)",
+                fontFamily: "var(--font-body)",
                 borderRadius: 50,
                 padding: '4px 10px',
                 height: 36,
@@ -223,7 +223,7 @@ export default function AppLayout({
                   gap: 6,
                   color: 'var(--color-ink)',
                   padding: '4px 8px',
-                  fontFamily: "var(--font-sans)",
+                  fontFamily: "var(--font-body)",
                   fontSize: 14,
                   fontWeight: 400,
                   borderRadius: 50,
@@ -250,7 +250,7 @@ export default function AppLayout({
               icon={<BarsOutlined style={{ fontSize: 14 }} />}
               style={{
                 color: 'var(--color-ink)',
-                fontFamily: "var(--font-sans)",
+                fontFamily: "var(--font-body)",
                 borderRadius: 50,
                 padding: '4px 10px',
                 height: 36,
@@ -343,7 +343,7 @@ export default function AppLayout({
                 fontWeight: 480,
                 fontSize: 15,
                 color: 'var(--color-ink)',
-                fontFamily: "var(--font-sans)",
+                fontFamily: "var(--font-body)",
               }}
             >
               价格监控

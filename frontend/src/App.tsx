@@ -25,22 +25,22 @@ function ErrorFallback() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      background: '#ffffff',
-      fontFamily: 'system-ui, sans-serif',
+      background: 'var(--color-canvas)',
+      fontFamily: 'var(--font-body)',
     }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: '#1f2937', marginBottom: 8 }}>
+      <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', marginBottom: 8 }}>
         页面加载失败
       </div>
-      <div style={{ fontSize: 14, color: '#64748b', marginBottom: 24 }}>
+      <div style={{ fontSize: 14, color: 'var(--color-muted)', marginBottom: 24 }}>
         请刷新页面或联系管理员
       </div>
       <button
         onClick={() => navigate('/login')}
         style={{
           padding: '8px 16px',
-          background: '#2563eb',
-          color: '#fff',
+          background: 'var(--color-primary)',
+          color: 'var(--color-on-primary)',
           border: 'none',
           borderRadius: 6,
           cursor: 'pointer',
@@ -179,8 +179,8 @@ function AppRoutes() {
             colorInfo: '#3b82f6',
             borderRadius: 50,
             fontSize: 14,
-            fontFamily: "'General Sans', 'DM Sans', 'SF Pro Display', system-ui, -apple-system, sans-serif",
-            fontFamilyCode: "'JetBrains Mono', 'Geist Mono', 'SF Mono', 'Menlo', monospace",
+            fontFamily: "'Outfit', 'DM Sans', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+            fontFamilyCode: "'JetBrains Mono', 'SF Mono', 'Menlo', monospace",
           },
           components: {
             Button: {

@@ -3,11 +3,12 @@
    ============================================================ */
 
 /* Load fonts first */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@320;330;340;450;480;540;700&family=JetBrains+Mono:wght@400&display=swap');
+@import './styles/fonts.css';
 
 /* Design tokens and component overrides */
 @import './styles/design-tokens.css';
 @import './styles/components.css';
+@import './styles/motion.css';
 
 /* ---- Base Reset ---- */
 * {

@@ -6,22 +6,20 @@ import {
   TeamOutlined,
   ShoppingCartOutlined,
   ScheduleOutlined,
-  ReloadOutlined,
   BarsOutlined,
   UserOutlined,
   LogoutOutlined,
   SettingOutlined,
 } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
+import { useThemeContext } from '@/components/ThemeProvider'
 
 const MOBILE_BREAKPOINT = 768
 
 export default function AppLayout({
   children,
-  onRefresh
 }: {
   children: React.ReactNode
-  onRefresh?: () => void
 }) {
   const appMessage = App.useApp().message
   const [collapsed, setCollapsed] = useState(false)
@@ -30,6 +28,7 @@ export default function AppLayout({
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
+  const { theme, toggleTheme } = useThemeContext()
 
   const handleLogout = () => {
     logout()
@@ -147,7 +146,7 @@ export default function AppLayout({
           padding: '0 24px',
           height: 56,
           background: '#ffffff',
-          borderBottom: '1px solid #bfbfbf',
+          borderBottom: '1px solid var(--color-hairline)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
       >
@@ -165,7 +164,7 @@ export default function AppLayout({
               color: '#fff',
               fontSize: 15,
               fontWeight: 700,
-              fontFamily: "'Inter', system-ui, sans-serif",
+              fontFamily: "var(--font-sans)",
               letterSpacing: '-0.5px',
             }}
           >
@@ -177,7 +176,7 @@ export default function AppLayout({
               fontSize: 18,
               fontWeight: 480,
               letterSpacing: '-0.2px',
-              fontFamily: "'Inter', system-ui, sans-serif",
+              fontFamily: "var(--font-sans)",
             }}
           >
             价格监控
@@ -197,6 +196,21 @@ export default function AppLayout({
         ) : (
           <>
 
+            <Button
+              type="text"
+              onClick={toggleTheme}
+              style={{
+                color: '#000000',
+                fontFamily: "var(--font-sans)",
+                borderRadius: 50,
+                padding: '4px 10px',
+                height: 36,
+                fontSize: 16,
+              }}
+              aria-label={theme === 'light' ? '切换到暗色模式' : '切换到亮色模式'}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </Button>
             <Dropdown
               menu={{ items: userMenuItems }}
               placement="bottomRight"
@@ -208,7 +222,7 @@ export default function AppLayout({
                   color: '#000000',
                   height: 'auto',
                   padding: '4px 8px',
-                  fontFamily: "'Inter', system-ui, sans-serif",
+                  fontFamily: "var(--font-sans)",
                   fontSize: 14,
                   fontWeight: 330,
                   borderRadius: 50,
@@ -223,7 +237,7 @@ export default function AppLayout({
                       backgroundColor: '#f7f7f5',
                       color: '#000000',
                       fontSize: 12,
-                      border: '1px solid #bfbfbf',
+                      border: '1px solid var(--color-hairline)',
                     }}
                   />
                   <span style={{ fontSize: 14, fontWeight: 330 }}>
@@ -237,7 +251,7 @@ export default function AppLayout({
               icon={<BarsOutlined style={{ fontSize: 14 }} />}
               style={{
                 color: '#000000',
-                fontFamily: "'Inter', system-ui, sans-serif",
+                fontFamily: "var(--font-sans)",
                 borderRadius: 50,
                 padding: '4px 10px',
                 height: 36,
@@ -264,7 +278,7 @@ export default function AppLayout({
             background: '#f7f7f5',
             overflow: 'auto',
             borderRadius: '0 24px 24px 0',
-            borderRight: '1px solid #bfbfbf',
+            borderRight: '1px solid var(--color-hairline)',
             marginTop: 8,
             marginBottom: 8,
           }}
@@ -303,7 +317,7 @@ export default function AppLayout({
           <div
             style={{
               padding: '16px',
-              borderBottom: '1px solid #bfbfbf',
+              borderBottom: '1px solid var(--color-hairline)',
               display: 'flex',
               alignItems: 'center',
               gap: 10,
@@ -330,7 +344,7 @@ export default function AppLayout({
                 fontWeight: 480,
                 fontSize: 15,
                 color: '#000000',
-                fontFamily: "'Inter', system-ui, sans-serif",
+                fontFamily: "var(--font-sans)",
               }}
             >
               价格监控
@@ -385,7 +399,7 @@ export default function AppLayout({
           fontFamily: "'JetBrains Mono', monospace",
           letterSpacing: '0.6px',
           textTransform: 'uppercase',
-          borderTop: '1px solid #bfbfbf',
+          borderTop: '1px solid var(--color-hairline)',
         }}
       >
         价格监控系统 © 2026

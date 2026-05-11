@@ -1,10 +1,10 @@
-import { useCallback, type ReactNode } from 'react'
+import { type ReactNode } from 'react'
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { App as AntdApp, ConfigProvider, Spin, theme } from 'antd'
-import { useQueryClient } from '@tanstack/react-query'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
+import { ThemeProvider, useThemeContext } from '@/components/ThemeProvider'
 import JobsPage from '@/pages/JobsPage'
 import ProductsPage from '@/pages/ProductsPage'
 import ScheduleConfigPage from '@/pages/ScheduleConfigPage'
@@ -158,46 +158,58 @@ function PublicRoute({ children }: { children: ReactNode }) {
 }
 
 function AppRoutes() {
-  const queryClient = useQueryClient()
-
-  const handleRefresh = useCallback(() => {
-    queryClient.invalidateQueries()
-  }, [queryClient])
+  const { theme: currentTheme } = useThemeContext()
 
   return (
     <>
       <ConfigProvider
         theme={{
-          algorithm: theme.defaultAlgorithm,
+          algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {
             colorPrimary: '#000000',
             colorBgLayout: '#ffffff',
             colorBgContainer: '#ffffff',
             colorText: '#000000',
             colorTextSecondary: '#666666',
-            colorBorder: '#bfbfbf',
+            colorBorder: '#e6e6e6',
             colorBorderSecondary: '#d9d9d9',
+            colorSuccess: '#1ea64a',
+            colorWarning: '#f5a623',
+            colorError: '#e5484d',
+            colorInfo: '#3b82f6',
             borderRadius: 50,
-            fontSize: 16,
-            fontFamily: "'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+            fontSize: 14,
+            fontFamily: "'General Sans', 'DM Sans', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+            fontFamilyCode: "'JetBrains Mono', 'Geist Mono', 'SF Mono', 'Menlo', monospace",
           },
           components: {
             Button: {
               borderRadius: 50,
               paddingInline: 20,
+              controlHeight: 40,
             },
             Input: {
               borderRadius: 8,
               paddingInline: 14,
+              controlHeight: 40,
             },
             Select: {
               borderRadius: 8,
+              controlHeight: 40,
             },
             Table: {
               borderRadius: 24,
+              headerBg: '#f7f7f5',
             },
             Card: {
               borderRadius: 24,
+            },
+            Tag: {
+              borderRadius: 50,
+            },
+            Menu: {
+              itemSelectedBg: '#000000',
+              itemSelectedColor: '#ffffff',
             },
           },
         }}
@@ -228,7 +240,7 @@ function AppRoutes() {
               path="/jobs"
               element={
                 <ProtectedRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <JobsPage />
                   </AppLayout>
                 </ProtectedRoute>
@@ -238,7 +250,7 @@ function AppRoutes() {
               path="/products"
               element={
                 <ProtectedRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <ProductsPage />
                   </AppLayout>
                 </ProtectedRoute>
@@ -248,7 +260,7 @@ function AppRoutes() {
               path="/schedule"
               element={
                 <ProtectedRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <ScheduleConfigPage />
                   </AppLayout>
                 </ProtectedRoute>
@@ -258,7 +270,7 @@ function AppRoutes() {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <ProfilePage />
                   </AppLayout>
                 </ProtectedRoute>
@@ -268,7 +280,7 @@ function AppRoutes() {
               path="/settings"
               element={
                 <ProtectedRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <SettingsPage />
                   </AppLayout>
                 </ProtectedRoute>
@@ -278,7 +290,7 @@ function AppRoutes() {
               path="/admin/users"
               element={
                 <AdminRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <AdminUsersPage />
                   </AppLayout>
                 </AdminRoute>
@@ -288,7 +300,7 @@ function AppRoutes() {
               path="/admin/audit-logs"
               element={
                 <AdminRoute>
-                  <AppLayout onRefresh={handleRefresh}>
+                  <AppLayout>
                     <AdminAuditLogsPage />
                   </AppLayout>
                 </AdminRoute>
@@ -309,9 +321,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </ErrorBoundary>
   )
 }

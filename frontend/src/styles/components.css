@@ -115,7 +115,7 @@
 .ant-input-affix-wrapper:focus,
 .ant-input-affix-wrapper-focused {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 .ant-input::placeholder {
@@ -145,7 +145,7 @@
 
 .ant-select-focused .ant-select-selector {
   border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ---- Tables ---- */
@@ -562,7 +562,7 @@
 }
 
 .page-title {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 26px;
   font-weight: 540;
   line-height: 1.35;
@@ -572,7 +572,7 @@
 }
 
 .page-subtitle {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: var(--font-sans);
   font-size: 16px;
   font-weight: 330;
   line-height: 1.5;
@@ -713,7 +713,7 @@
 
 .fg-input .ant-input:focus {
   border-color: #000 !important;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ---- Figma Select ---- */
@@ -735,7 +735,7 @@
 
 .fg-select .ant-select-focused .ant-select-selector {
   border-color: #000 !important;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08) !important;
 }
 
 /* ---- Responsive page header ---- */

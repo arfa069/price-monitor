@@ -11,10 +11,13 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.1",
+    "@fontsource/dm-sans": "^5.2.8",
+    "@fontsource/jetbrains-mono": "^5.2.8",
     "@tanstack/react-query": "^5.99.2",
     "antd": "^6.3.6",
     "axios": "^1.15.2",
     "cron-validator": "^1.4.0",
+    "geist": "^1.7.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",

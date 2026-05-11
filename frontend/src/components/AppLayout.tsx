@@ -132,7 +132,7 @@ export default function AppLayout({
   ]
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#ffffff' }}>
+    <Layout style={{ minHeight: '100vh', background: 'var(--color-canvas)' }}>
       {/* Top Nav — white, 56px, Figma style */}
       <Layout.Header
         style={{
@@ -145,7 +145,7 @@ export default function AppLayout({
           alignItems: 'center',
           padding: '0 24px',
           height: 56,
-          background: '#ffffff',
+          background: 'var(--color-canvas)',
           borderBottom: '1px solid var(--color-hairline)',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}
@@ -157,11 +157,11 @@ export default function AppLayout({
               width: 32,
               height: 32,
               borderRadius: 8,
-              background: '#000000',
+              background: 'var(--color-primary)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#fff',
+              color: 'var(--color-on-primary)',
               fontSize: 15,
               fontWeight: 700,
               fontFamily: "var(--font-sans)",
@@ -172,7 +172,7 @@ export default function AppLayout({
           </div>
           <div
             style={{
-              color: '#000000',
+              color: 'var(--color-ink)',
               fontSize: 18,
               fontWeight: 480,
               letterSpacing: '-0.2px',
@@ -189,7 +189,7 @@ export default function AppLayout({
           <Button
             type="text"
             icon={<BarsOutlined />}
-            style={{ color: '#000000', fontSize: 16 }}
+            style={{ color: 'var(--color-ink)', fontSize: 16 }}
             onClick={() => setDrawerOpen(true)}
             aria-label="打开菜单"
           />
@@ -200,7 +200,7 @@ export default function AppLayout({
               type="text"
               onClick={toggleTheme}
               style={{
-                color: '#000000',
+                color: 'var(--color-ink)',
                 fontFamily: "var(--font-sans)",
                 borderRadius: 50,
                 padding: '4px 10px',
@@ -216,41 +216,40 @@ export default function AppLayout({
               placement="bottomRight"
               trigger={['click']}
             >
-              <Button
-                type="text"
+              <div
                 style={{
-                  color: '#000000',
-                  height: 'auto',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  color: 'var(--color-ink)',
                   padding: '4px 8px',
                   fontFamily: "var(--font-sans)",
                   fontSize: 14,
-                  fontWeight: 330,
+                  fontWeight: 400,
                   borderRadius: 50,
+                  cursor: 'pointer',
+                  userSelect: 'none',
                 }}
                 aria-label="用户菜单"
               >
-                <Space size={6}>
-                  <Avatar
-                    size={28}
-                    icon={<UserOutlined />}
-                    style={{
-                      backgroundColor: '#f7f7f5',
-                      color: '#000000',
-                      fontSize: 12,
-                      border: '1px solid var(--color-hairline)',
-                    }}
-                  />
-                  <span style={{ fontSize: 14, fontWeight: 330 }}>
-                    {user?.username || '用户'}
-                  </span>
-                </Space>
-              </Button>
+                <Avatar
+                  size={28}
+                  icon={<UserOutlined />}
+                  style={{
+                    backgroundColor: 'var(--color-surface-soft)',
+                    color: 'var(--color-ink)',
+                    fontSize: 12,
+                    border: '1px solid var(--color-hairline)',
+                  }}
+                />
+                <span>{user?.username || '用户'}</span>
+              </div>
             </Dropdown>
             <Button
               type="text"
               icon={<BarsOutlined style={{ fontSize: 14 }} />}
               style={{
-                color: '#000000',
+                color: 'var(--color-ink)',
                 fontFamily: "var(--font-sans)",
                 borderRadius: 50,
                 padding: '4px 10px',
@@ -275,7 +274,7 @@ export default function AppLayout({
             left: 0,
             bottom: 48,
             zIndex: 100,
-            background: '#f7f7f5',
+            background: 'var(--color-surface-soft)',
             overflow: 'auto',
             borderRadius: '0 24px 24px 0',
             borderRight: '1px solid var(--color-hairline)',
@@ -309,7 +308,7 @@ export default function AppLayout({
           open={drawerOpen}
           width={220}
           styles={{
-            body: { padding: 0, background: '#f7f7f5' },
+            body: { padding: 0, background: 'var(--color-surface-soft)' },
             header: { display: 'none' },
           }}
         >
@@ -328,11 +327,11 @@ export default function AppLayout({
                 width: 28,
                 height: 28,
                 borderRadius: 6,
-                background: '#000000',
+                background: 'var(--color-primary)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#fff',
+                color: 'var(--color-on-primary)',
                 fontSize: 13,
                 fontWeight: 700,
               }}
@@ -343,7 +342,7 @@ export default function AppLayout({
               style={{
                 fontWeight: 480,
                 fontSize: 15,
-                color: '#000000',
+                color: 'var(--color-ink)',
                 fontFamily: "var(--font-sans)",
               }}
             >
@@ -374,7 +373,7 @@ export default function AppLayout({
           marginBottom: 48,
           marginLeft: isMobile ? 0 : siderWidth,
           padding: '24px',
-          background: '#ffffff',
+          background: 'var(--color-canvas)',
           minHeight: 'calc(100vh - 104px)',
           overflow: 'auto',
         }}
@@ -393,8 +392,8 @@ export default function AppLayout({
           textAlign: 'center',
           padding: '12px 24px',
           height: 48,
-          background: '#ffffff',
-          color: '#000000',
+          background: 'var(--color-canvas)',
+          color: 'var(--color-ink)',
           fontSize: 12,
           fontFamily: "'JetBrains Mono', monospace",
           letterSpacing: '0.6px',

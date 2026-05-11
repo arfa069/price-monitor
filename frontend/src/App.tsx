@@ -166,13 +166,13 @@ function AppRoutes() {
         theme={{
           algorithm: currentTheme === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
           token: {
-            colorPrimary: '#000000',
-            colorBgLayout: '#ffffff',
-            colorBgContainer: '#ffffff',
-            colorText: '#000000',
-            colorTextSecondary: '#666666',
-            colorBorder: '#e6e6e6',
-            colorBorderSecondary: '#d9d9d9',
+            colorPrimary: currentTheme === 'dark' ? '#ffffff' : '#000000',
+            colorBgLayout: currentTheme === 'dark' ? '#0a0a0a' : '#ffffff',
+            colorBgContainer: currentTheme === 'dark' ? '#141414' : '#ffffff',
+            colorText: currentTheme === 'dark' ? '#ffffff' : '#000000',
+            colorTextSecondary: currentTheme === 'dark' ? '#888888' : '#666666',
+            colorBorder: currentTheme === 'dark' ? '#2a2a2a' : '#bfbfbf',
+            colorBorderSecondary: currentTheme === 'dark' ? '#333333' : '#d9d9d9',
             colorSuccess: '#1ea64a',
             colorWarning: '#f5a623',
             colorError: '#e5484d',
@@ -199,7 +199,7 @@ function AppRoutes() {
             },
             Table: {
               borderRadius: 24,
-              headerBg: '#f7f7f5',
+              headerBg: currentTheme === 'dark' ? '#141414' : '#f7f7f5',
             },
             Card: {
               borderRadius: 24,
@@ -208,8 +208,8 @@ function AppRoutes() {
               borderRadius: 50,
             },
             Menu: {
-              itemSelectedBg: '#000000',
-              itemSelectedColor: '#ffffff',
+              itemSelectedBg: currentTheme === 'dark' ? '#ffffff' : '#000000',
+              itemSelectedColor: currentTheme === 'dark' ? '#000000' : '#ffffff',
             },
           },
         }}

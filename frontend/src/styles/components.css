@@ -17,8 +17,6 @@
   font-weight: var(--font-weight-button) !important;
   letter-spacing: var(--letter-spacing-button) !important;
   line-height: var(--line-height-button) !important;
-  height: auto !important;
-  padding: 10px 20px !important;
   transition: all 0.2s ease !important;
 }
 
@@ -587,7 +585,7 @@
   height: auto !important;
   padding: 10px 20px !important;
   border-radius: 50px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 16px !important;
   font-weight: 480 !important;
   letter-spacing: -0.1px !important;
@@ -632,7 +630,7 @@
   height: auto !important;
   padding: 10px 20px !important;
   border-radius: 50px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 480 !important;
   background: #000 !important;
@@ -652,7 +650,7 @@
   height: auto !important;
   padding: 8px 16px !important;
   border-radius: 50px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 330 !important;
   background: #f7f7f5 !important;
@@ -673,7 +671,7 @@
   height: auto !important;
   padding: 8px 16px !important;
   border-radius: 50px !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   font-weight: 330 !important;
   background: transparent !important;
@@ -699,7 +697,7 @@
 .fg-input .ant-input {
   border-radius: 50px !important;
   border: 1px solid var(--color-hairline) !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   padding: 7px 14px !important;
   height: auto !important;
@@ -720,7 +718,7 @@
 .fg-select .ant-select-selector {
   border-radius: 50px !important;
   border: 1px solid var(--color-hairline) !important;
-  font-family: 'Inter', system-ui, sans-serif !important;
+  font-family: var(--font-sans) !important;
   font-size: 14px !important;
   padding: 4px 12px !important;
   height: auto !important;
@@ -771,14 +769,4 @@
   outline-offset: 2px !important;
 }
 
-/* ---- Respect reduced motion ---- */
-@media (prefers-reduced-motion: reduce) {
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
+/* Note: prefers-reduced-motion handled in motion.css */

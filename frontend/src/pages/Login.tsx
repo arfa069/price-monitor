@@ -218,7 +218,7 @@ export default function LoginPage() {
         }
 
         .login-logo-mark {
-          animation: scaleIn 0.5s ease-out 0.1s both;
+          animation: fadeInUp 150ms ease-out 50ms both;
         }
 
         .login-logo-name {
@@ -238,7 +238,7 @@ export default function LoginPage() {
           letter-spacing: -1.72px;
           color: var(--color-ink);
           margin: 0 0 24px 0;
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-subhead {
@@ -248,7 +248,7 @@ export default function LoginPage() {
           line-height: 1.6;
           color: var(--color-ink);
           margin: 0 0 40px 0;
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
         /* Decorative color block — lime accent strip (DESIGN.md: Login Mockup) */
@@ -284,7 +284,7 @@ export default function LoginPage() {
           border-radius: 24px;
           padding: 40px;
           box-shadow: var(--shadow-card);
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-form-header {
@@ -310,7 +310,7 @@ export default function LoginPage() {
         }
 
         .login-form {
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
         /* Form items */
@@ -436,7 +436,7 @@ export default function LoginPage() {
           margin-top: 24px;
           padding-top: 24px;
           border-top: 1px solid var(--color-hairline-soft);
-          animation: fadeUp 0.6s ease-out 0.5s both;
+          animation: fadeInUp 150ms ease-out 200ms both;
         }
 
         .login-footer-text {
@@ -468,20 +468,10 @@ export default function LoginPage() {
           letter-spacing: 0.6px !important;
           text-transform: uppercase !important;
           color: var(--color-muted) !important;
-          animation: fadeUp 0.6s ease-out 0.6s both;
+          animation: fadeInUp 150ms ease-out 250ms both;
         }
 
         /* Animations */
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.85); }
-          to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
           .login-root {

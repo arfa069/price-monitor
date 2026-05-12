@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Form, Input, Button, App, Typography } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -84,13 +83,6 @@ export default function LoginPage() {
               降价自动推送，不错过任何优惠
             </p>
           </div>
-
-          {/* Feature pills */}
-          <div className="login-features">
-            <span className="feature-chip">实时监控</span>
-            <span className="feature-chip">降价提醒</span>
-            <span className="feature-chip">多平台支持</span>
-          </div>
         </div>
 
         {/* Decorative color block */}
@@ -116,14 +108,14 @@ export default function LoginPage() {
           >
             <Form.Item
               name="username"
+              label="邮箱"
               rules={[
                 { required: true, message: '请输入用户名或邮箱' },
                 { min: 2, message: '用户名至少2个字符' },
               ]}
             >
               <Input
-                prefix={<UserOutlined className="input-icon" />}
-                placeholder="用户名或邮箱"
+                placeholder="user@example.com"
                 size="large"
                 autoComplete="username"
                 className="login-input"
@@ -132,14 +124,14 @@ export default function LoginPage() {
 
             <Form.Item
               name="password"
+              label="密码"
               rules={[
                 { required: true, message: '请输入密码' },
                 { min: 6, message: '密码至少6个字符' },
               ]}
             >
               <Input.Password
-                prefix={<LockOutlined className="input-icon" />}
-                placeholder="密码"
+                placeholder="••••••••"
                 size="large"
                 autoComplete="current-password"
                 className="login-input"
@@ -259,37 +251,16 @@ export default function LoginPage() {
           animation: fadeUp 0.6s ease-out 0.35s both;
         }
 
-        /* Feature chips */
-        .login-features {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          animation: fadeUp 0.6s ease-out 0.5s both;
-        }
-
-        .feature-chip {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          font-weight: 400;
-          letter-spacing: 0.6px;
-          text-transform: uppercase;
-          color: var(--color-ink);
-          background: var(--color-surface-soft);
-          border: 1px solid var(--color-hairline);
-          border-radius: 50px;
-          padding: 6px 14px;
-        }
-
-        /* Decorative color block — lime sticky note style */
+        /* Decorative color block — lime accent strip (DESIGN.md: Login Mockup) */
         .login-brand-decoration {
           position: absolute;
-          right: -60px;
+          right: -20px;
           top: 50%;
-          transform: translateY(-50%) rotate(3deg);
-          width: 320px;
-          height: 320px;
+          transform: translateY(-50%);
+          width: 80px;
+          height: 200px;
           background: var(--color-block-lime);
-          border-radius: 24px;
+          border-radius: var(--radius-lg);
           z-index: 0;
         }
 
@@ -309,10 +280,10 @@ export default function LoginPage() {
         .login-form-card {
           width: 100%;
           max-width: 360px;
-          background: var(--color-canvas);
+          background: var(--color-surface-raised);
           border-radius: 24px;
           padding: 40px;
-          border: 1px solid var(--color-hairline);
+          box-shadow: var(--shadow-card);
           animation: fadeUp 0.6s ease-out 0.2s both;
         }
 
@@ -349,10 +320,12 @@ export default function LoginPage() {
 
         .login-form .ant-form-item-label > label {
           font-family: var(--font-body);
-          font-size: 14px;
-          font-weight: 330;
-          color: var(--color-ink);
-          line-height: 1.45;
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--color-muted);
+          letter-spacing: 0.3px;
+          line-height: 1.4;
+          height: auto;
           padding-bottom: 6px;
         }
 
@@ -363,7 +336,7 @@ export default function LoginPage() {
           font-family: var(--font-body) !important;
           font-size: 16px !important;
           font-weight: 320 !important;
-          background: var(--color-canvas) !important;
+          background: var(--color-surface-soft) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
@@ -380,7 +353,7 @@ export default function LoginPage() {
           padding: 11px 14px !important;
           border-radius: 8px !important;
           border: 1px solid var(--color-hairline) !important;
-          background: var(--color-canvas) !important;
+          background: var(--color-surface-soft) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
@@ -392,6 +365,28 @@ export default function LoginPage() {
         .login-input .ant-input-affix-wrapper-focused {
           border-color: var(--color-primary) !important;
           box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
+        }
+
+        /* Inner input inside affix-wrapper (e.g. Input.Password) — keep transparent so only wrapper shows the frame */
+        .login-input.ant-input-affix-wrapper .ant-input,
+        .login-input .ant-input-affix-wrapper .ant-input {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          font-size: 16px !important;
+          font-weight: 320 !important;
+        }
+
+        /* Override browser autofill (Chrome/Edge/Safari) blue/yellow tint */
+        .login-input input:-webkit-autofill,
+        .login-input input:-webkit-autofill:hover,
+        .login-input input:-webkit-autofill:focus,
+        .login-input input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px var(--color-surface-soft) inset !important;
+          -webkit-text-fill-color: var(--color-ink) !important;
+          caret-color: var(--color-ink) !important;
+          transition: background-color 5000s ease-in-out 0s !important;
         }
 
         .input-icon {

@@ -244,7 +244,7 @@ export default function RegisterPage() {
         }
 
         .login-logo-mark {
-          animation: scaleIn 0.5s ease-out 0.1s both;
+          animation: fadeInUp 150ms ease-out 50ms both;
         }
 
         .login-logo-name {
@@ -263,7 +263,7 @@ export default function RegisterPage() {
           letter-spacing: -1.72px;
           color: var(--color-ink);
           margin: 0 0 24px 0;
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-subhead {
@@ -273,14 +273,14 @@ export default function RegisterPage() {
           line-height: 1.6;
           color: var(--color-ink);
           margin: 0 0 40px 0;
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
         .login-features {
           display: flex;
           flex-wrap: wrap;
           gap: 8px;
-          animation: fadeUp 0.6s ease-out 0.5s both;
+          animation: fadeInUp 150ms ease-out 200ms both;
         }
 
         .feature-chip {
@@ -327,7 +327,7 @@ export default function RegisterPage() {
           border-radius: 24px;
           padding: 40px;
           border: 1px solid var(--color-hairline);
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-form-header {
@@ -353,7 +353,7 @@ export default function RegisterPage() {
         }
 
         .login-form {
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
         .login-form .ant-form-item {
@@ -452,7 +452,7 @@ export default function RegisterPage() {
           margin-top: 24px;
           padding-top: 24px;
           border-top: 1px solid var(--color-hairline-soft);
-          animation: fadeUp 0.6s ease-out 0.5s both;
+          animation: fadeInUp 150ms ease-out 200ms both;
         }
 
         .login-footer-text {
@@ -484,17 +484,7 @@ export default function RegisterPage() {
           letter-spacing: 0.6px !important;
           text-transform: uppercase !important;
           color: var(--color-muted) !important;
-          animation: fadeUp 0.6s ease-out 0.6s both;
-        }
-
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.85); }
-          to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
+          animation: fadeInUp 150ms ease-out 250ms both;
         }
 
         @media (max-width: 768px) {

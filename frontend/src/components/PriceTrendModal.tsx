@@ -175,26 +175,26 @@ function PriceTrendContent({
         }}
       >
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#64748b' }}>最低价</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#22c55e' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>最低价</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-success)' }}>
             ¥{stats?.minPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#64748b' }}>最高价</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#ef4444' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>最高价</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-error)' }}>
             ¥{stats?.maxPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#64748b' }}>当前价</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#2563eb' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>当前价</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-info)' }}>
             ¥{stats?.currentPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: '#64748b' }}>降价次数</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: '#f97316' }}>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>降价次数</div>
+          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-warning)' }}>
             {stats?.dropCount}
           </div>
         </Card>

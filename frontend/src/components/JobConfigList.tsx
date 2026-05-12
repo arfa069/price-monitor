@@ -72,7 +72,11 @@ export default function JobConfigList({
         <Typography.Title level={5} style={{ margin: 0 }}>
           职位搜索配置
         </Typography.Title>
-        <Button type="primary" icon={<PlusOutlined />} onClick={() => setCreateOpen(true)}>
+        <Button
+          icon={<PlusOutlined />}
+          onClick={() => setCreateOpen(true)}
+          className="fg-btn-secondary"
+        >
           新增配置
         </Button>
       </Space>

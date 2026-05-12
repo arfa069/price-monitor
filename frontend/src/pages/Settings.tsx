@@ -40,7 +40,7 @@ export default function SettingsPage() {
       <div style={{ maxWidth: 560, marginTop: 24 }}>
         <div className="fg-card">
           <div className="fg-card-header">
-            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
               个人设置
             </span>
           </div>
@@ -57,11 +57,11 @@ export default function SettingsPage() {
               <Form.Item
                 name="feishu_webhook_url"
                 label="飞书 Webhook URL"
-                style={{ fontFamily: "'Inter', system-ui, sans-serif" }}
+                style={{ fontFamily: 'var(--font-body)' }}
               >
                 <Input
                   placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"
-                  style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
+                  style={{ fontFamily: 'var(--font-body)', fontSize: 14 }}
                 />
               </Form.Item>
               <Form.Item
@@ -72,7 +72,7 @@ export default function SettingsPage() {
                 <InputNumber
                   min={1}
                   max={3650}
-                  style={{ width: 200, fontFamily: "'Inter', system-ui, sans-serif" }}
+                  style={{ width: 200, fontFamily: 'var(--font-body)' }}
                 />
               </Form.Item>
               <Form.Item style={{ marginBottom: 0 }}>

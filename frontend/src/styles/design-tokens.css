@@ -1,6 +1,6 @@
 /* ============================================================
    Figma Design System — CSS Design Tokens
-   Source: C:\Users\arfac\Downloads\DESIGN.md (Figma Marketing Style)
+   Source: DESIGN.md (Brutally Minimal + Playful Accents)
    ============================================================ */
 
 /* ---- Figma Design Tokens ---- */
@@ -18,6 +18,7 @@
   --color-hairline: #bfbfbf;
   --color-hairline-soft: #d9d9d9;
   --color-surface-soft: #f7f7f5;
+  --color-surface-raised: #ffffff;
   --color-block-lime: #dceeb1;
   --color-block-lilac: #c5b0f4;
   --color-block-cream: #f4ecd6;
@@ -26,14 +27,21 @@
   --color-block-coral: #f3c9b6;
   --color-block-navy: #1f1d3d;
   --color-accent-magenta: #ff3d8b;
-  --color-success: #1ea64a;
   --color-overlay-scrim: rgba(0, 0, 0, 0.6);
 
+  /* --- Colors: Semantic --- */
+  --color-muted: #666666;
+  --color-success: #1ea64a;
+  --color-warning: #f5a623;
+  --color-error: #e5484d;
+  --color-info: #3b82f6;
+
   /* --- Typography --- */
-  --font-sans: 'Inter', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  --font-display: 'Outfit', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', 'SF Pro Text', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
 
-  --font-size-display-xl: clamp(28px, 4vw, 48px);
+  --font-size-display-xl: clamp(32px, 5vw, 48px);
   --font-size-display-lg: clamp(22px, 3vw, 36px);
   --font-size-headline: 20px;
   --font-size-subhead: 20px;
@@ -45,18 +53,22 @@
   --font-size-button: 14px;
   --font-size-eyebrow: 12px;
   --font-size-caption: 11px;
+  --font-size-lead: 16px;
+  --font-size-micro: 11px;
 
-  --font-weight-display: 340;
-  --font-weight-headline: 540;
-  --font-weight-subhead: 340;
+  --font-weight-display: 600;
+  --font-weight-headline: 600;
+  --font-weight-subhead: 600;
   --font-weight-card-title: 700;
-  --font-weight-body-lg: 330;
-  --font-weight-body: 320;
-  --font-weight-body-sm: 330;
-  --font-weight-link: 480;
-  --font-weight-button: 480;
+  --font-weight-body-lg: 400;
+  --font-weight-body: 400;
+  --font-weight-body-sm: 400;
+  --font-weight-link: 400;
+  --font-weight-button: 500;
   --font-weight-eyebrow: 400;
-  --font-weight-caption: 400;
+  --font-weight-caption: 500;
+  --font-weight-lead: 400;
+  --font-weight-micro: 500;
 
   --line-height-display-xl: 1.0;
   --line-height-display-lg: 1.1;
@@ -70,6 +82,8 @@
   --line-height-button: 1.40;
   --line-height-eyebrow: 1.30;
   --line-height-caption: 1.00;
+  --line-height-lead: 1.40;
+  --line-height-micro: 1.30;
 
   --letter-spacing-display-xl: -1.72px;
   --letter-spacing-display-lg: -0.96px;
@@ -82,6 +96,8 @@
   --letter-spacing-button: -0.10px;
   --letter-spacing-eyebrow: 0.54px;
   --letter-spacing-caption: 0.60px;
+  --letter-spacing-lead: -0.14px;
+  --letter-spacing-micro: 0.02em;
 
   /* --- Spacing --- */
   --spacing-hair: 1px;
@@ -103,6 +119,13 @@
   --radius-pill: 50px;
   --radius-full: 9999px;
 
+  /* --- Interaction --- */
+  --color-primary-hover: #222222;
+  --color-border-hover: #999999;
+  --color-focus-ring: rgba(0, 0, 0, 0.08);
+  --color-danger-bg-hover: #fef2f2;
+  --color-scrollbar-hover: #cccccc;
+
   /* --- Elevation --- */
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.06);
   --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.2);
@@ -118,17 +141,81 @@
   --z-toast: 600;
 }
 
-/* ---- Ant Design v6 Token Overrides ---- */
-/* These map Figma tokens to Ant Design's token system */
+/* ---- Density Mode ---- */
+:root {
+  /* Default: Comfortable */
+  --density-padding-xs: 8px;
+  --density-padding-sm: 12px;
+  --density-padding-md: 16px;
+  --density-padding-lg: 24px;
+  --density-table-row-padding: 12px 16px;
+  --density-card-padding: 24px;
+  --density-form-gap: 16px;
+  --density-section-gap: 24px;
+}
+
+[data-density="compact"] {
+  --density-padding-xs: 4px;
+  --density-padding-sm: 8px;
+  --density-padding-md: 12px;
+  --density-padding-lg: 16px;
+  --density-table-row-padding: 8px 12px;
+  --density-card-padding: 16px;
+  --density-form-gap: 12px;
+  --density-section-gap: 16px;
+}
+
+[data-density="spacious"] {
+  --density-padding-xs: 12px;
+  --density-padding-sm: 16px;
+  --density-padding-md: 24px;
+  --density-padding-lg: 32px;
+  --density-table-row-padding: 16px 24px;
+  --density-card-padding: 32px;
+  --density-form-gap: 24px;
+  --density-section-gap: 32px;
+}
+
+/* ---- Dark Mode ---- */
+[data-theme="dark"] {
+  --color-primary: #ffffff;
+  --color-on-primary: #000000;
+  --color-ink: #ffffff;
+  --color-canvas: #0a0a0a;
+  --color-inverse-canvas: #ffffff;
+  --color-inverse-ink: #000000;
+  --color-hairline: #2a2a2a;
+  --color-hairline-soft: #333333;
+  --color-surface-soft: #141414;
+  --color-surface-raised: #1a1a1a;
+  --color-block-lime: #3a4a1a;
+  --color-block-lilac: #3d305a;
+  --color-block-cream: #4a4020;
+  --color-block-mint: #1a3a1a;
+  --color-block-pink: #4a2020;
+  --color-block-coral: #4a2a18;
+  --color-block-navy: #e8e6f5;
+  --color-muted: #888888;
+  --color-primary-hover: #eeeeee;
+  --color-border-hover: #666666;
+  --color-focus-ring: rgba(255, 255, 255, 0.08);
+  --color-danger-bg-hover: #4a2020;
+  --color-scrollbar-hover: #555555;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.6);
+  --shadow-nav: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* ---- Ant Design v5 Token Overrides ---- */
 :root {
   --ant-color-primary: var(--color-primary);
   --ant-color-bg-layout: var(--color-canvas);
   --ant-color-bg-container: var(--color-canvas);
   --ant-color-text: var(--color-ink);
-  --ant-color-text-secondary: #666666;
+  --ant-color-text-secondary: var(--color-muted);
   --ant-color-border: var(--color-hairline);
   --ant-border-radius: var(--radius-pill);
-  --ant-font-size: var(--font-size-body-sm);
-  --ant-line-height: var(--line-height-body-sm);
-  --ant-font-family: var(--font-sans);
+  --ant-font-size: var(--font-size-body);
+  --ant-line-height: var(--line-height-body);
+  --ant-font-family: var(--font-body);
 }

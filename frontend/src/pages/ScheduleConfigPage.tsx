@@ -254,10 +254,10 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
           />
           <Button
-            type="primary"
             onClick={() => void handleSavePlatformCron(record.platform)}
             loading={platformSaving[record.platform]}
             disabled={isReadOnly}
+            className="fg-btn-secondary"
           >
             保存
           </Button>
@@ -313,10 +313,10 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
           />
           <Button
-            type="primary"
             onClick={() => void handleSaveConfigCron(record.id)}
             loading={savingCron[record.id]}
             disabled={isReadOnly}
+            className="fg-btn-secondary"
           >
             保存
           </Button>
@@ -338,8 +338,8 @@ export default function ScheduleConfigPage() {
 
   return (
     <div>
-      {/* Page header — lime color block */}
-      <div className="page-header bg-lilac">
+      {/* Page header — mint color block (DESIGN.md: Mint — 配置) */}
+      <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">自动化</p>
@@ -376,21 +376,20 @@ export default function ScheduleConfigPage() {
       {/* Cron config card */}
       <div className="fg-card" style={{ marginTop: 24 }}>
         <div className="fg-card-header">
-          <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
             Cron 定时配置
           </span>
         </div>
         <div style={{ padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
-            <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: 0 }}>
+            <h4 style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 480, color: 'var(--color-ink)', margin: 0 }}>
               商品抓取定时配置
             </h4>
             {!isReadOnly && (
               <Button
-                type="primary"
                 size="small"
                 onClick={() => setAddModalOpen(true)}
-                className="fg-btn-primary fg-btn-sm"
+                className="fg-btn-secondary fg-btn-sm"
               >
                 新增商品定时器
               </Button>
@@ -409,7 +408,7 @@ export default function ScheduleConfigPage() {
 
           <Divider style={{ margin: '16px 0' }} />
 
-          <h4 style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 480, color: '#000', margin: '0 0 12px' }}>
+          <h4 style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 480, color: 'var(--color-ink)', margin: '0 0 12px' }}>
             职位抓取定时配置
           </h4>
           <Table
@@ -428,13 +427,13 @@ export default function ScheduleConfigPage() {
       {/* Data & notification card */}
       <div className="fg-card" style={{ marginTop: 16 }}>
         <div className="fg-card-header">
-          <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 15, fontWeight: 480, color: '#000' }}>
+          <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
             数据保留与通知配置
           </span>
         </div>
         <div style={{ padding: '20px 24px' }}>
           <div style={{ marginBottom: 20 }}>
-            <div style={{ marginBottom: 6, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+            <div style={{ marginBottom: 6, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
               飞书 Webhook URL
             </div>
             <Space>
@@ -442,14 +441,13 @@ export default function ScheduleConfigPage() {
                 value={feishuWebhookUrl}
                 onChange={(e) => setFeishuWebhookUrl(e.target.value)}
                 placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
-                style={{ width: 420, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14 }}
+                style={{ width: 420, fontFamily: 'var(--font-body)', fontSize: 14 }}
               />
               <Button
-                type="primary"
                 onClick={() => void handleSaveWebhook()}
                 loading={updateMutation.isPending}
                 disabled={isReadOnly}
-                className="fg-btn-primary"
+                className="fg-btn-secondary"
               >
                 保存
               </Button>
@@ -457,7 +455,7 @@ export default function ScheduleConfigPage() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <span style={{ fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666', whiteSpace: 'nowrap' }}>
+            <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
               数据保留天数
             </span>
             <Space>
@@ -466,16 +464,15 @@ export default function ScheduleConfigPage() {
                 max={3650}
                 value={retentionDays}
                 onChange={(v) => setRetentionDays(v ?? 365)}
-                style={{ width: 160, fontFamily: "'Inter', system-ui, sans-serif" }}
+                style={{ width: 160, fontFamily: 'var(--font-body)' }}
                 disabled={isReadOnly}
               />
               <Button
-                type="primary"
                 icon={<SaveOutlined style={{ fontSize: 13 }} />}
                 onClick={() => void handleSaveRetention()}
                 loading={updateMutation.isPending}
                 disabled={isReadOnly}
-                className="fg-btn-primary"
+                className="fg-btn-secondary"
               >
                 保存
               </Button>
@@ -498,14 +495,14 @@ export default function ScheduleConfigPage() {
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
           <div>
-            <div style={{ marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+            <div style={{ marginBottom: 4, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
               平台
             </div>
             <Select
               value={addPlatform}
               onChange={setAddPlatform}
               placeholder="选择平台"
-              style={{ width: '100%', fontFamily: "'Inter', system-ui, sans-serif" }}
+              style={{ width: '100%', fontFamily: 'var(--font-body)' }}
               options={[
                 { value: 'taobao', label: '淘宝' },
                 { value: 'jd', label: '京东' },
@@ -514,7 +511,7 @@ export default function ScheduleConfigPage() {
             />
           </div>
           <div>
-            <div style={{ marginBottom: 4, fontFamily: "'Inter', system-ui, sans-serif", fontSize: 14, fontWeight: 330, color: '#666' }}>
+            <div style={{ marginBottom: 4, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
               Cron 表达式
             </div>
             <Input

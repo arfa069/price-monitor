@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Form, Input, Button, App, Typography } from 'antd'
-import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { authApi } from '@/api/auth'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -84,13 +83,6 @@ export default function LoginPage() {
               降价自动推送，不错过任何优惠
             </p>
           </div>
-
-          {/* Feature pills */}
-          <div className="login-features">
-            <span className="feature-chip">实时监控</span>
-            <span className="feature-chip">降价提醒</span>
-            <span className="feature-chip">多平台支持</span>
-          </div>
         </div>
 
         {/* Decorative color block */}
@@ -116,14 +108,14 @@ export default function LoginPage() {
           >
             <Form.Item
               name="username"
+              label="邮箱"
               rules={[
                 { required: true, message: '请输入用户名或邮箱' },
                 { min: 2, message: '用户名至少2个字符' },
               ]}
             >
               <Input
-                prefix={<UserOutlined className="input-icon" />}
-                placeholder="用户名或邮箱"
+                placeholder="user@example.com"
                 size="large"
                 autoComplete="username"
                 className="login-input"
@@ -132,14 +124,14 @@ export default function LoginPage() {
 
             <Form.Item
               name="password"
+              label="密码"
               rules={[
                 { required: true, message: '请输入密码' },
                 { min: 6, message: '密码至少6个字符' },
               ]}
             >
               <Input.Password
-                prefix={<LockOutlined className="input-icon" />}
-                placeholder="密码"
+                placeholder="••••••••"
                 size="large"
                 autoComplete="current-password"
                 className="login-input"
@@ -167,10 +159,10 @@ export default function LoginPage() {
               block
               style={{
                 borderRadius: 50,
-                background: '#f7f7f5',
-                borderColor: '#bfbfbf',
-                color: '#999',
-                fontFamily: "'Inter', system-ui, sans-serif",
+                background: 'var(--color-surface-soft)',
+                borderColor: 'var(--color-hairline)',
+                color: 'var(--color-muted)',
+                fontFamily: 'var(--font-body)',
               }}
             >
               微信登录（暂不可用）
@@ -196,13 +188,13 @@ export default function LoginPage() {
         .login-root {
           min-height: 100vh;
           display: flex;
-          background: #ffffff;
+          background: var(--color-canvas);
         }
 
         /* ---- Left Brand Panel ---- */
         .login-brand {
           flex: 1;
-          background: #ffffff;
+          background: var(--color-canvas);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -226,70 +218,49 @@ export default function LoginPage() {
         }
 
         .login-logo-mark {
-          animation: scaleIn 0.5s ease-out 0.1s both;
+          animation: fadeInUp 150ms ease-out 50ms both;
         }
 
         .login-logo-name {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 18px;
           font-weight: 480;
-          color: #000000;
+          color: var(--color-ink);
           letter-spacing: -0.2px;
         }
 
         /* Hero */
         .login-headline {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-display);
           font-size: clamp(40px, 5vw, 64px);
           font-weight: 340;
           line-height: 1.05;
           letter-spacing: -1.72px;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 24px 0;
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-subhead {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 18px;
           font-weight: 320;
           line-height: 1.6;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 40px 0;
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
-        /* Feature chips */
-        .login-features {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 8px;
-          animation: fadeUp 0.6s ease-out 0.5s both;
-        }
-
-        .feature-chip {
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 12px;
-          font-weight: 400;
-          letter-spacing: 0.6px;
-          text-transform: uppercase;
-          color: #000000;
-          background: #f7f7f5;
-          border: 1px solid #bfbfbf;
-          border-radius: 50px;
-          padding: 6px 14px;
-        }
-
-        /* Decorative color block — lime sticky note style */
+        /* Decorative color block — lime accent strip (DESIGN.md: Login Mockup) */
         .login-brand-decoration {
           position: absolute;
-          right: -60px;
+          right: -20px;
           top: 50%;
-          transform: translateY(-50%) rotate(3deg);
-          width: 320px;
-          height: 320px;
-          background: #dceeb1;
-          border-radius: 24px;
+          transform: translateY(-50%);
+          width: 80px;
+          height: 200px;
+          background: var(--color-block-lime);
+          border-radius: var(--radius-lg);
           z-index: 0;
         }
 
@@ -297,7 +268,7 @@ export default function LoginPage() {
         .login-form-panel {
           width: 480px;
           min-width: 380px;
-          background: #f7f7f5;
+          background: var(--color-surface-soft);
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -309,11 +280,11 @@ export default function LoginPage() {
         .login-form-card {
           width: 100%;
           max-width: 360px;
-          background: #ffffff;
+          background: var(--color-surface-raised);
           border-radius: 24px;
           padding: 40px;
-          border: 1px solid #bfbfbf;
-          animation: fadeUp 0.6s ease-out 0.2s both;
+          box-shadow: var(--shadow-card);
+          animation: fadeInUp 150ms ease-out 100ms both;
         }
 
         .login-form-header {
@@ -321,25 +292,25 @@ export default function LoginPage() {
         }
 
         .login-form-title {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-display);
           font-size: 26px;
           font-weight: 540;
           line-height: 1.35;
           letter-spacing: -0.26px;
-          color: #000000;
+          color: var(--color-ink);
           margin: 0 0 6px 0;
         }
 
         .login-form-subtitle {
-          font-family: 'Inter', system-ui, sans-serif;
+          font-family: var(--font-body);
           font-size: 16px;
           font-weight: 330;
-          color: #666666;
+          color: var(--color-muted);
           margin: 0;
         }
 
         .login-form {
-          animation: fadeUp 0.6s ease-out 0.35s both;
+          animation: fadeInUp 150ms ease-out 150ms both;
         }
 
         /* Form items */
@@ -348,61 +319,85 @@ export default function LoginPage() {
         }
 
         .login-form .ant-form-item-label > label {
-          font-family: 'Inter', system-ui, sans-serif;
-          font-size: 14px;
-          font-weight: 330;
-          color: #000000;
-          line-height: 1.45;
+          font-family: var(--font-body);
+          font-size: 12px;
+          font-weight: 500;
+          color: var(--color-muted);
+          letter-spacing: 0.3px;
+          line-height: 1.4;
+          height: auto;
           padding-bottom: 6px;
         }
 
         .login-input .ant-input {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #bfbfbf !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
+          border: 1px solid var(--color-hairline) !important;
+          font-family: var(--font-body) !important;
           font-size: 16px !important;
           font-weight: 320 !important;
-          background: #ffffff !important;
+          background: var(--color-surface-soft) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
         .login-input .ant-input:hover {
-          border-color: #999 !important;
+          border-color: var(--color-border-hover) !important;
         }
 
         .login-input .ant-input:focus {
-          border-color: #000000 !important;
-          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
         }
 
         .login-input .ant-input-affix-wrapper {
           padding: 11px 14px !important;
           border-radius: 8px !important;
-          border: 1px solid #bfbfbf !important;
-          background: #ffffff !important;
+          border: 1px solid var(--color-hairline) !important;
+          background: var(--color-surface-soft) !important;
           transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
         }
 
         .login-input .ant-input-affix-wrapper:hover {
-          border-color: #999 !important;
+          border-color: var(--color-border-hover) !important;
         }
 
         .login-input .ant-input-affix-wrapper:focus,
         .login-input .ant-input-affix-wrapper-focused {
-          border-color: #000000 !important;
-          box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06) !important;
+          border-color: var(--color-primary) !important;
+          box-shadow: 0 0 0 3px var(--color-focus-ring) !important;
+        }
+
+        /* Inner input inside affix-wrapper (e.g. Input.Password) — keep transparent so only wrapper shows the frame */
+        .login-input.ant-input-affix-wrapper .ant-input,
+        .login-input .ant-input-affix-wrapper .ant-input {
+          background: transparent !important;
+          border: none !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          font-size: 16px !important;
+          font-weight: 320 !important;
+        }
+
+        /* Override browser autofill (Chrome/Edge/Safari) blue/yellow tint */
+        .login-input input:-webkit-autofill,
+        .login-input input:-webkit-autofill:hover,
+        .login-input input:-webkit-autofill:focus,
+        .login-input input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 1000px var(--color-surface-soft) inset !important;
+          -webkit-text-fill-color: var(--color-ink) !important;
+          caret-color: var(--color-ink) !important;
+          transition: background-color 5000s ease-in-out 0s !important;
         }
 
         .input-icon {
-          color: #999;
+          color: var(--color-muted);
           font-size: 14px;
           transition: color 0.2s ease;
         }
 
         .login-input .ant-input:focus ~ .ant-input-suffix .input-icon,
         .login-input:hover .input-icon {
-          color: #000000;
+          color: var(--color-ink);
         }
 
         /* Primary pill button */
@@ -410,20 +405,20 @@ export default function LoginPage() {
           height: auto !important;
           padding: 12px 24px !important;
           border-radius: 50px !important;
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 16px !important;
           font-weight: 480 !important;
           letter-spacing: -0.1px !important;
-          background: #000000 !important;
+          background: var(--color-primary) !important;
           border: none !important;
-          color: #ffffff !important;
+          color: var(--color-on-primary) !important;
           width: 100%;
           transition: background 0.2s ease, transform 0.15s ease !important;
           margin-top: 4px;
         }
 
         .login-btn-primary:hover:not(:disabled) {
-          background: #222222 !important;
+          background: var(--color-primary-hover) !important;
           transform: translateY(-1px);
         }
 
@@ -440,29 +435,29 @@ export default function LoginPage() {
           text-align: center;
           margin-top: 24px;
           padding-top: 24px;
-          border-top: 1px solid #d9d9d9;
-          animation: fadeUp 0.6s ease-out 0.5s both;
+          border-top: 1px solid var(--color-hairline-soft);
+          animation: fadeInUp 150ms ease-out 200ms both;
         }
 
         .login-footer-text {
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 14px !important;
           font-weight: 330 !important;
-          color: #666666 !important;
+          color: var(--color-muted) !important;
         }
 
         .login-footer-link {
-          font-family: 'Inter', system-ui, sans-serif !important;
+          font-family: var(--font-body) !important;
           font-size: 14px !important;
           font-weight: 480 !important;
-          color: #000000 !important;
+          color: var(--color-ink) !important;
           transition: opacity 0.2s ease;
           padding: 4px 8px;
           border-radius: 50px;
         }
 
         .login-footer-link:hover {
-          background: #f7f7f5;
+          background: var(--color-surface-soft);
           opacity: 0.8;
         }
 
@@ -472,21 +467,11 @@ export default function LoginPage() {
           font-weight: 400 !important;
           letter-spacing: 0.6px !important;
           text-transform: uppercase !important;
-          color: #999 !important;
-          animation: fadeUp 0.6s ease-out 0.6s both;
+          color: var(--color-muted) !important;
+          animation: fadeInUp 150ms ease-out 250ms both;
         }
 
         /* Animations */
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.85); }
-          to { opacity: 1; transform: scale(1); }
-        }
-
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(16px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
         /* Responsive */
         @media (max-width: 768px) {
           .login-root {

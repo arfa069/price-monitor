@@ -1,0 +1,89 @@
+/* ============================================================
+   Motion System — Intentional, minimal, functional
+   ============================================================ */
+
+/* ---- Keyframes ---- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dataFlash {
+  0% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: var(--flash-color, rgba(220, 238, 177, 0.15));
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* ---- Transition Tokens ---- */
+.transition-fast {
+  transition: all 100ms ease-out;
+}
+
+.transition-base {
+  transition: all 150ms ease-out;
+}
+
+.transition-medium {
+  transition: all 200ms ease-out;
+}
+
+.transition-long {
+  transition: all 300ms ease-in-out;
+}
+
+/* ---- Entrance Animation ---- */
+.animate-fade-in-up {
+  animation: fadeInUp 150ms ease-out forwards;
+}
+
+/* Stagger delays for list items */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+
+/* ---- Data Update Flash ---- */
+.animate-data-flash {
+  animation: dataFlash 300ms ease-in-out;
+}
+
+/* Flash color variants matching macaron blocks */
+.flash-lime    { --flash-color: rgba(220, 238, 177, 0.2); }
+.flash-cream   { --flash-color: rgba(244, 236, 214, 0.2); }
+.flash-mint    { --flash-color: rgba(200, 230, 205, 0.2); }
+.flash-lilac   { --flash-color: rgba(197, 176, 244, 0.2); }
+.flash-pink    { --flash-color: rgba(239, 212, 212, 0.2); }
+.flash-coral   { --flash-color: rgba(243, 201, 182, 0.2); }
+
+/* ---- Button/Interactive Transitions ---- */
+.btn-transition {
+  transition: opacity 100ms ease-out, transform 100ms ease-out, border-color 100ms ease-out;
+}
+
+.card-transition {
+  transition: box-shadow 150ms ease-out, transform 150ms ease-out;
+}
+
+/* ---- Reduced Motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

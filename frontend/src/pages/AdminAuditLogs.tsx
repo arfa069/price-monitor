@@ -84,7 +84,16 @@ export default function AdminAuditLogsPage() {
       dataIndex: 'details',
       render: (details: Record<string, unknown> | null) =>
         details ? (
-          <pre style={{ margin: 0, fontSize: 12, background: '#f7f7f5', padding: 4, borderRadius: 4 }}>
+          <pre
+            style={{
+              margin: 0,
+              fontSize: 12,
+              background: 'var(--color-surface-soft)',
+              color: 'var(--color-ink)',
+              padding: 4,
+              borderRadius: 4,
+            }}
+          >
             {JSON.stringify(details, null, 2)}
           </pre>
         ) : null,
@@ -99,7 +108,7 @@ export default function AdminAuditLogsPage() {
 
   return (
     <div>
-      <div className="page-header bg-surface-soft">
+      <div className="page-header bg-admin-lilac">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">系统管理</p>

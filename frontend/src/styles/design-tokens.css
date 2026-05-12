@@ -18,6 +18,7 @@
   --color-hairline: #bfbfbf;
   --color-hairline-soft: #d9d9d9;
   --color-surface-soft: #f7f7f5;
+  --color-surface-raised: #ffffff;
   --color-block-lime: #dceeb1;
   --color-block-lilac: #c5b0f4;
   --color-block-cream: #f4ecd6;
@@ -186,6 +187,7 @@
   --color-hairline: #2a2a2a;
   --color-hairline-soft: #333333;
   --color-surface-soft: #141414;
+  --color-surface-raised: #1a1a1a;
   --color-block-lime: #3a4a1a;
   --color-block-lilac: #3d305a;
   --color-block-cream: #4a4020;

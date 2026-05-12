@@ -55,10 +55,24 @@ import type {
   Product,
 } from '@/types'
 
-const PLATFORM_COLORS: Record<string, string> = {
-  taobao: '#f97316',
-  jd: '#dc2626',
-  amazon: '#2563eb',
+const PLATFORM_BADGE_CLASS: Record<string, string> = {
+  taobao: 'platform-badge--taobao',
+  jd: 'platform-badge--jd',
+  amazon: 'platform-badge--amazon',
+}
+
+const PLATFORM_LABEL: Record<string, string> = {
+  taobao: '淘宝',
+  jd: '京东',
+  amazon: '亚马逊',
+}
+
+function PlatformBadge({ value }: { value: string | null | undefined }) {
+  if (!value) return <Tag>-</Tag>
+  const cls = PLATFORM_BADGE_CLASS[value]
+  const label = PLATFORM_LABEL[value] ?? value
+  if (!cls) return <Tag>{label}</Tag>
+  return <span className={`platform-badge ${cls}`}>{label}</span>
 }
 
 type AlertInfo = {
@@ -283,11 +297,7 @@ export default function ProductsPage() {
       title: '平台',
       dataIndex: 'platform',
       width: 90,
-      render: (value: string) => (
-        <Tag color={PLATFORM_COLORS[value] || 'default'}>
-          {value === 'taobao' ? '淘宝' : value === 'jd' ? '京东' : '亚马逊'}
-        </Tag>
-      ),
+      render: (value: string) => <PlatformBadge value={value} />,
     },
     { title: '标题', dataIndex: 'title', ellipsis: true },
     {
@@ -366,11 +376,7 @@ export default function ProductsPage() {
       title: '平台',
       dataIndex: 'platform',
       width: 80,
-      render: (value: string | null) => (
-        <Tag color={PLATFORM_COLORS[value || ''] || 'default'}>
-          {value === 'taobao' ? '淘宝' : value === 'jd' ? '京东' : value || '-'}
-        </Tag>
-      ),
+      render: (value: string | null) => <PlatformBadge value={value} />,
     },
     {
       title: '状态',
@@ -448,10 +454,9 @@ export default function ProductsPage() {
                   </Button>
                 </Popconfirm>
                 <Button
-                  type="primary"
                   icon={<PlusOutlined style={{ fontSize: 14 }} />}
                   onClick={() => setCreateFormOpen(true)}
-                  className="fg-btn-primary"
+                  className="fg-btn-secondary"
                 >
                   新增商品
                 </Button>

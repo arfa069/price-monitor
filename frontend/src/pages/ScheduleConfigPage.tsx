@@ -254,10 +254,10 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
           />
           <Button
-            type="primary"
             onClick={() => void handleSavePlatformCron(record.platform)}
             loading={platformSaving[record.platform]}
             disabled={isReadOnly}
+            className="fg-btn-secondary"
           >
             保存
           </Button>
@@ -313,10 +313,10 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
           />
           <Button
-            type="primary"
             onClick={() => void handleSaveConfigCron(record.id)}
             loading={savingCron[record.id]}
             disabled={isReadOnly}
+            className="fg-btn-secondary"
           >
             保存
           </Button>
@@ -338,8 +338,8 @@ export default function ScheduleConfigPage() {
 
   return (
     <div>
-      {/* Page header — lime color block */}
-      <div className="page-header bg-lilac">
+      {/* Page header — mint color block (DESIGN.md: Mint — 配置) */}
+      <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">自动化</p>
@@ -387,10 +387,9 @@ export default function ScheduleConfigPage() {
             </h4>
             {!isReadOnly && (
               <Button
-                type="primary"
                 size="small"
                 onClick={() => setAddModalOpen(true)}
-                className="fg-btn-primary fg-btn-sm"
+                className="fg-btn-secondary fg-btn-sm"
               >
                 新增商品定时器
               </Button>
@@ -445,11 +444,10 @@ export default function ScheduleConfigPage() {
                 style={{ width: 420, fontFamily: 'var(--font-body)', fontSize: 14 }}
               />
               <Button
-                type="primary"
                 onClick={() => void handleSaveWebhook()}
                 loading={updateMutation.isPending}
                 disabled={isReadOnly}
-                className="fg-btn-primary"
+                className="fg-btn-secondary"
               >
                 保存
               </Button>
@@ -470,12 +468,11 @@ export default function ScheduleConfigPage() {
                 disabled={isReadOnly}
               />
               <Button
-                type="primary"
                 icon={<SaveOutlined style={{ fontSize: 13 }} />}
                 onClick={() => void handleSaveRetention()}
                 loading={updateMutation.isPending}
                 disabled={isReadOnly}
-                className="fg-btn-primary"
+                className="fg-btn-secondary"
               >
                 保存
               </Button>

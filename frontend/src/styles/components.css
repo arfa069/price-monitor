@@ -594,6 +594,22 @@
   background: var(--color-surface-soft);      /* #f7f7f5 — 管理员页面 */
 }
 
+.page-header.bg-admin {
+  background: var(--color-block-pink);        /* light: #efd4d4 — 管理员/用户管理（柔和粉，告警语义） */
+}
+
+[data-theme="dark"] .page-header.bg-admin {
+  background: var(--color-surface-soft);      /* dark: #141414 — 降为低调灰，保持管理员区域沉稳 */
+}
+
+.page-header.bg-admin-lilac {
+  background: var(--color-block-lilac);       /* light: #c5b0f4 — 审计日志 */
+}
+
+[data-theme="dark"] .page-header.bg-admin-lilac {
+  background: var(--color-surface-soft);      /* dark: #141414 — 与 bg-admin 一致的沉稳灰 */
+}
+
 .page-header-inner {
   display: flex;
   align-items: flex-start;
@@ -660,7 +676,7 @@
 
 /* ---- Figma Card ---- */
 .fg-card {
-  background: #ffffff;
+  background: var(--color-surface-raised);
   border: 1px solid var(--color-hairline);
   border-radius: 24px;
   overflow: hidden;
@@ -676,6 +692,34 @@
 
 .fg-card-toolbar {
   padding: 16px 24px;
+}
+
+/* ---- Platform Badge (淘宝 / 京东 / 亚马逊 品牌色徽章) ---- */
+.platform-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #ffffff;
+  border: none;
+  white-space: nowrap;
+}
+
+.platform-badge--taobao {
+  background: #f25c1c;
+}
+
+.platform-badge--jd {
+  background: #e4393c;
+}
+
+.platform-badge--amazon {
+  background: #ff9900;
 }
 
 /* ---- Figma Button Variants ---- */

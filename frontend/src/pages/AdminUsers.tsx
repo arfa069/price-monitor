@@ -148,8 +148,8 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      {/* Page header — surface-soft for admin section */}
-      <div className="page-header bg-surface-soft">
+      {/* Page header — lilac for admin section (DESIGN.md: Lilac — 用户) */}
+      <div className="page-header bg-admin">
         <div className="page-header-inner">
           <div>
             <p className="page-eyebrow">系统管理</p>
@@ -179,10 +179,9 @@ export default function AdminUsersPage() {
           <Select.Option value="admin">管理员</Select.Option>
         </Select>
         <Button
-          type="primary"
           icon={<PlusOutlined style={{ fontSize: 14 }} />}
           onClick={handleCreate}
-          className="fg-btn-primary"
+          className="fg-btn-secondary"
         >
           新建用户
         </Button>

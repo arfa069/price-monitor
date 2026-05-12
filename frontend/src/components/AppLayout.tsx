@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { App, Layout, Menu, Button, Drawer, Dropdown, Avatar } from 'antd'
+import { useState, useEffect, useRef } from 'react'
+import { App, Layout, Menu, Button, Drawer, Avatar, Space } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
 import {
@@ -25,6 +25,8 @@ export default function AppLayout({
   const [collapsed, setCollapsed] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
@@ -41,13 +43,13 @@ export default function AppLayout({
       key: 'profile',
       icon: <UserOutlined style={{ fontSize: 14 }} />,
       label: '个人信息',
-      onClick: () => navigate('/profile'),
+      onClick: () => { setUserMenuOpen(false); navigate('/profile') },
     },
     {
       key: 'settings',
       icon: <SettingOutlined style={{ fontSize: 14 }} />,
       label: '账号设置',
-      onClick: () => navigate('/settings'),
+      onClick: () => { setUserMenuOpen(false); navigate('/settings') },
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
       ? [
@@ -55,13 +57,13 @@ export default function AppLayout({
           key: 'admin/users',
           icon: <TeamOutlined style={{ fontSize: 14 }} />,
           label: '用户管理',
-          onClick: () => navigate('/admin/users'),
+          onClick: () => { setUserMenuOpen(false); navigate('/admin/users') },
         },
         {
           key: 'admin/audit-logs',
           icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
           label: '审计日志',
-          onClick: () => navigate('/admin/audit-logs'),
+          onClick: () => { setUserMenuOpen(false); navigate('/admin/audit-logs') },
         },
       ]
       : []),
@@ -71,9 +73,27 @@ export default function AppLayout({
       icon: <LogoutOutlined style={{ fontSize: 14 }} />,
       label: '退出登录',
       danger: true,
-      onClick: handleLogout,
+      onClick: () => { setUserMenuOpen(false); handleLogout() },
     },
   ]
+
+  // 点击外部关闭用户菜单
+  useEffect(() => {
+    if (!userMenuOpen) return
+    const handleDocClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    // 用 setTimeout 确保当前点击事件不会立即触发关闭
+    const timer = setTimeout(() => {
+      document.addEventListener('click', handleDocClick)
+    }, 0)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('click', handleDocClick)
+    }
+  }, [userMenuOpen])
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
@@ -133,7 +153,7 @@ export default function AppLayout({
 
   return (
     <Layout style={{ minHeight: '100vh', background: 'var(--color-canvas)' }}>
-      {/* Top Nav — white, 56px, Figma style */}
+      {/* Top Nav */}
       <Layout.Header
         style={{
           position: 'fixed',
@@ -195,7 +215,6 @@ export default function AppLayout({
           />
         ) : (
           <>
-
             <Button
               type="text"
               onClick={toggleTheme}
@@ -211,40 +230,75 @@ export default function AppLayout({
             >
               {theme === 'light' ? '🌙' : '☀️'}
             </Button>
-            <Dropdown
-              menu={{ items: userMenuItems }}
-              placement="bottomRight"
-              trigger={['click']}
-            >
-              <div
+
+            {/* 用户菜单 — 完全手动控制，绕过 antd Dropdown 事件 bug */}
+            <div ref={userMenuRef} style={{ position: 'relative' }}>
+              <Button
+                type="text"
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
                   color: 'var(--color-ink)',
+                  height: 'auto',
                   padding: '4px 8px',
                   fontFamily: "var(--font-body)",
                   fontSize: 14,
                   fontWeight: 400,
                   borderRadius: 50,
-                  cursor: 'pointer',
-                  userSelect: 'none',
                 }}
                 aria-label="用户菜单"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setUserMenuOpen(prev => !prev)
+                }}
               >
-                <Avatar
-                  size={28}
-                  icon={<UserOutlined />}
+                <Space size={6}>
+                  <Avatar
+                    size={28}
+                    icon={<UserOutlined />}
+                    style={{
+                      backgroundColor: 'var(--color-surface-soft)',
+                      color: 'var(--color-ink)',
+                      fontSize: 12,
+                      border: '1px solid var(--color-hairline)',
+                    }}
+                  />
+                  <span style={{ fontSize: 14, fontWeight: 400 }}>
+                    {user?.username || '用户'}
+                  </span>
+                </Space>
+              </Button>
+
+              {userMenuOpen && (
+                <div
                   style={{
-                    backgroundColor: 'var(--color-surface-soft)',
-                    color: 'var(--color-ink)',
-                    fontSize: 12,
+                    position: 'absolute',
+                    top: 'calc(100% + 4px)',
+                    right: 0,
+                    zIndex: 1050,
+                    minWidth: 160,
+                    background: 'var(--color-canvas)',
+                    borderRadius: 12,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
                     border: '1px solid var(--color-hairline)',
+                    padding: '4px',
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 14,
                   }}
-                />
-                <span>{user?.username || '用户'}</span>
-              </div>
-            </Dropdown>
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Menu
+                    mode="vertical"
+                    selectable={false}
+                    items={userMenuItems}
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      boxShadow: 'none',
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
             <Button
               type="text"
               icon={<BarsOutlined style={{ fontSize: 14 }} />}
@@ -262,7 +316,7 @@ export default function AppLayout({
         )}
       </Layout.Header>
 
-      {/* Desktop Sidebar — surface-soft, rounded-lg card style */}
+      {/* Desktop Sidebar */}
       {!isMobile && (
         <Layout.Sider
           collapsible
@@ -312,7 +366,6 @@ export default function AppLayout({
             header: { display: 'none' },
           }}
         >
-          {/* Drawer header */}
           <div
             style={{
               padding: '16px',
@@ -361,7 +414,6 @@ export default function AppLayout({
             }}
             items={menuItems}
           />
-
         </Drawer>
       )}
 

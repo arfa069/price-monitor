@@ -600,6 +600,10 @@
   background: var(--color-surface-soft);      /* #f7f7f5 — 管理员页面 */
 }
 
+[data-theme="dark"] .page-header.bg-surface-soft {
+  background: var(--color-surface-raised);   /* #1a1a1a — 暗色下与 canvas(#0a0a0a) 保持微妙层次 */
+}
+
 .page-header.bg-admin {
   background: var(--color-block-pink);        /* light: #efd4d4 — 管理员/用户管理（柔和粉，告警语义） */
 }

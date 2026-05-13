@@ -441,6 +441,7 @@ export default function ScheduleConfigPage() {
                 value={feishuWebhookUrl}
                 onChange={(e) => setFeishuWebhookUrl(e.target.value)}
                 placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/..."
+                autoComplete="off"
                 style={{ width: 420, fontFamily: 'var(--font-body)', fontSize: 14 }}
               />
               <Button

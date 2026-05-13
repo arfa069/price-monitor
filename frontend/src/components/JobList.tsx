@@ -109,6 +109,7 @@ export default function JobList({
           prefix={<SearchOutlined />}
           placeholder="关键词搜索职位或公司"
           value={filters.keyword}
+          autoComplete="off"
           onChange={(e) => onFilterChange({ ...filters, keyword: e.target.value })}
           style={{ width: 240 }}
         />

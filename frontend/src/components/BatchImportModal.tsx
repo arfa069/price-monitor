@@ -173,6 +173,7 @@ export default function BatchImportModal({
         <div>
           <Input.TextArea
             aria-label="批量粘贴 URL，每行一个"
+            autoComplete="off"
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             placeholder={

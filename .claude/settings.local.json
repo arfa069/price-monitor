@@ -33,5 +33,6 @@
     "connect-chrome": "off",
     "open-gstack-browser": "off",
     "pair-agent": "off"
-  }
+  },
+  "outputStyle": "Proactive"
 }

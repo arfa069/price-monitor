@@ -87,10 +87,10 @@ export default function ProfilePage() {
               onFinish={handleProfileUpdate}
             >
               <Form.Item name="username" label="用户名" rules={[{ required: true, min: 3, max: 50 }]}>
-                <Input style={{ fontFamily: 'var(--font-body)' }} />
+                <Input style={{ fontFamily: 'var(--font-body)' }} autoComplete="username" />
               </Form.Item>
               <Form.Item name="email" label="邮箱" rules={[{ required: true, type: 'email' }]}>
-                <Input style={{ fontFamily: 'var(--font-body)' }} />
+                <Input style={{ fontFamily: 'var(--font-body)' }} autoComplete="email" />
               </Form.Item>
               <Form.Item style={{ marginBottom: 0 }}>
                 <Button type="primary" htmlType="submit" loading={loading} className="fg-btn-primary">
@@ -111,10 +111,10 @@ export default function ProfilePage() {
           <div style={{ padding: '20px 24px' }}>
             <Form form={passwordForm} layout="vertical" onFinish={handlePasswordChange}>
               <Form.Item name="old_password" label="原密码" rules={[{ required: true }]}>
-                <Input.Password style={{ fontFamily: 'var(--font-body)' }} />
+                <Input.Password style={{ fontFamily: 'var(--font-body)' }} autoComplete="current-password" />
               </Form.Item>
               <Form.Item name="new_password" label="新密码" rules={[{ required: true, min: 6 }]}>
-                <Input.Password style={{ fontFamily: 'var(--font-body)' }} />
+                <Input.Password style={{ fontFamily: 'var(--font-body)' }} autoComplete="new-password" />
               </Form.Item>
               <Form.Item style={{ marginBottom: 0 }}>
                 <Button type="primary" htmlType="submit" loading={loading} className="fg-btn-primary">

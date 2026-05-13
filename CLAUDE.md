@@ -23,7 +23,7 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; pip install -e
 ### 运行数据库迁移
 powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; alembic upgrade head"
 
-### 启动前端服务器和后端服务器
+### 启动前端服务器和后端服务器 **前端端口3000，后端8000**
 powershell.exe -Command "cd C:/Users/arfac/price-monitor; powershell -ExecutionPolicy Bypass -File 'scripts/start_server.ps1'"
 
 ### 运行测试

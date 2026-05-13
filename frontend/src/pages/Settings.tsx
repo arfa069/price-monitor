@@ -62,6 +62,7 @@ export default function SettingsPage() {
                 <Input
                   placeholder="https://open.feishu.cn/open-apis/bot/v2/hook/xxx"
                   style={{ fontFamily: 'var(--font-body)', fontSize: 14 }}
+                  autoComplete="off"
                 />
               </Form.Item>
               <Form.Item

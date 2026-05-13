@@ -311,7 +311,7 @@ export default function ProductsPage() {
       title: '创建时间',
       dataIndex: 'created_at',
       width: 180,
-      render: (value: string) => new Date(value).toLocaleString('zh-CN'),
+      render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
     },
     {
       title: '告警',
@@ -370,7 +370,7 @@ export default function ProductsPage() {
       title: '时间',
       dataIndex: 'timestamp',
       width: 160,
-      render: (value: string) => new Date(value).toLocaleString('zh-CN'),
+      render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
     },
     {
       title: '平台',
@@ -478,6 +478,7 @@ export default function ProductsPage() {
                   placeholder="搜索标题或 URL"
                   prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
                   allowClear
+                  autoComplete="off"
                   style={{ width: 200, fontFamily: 'var(--font-body)' }}
                   onChange={(e) => setKeyword(e.target.value)}
                   className="fg-input"

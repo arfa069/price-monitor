@@ -1,7 +1,0 @@
-﻿2026-04-28 17:44:47 | git status -> rtk git status
-2026-04-28 17:54:38 | git -C C:\Users\arfac\price-monitor status --short --branch -> rtk git -C C:\Users\arfac\price-monitor status --short --branch
-2026-04-28 17:54:47 | git status --short --branch -> rtk git status --short --branch
-2026-04-28 18:25:52 | curl -s http://127.0.0.1:9222/json/version 2>/dev/null | head -2 || echo "CDP not running" -> rtk curl -s http://127.0.0.1:9222/json/version 2>/dev/null | head -2 || echo "CDP not running"
-2026-04-28 18:33:44 | rm "C:\Users\arfac\price-monitor\backend\test_full.py" 2>/dev/null; cd "C:\Users\arfac\price-monitor\backend" && python -m pytest tests/ -q --ignore=tests/test_integration_realdb.py --ignore=tests/screenshots 2>&1 | tail -2 -> rm "C:\Users\arfac\price-monitor\backend\test_full.py" 2>/dev/null; cd "C:\Users\arfac\price-monitor\backend" && rtk pytest tests/ -q --ignore=tests/test_integration_realdb.py --ignore=tests/screenshots 2>&1 | tail -2
-2026-04-28 18:44:50 | ls "C:\Users\arfac\price-monitor\docs\superpowers\plans\" 2>/dev/null || echo "No plans dir" -> rtk ls "C:\Users\arfac\price-monitor\docs\superpowers\plans\" 2>/dev/null || echo "No plans dir"
-2026-04-28 18:44:57 | ls C:/Users/arfac/price-monitor/docs/superpowers/plans/ 2>/dev/null; echo "exit: $?" -> rtk ls C:/Users/arfac/price-monitor/docs/superpowers/plans/ 2>/dev/null; echo "exit: $?"

@@ -152,6 +152,8 @@
   font-family: var(--font-body) !important;
   font-size: var(--font-size-body-sm) !important;
   color: var(--color-ink) !important;
+  font-variant-numeric: var(--font-variant-numeric) !important;
+  font-feature-settings: var(--font-feature-numeric) !important;
 }
 
 .ant-table-thead>tr>th {
@@ -162,12 +164,16 @@
   letter-spacing: 0.02em !important;
   border-bottom: 1px solid var(--color-hairline) !important;
   padding: var(--spacing-sm) var(--spacing-md) !important;
+  font-variant-numeric: var(--font-variant-numeric) !important;
+  font-feature-settings: var(--font-feature-numeric) !important;
 }
 
 .ant-table-tbody>tr>td {
   border-bottom: 1px solid var(--color-hairline-soft) !important;
   padding: var(--spacing-sm) var(--spacing-md) !important;
   color: var(--color-ink) !important;
+  font-variant-numeric: var(--font-variant-numeric) !important;
+  font-feature-settings: var(--font-feature-numeric) !important;
 }
 
 .ant-table-tbody>tr:hover>td {

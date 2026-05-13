@@ -171,7 +171,7 @@ function AppRoutes() {
             colorBgContainer: currentTheme === 'dark' ? '#141414' : '#ffffff',
             colorText: currentTheme === 'dark' ? '#ffffff' : '#000000',
             colorTextSecondary: currentTheme === 'dark' ? '#888888' : '#666666',
-            colorBorder: currentTheme === 'dark' ? '#2a2a2a' : '#bfbfbf',
+            colorBorder: currentTheme === 'dark' ? '#2a2a2a' : '#e6e6e6',
             colorBorderSecondary: currentTheme === 'dark' ? '#333333' : '#d9d9d9',
             colorSuccess: '#1ea64a',
             colorWarning: '#f5a623',
@@ -179,7 +179,7 @@ function AppRoutes() {
             colorInfo: '#3b82f6',
             borderRadius: 50,
             fontSize: 14,
-            fontFamily: "'Outfit', 'DM Sans', 'SF Pro Display', system-ui, -apple-system, sans-serif",
+            fontFamily: "'General Sans', 'DM Sans', system-ui, sans-serif",
             fontFamilyCode: "'JetBrains Mono', 'SF Mono', 'Menlo', monospace",
           },
           components: {

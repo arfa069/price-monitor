@@ -15,7 +15,7 @@
   --color-on-inverse-soft: rgba(255, 255, 255, 0.16);
 
   /* --- Colors: Surface --- */
-  --color-hairline: #bfbfbf;
+  --color-hairline: #e6e6e6;
   --color-hairline-soft: #d9d9d9;
   --color-surface-soft: #f7f7f5;
   --color-surface-raised: #ffffff;
@@ -37,9 +37,12 @@
   --color-info: #3b82f6;
 
   /* --- Typography --- */
-  --font-display: 'Outfit', 'SF Pro Display', system-ui, -apple-system, sans-serif;
+  --font-display: 'General Sans', 'DM Sans', system-ui, sans-serif;
   --font-body: 'DM Sans', 'SF Pro Text', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Menlo', monospace;
+  --font-data: 'Geist', 'JetBrains Mono', monospace;
+  --font-variant-numeric: tabular-nums;
+  --font-feature-numeric: 'tnum';
 
   --font-size-display-xl: clamp(32px, 5vw, 48px);
   --font-size-display-lg: clamp(22px, 3vw, 36px);
@@ -217,5 +220,5 @@
   --ant-border-radius: var(--radius-pill);
   --ant-font-size: var(--font-size-body);
   --ant-line-height: var(--line-height-body);
-  --ant-font-family: var(--font-body);
+  --ant-font-family: var(--font-display), var(--font-body), system-ui, sans-serif;
 }

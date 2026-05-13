@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   App,
   Button,
@@ -13,6 +14,7 @@ import {
 } from 'antd'
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons'
 import { useCreateResume, useDeleteResume, useResumes } from '@/hooks/api'
+import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
 import type { UserResume } from '@/types'
 
 interface ResumeManagerProps {
@@ -22,6 +24,7 @@ interface ResumeManagerProps {
 
 export default function ResumeManager({ onSelectResume, selectedResumeId }: ResumeManagerProps) {
   const message = App.useApp().message
+  const stagger = useStaggerAnimation(0.05, 0.05)
   const { data: resumes, isLoading, refetch } = useResumes()
   const createResume = useCreateResume()
   const deleteResume = useDeleteResume()
@@ -78,37 +81,43 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
       ) : !resumes?.length ? (
         <Empty description="暂无简历，请先上传一份简历" />
       ) : (
-        <div style={{ display: 'grid', gap: 12 }}>
+        <motion.div
+          variants={stagger.container}
+          initial="hidden"
+          animate="show"
+          style={{ display: 'grid', gap: 12 }}
+        >
           {resumes.map((resume) => (
-            <Card
-              key={resume.id}
-              size="small"
-              title={resume.name}
-              extra={
-                <Space>
-                  {onSelectResume ? (
-                    <Button
-                      type={selectedResumeId === resume.id ? 'primary' : 'default'}
-                      size="small"
-                      onClick={() => onSelectResume(resume)}
-                    >
-                      {selectedResumeId === resume.id ? '已选择' : '选择'}
-                    </Button>
-                  ) : null}
-                  <Popconfirm title="确认删除这份简历吗？" onConfirm={() => handleDelete(resume.id)}>
-                    <Button danger size="small" icon={<DeleteOutlined />}>
-                      删除
-                    </Button>
-                  </Popconfirm>
-                </Space>
-              }
-            >
-              <Typography.Text type="secondary">
-                上传时间：{new Date(resume.created_at).toLocaleString('zh-CN')}
-              </Typography.Text>
-            </Card>
+            <motion.div key={resume.id} variants={stagger.item}>
+              <Card
+                size="small"
+                title={resume.name}
+                extra={
+                  <Space>
+                    {onSelectResume ? (
+                      <Button
+                        type={selectedResumeId === resume.id ? 'primary' : 'default'}
+                        size="small"
+                        onClick={() => onSelectResume(resume)}
+                      >
+                        {selectedResumeId === resume.id ? '已选择' : '选择'}
+                      </Button>
+                    ) : null}
+                    <Popconfirm title="确认删除这份简历吗？" onConfirm={() => handleDelete(resume.id)}>
+                      <Button danger size="small" icon={<DeleteOutlined />}>
+                        删除
+                      </Button>
+                    </Popconfirm>
+                  </Space>
+                }
+              >
+                <Typography.Text type="secondary">
+                  上传时间：{new Date(resume.created_at).toLocaleString('zh-CN')}
+                </Typography.Text>
+              </Card>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
       <Modal

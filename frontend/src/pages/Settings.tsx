@@ -1,11 +1,14 @@
 import { useState } from 'react'
-import { Form, Input, InputNumber, Button, App } from 'antd'
+import { Form, Input, InputNumber, Button, App, Segmented } from 'antd'
 import type { AxiosError } from 'axios'
 import { useAuth } from '@/contexts/AuthContext'
+import { useThemeContext } from '@/components/ThemeProvider'
 import { configApi } from '@/api/config'
+import type { MotionSpeed } from '@/types/motion'
 
 export default function SettingsPage() {
   const { user } = useAuth()
+  const { motionSpeed, setMotionSpeed } = useThemeContext()
   const message = App.useApp().message
   const [form] = Form.useForm()
   const [loading, setLoading] = useState(false)
@@ -74,6 +77,17 @@ export default function SettingsPage() {
                   min={1}
                   max={3650}
                   style={{ width: 200, fontFamily: 'var(--font-body)' }}
+                />
+              </Form.Item>
+              <Form.Item label="页面过渡速度">
+                <Segmented
+                  value={motionSpeed}
+                  onChange={(value) => setMotionSpeed(value as MotionSpeed)}
+                  options={[
+                    { label: '快', value: 'fast' },
+                    { label: '正常', value: 'normal' },
+                    { label: '慢', value: 'slow' },
+                  ]}
                 />
               </Form.Item>
               <Form.Item style={{ marginBottom: 0 }}>

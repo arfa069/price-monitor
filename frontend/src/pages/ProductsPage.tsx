@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   Alert,
   App,
@@ -47,6 +48,7 @@ import {
   useUpdateProduct,
 } from '@/hooks/api'
 import { useAuth } from '@/contexts/AuthContext'
+import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
 import type {
   BatchCreateItem,
   BatchImportRow,
@@ -86,6 +88,7 @@ const getErrorMessage = (error: unknown) =>
 
 export default function ProductsPage() {
   const { user } = useAuth()
+  const stagger = useStaggerAnimation(0.05, 0.05)
   const canCrawl = user?.role !== 'admin'
   const message = App.useApp().message
   const [page, setPage] = useState(1)
@@ -426,9 +429,15 @@ export default function ProductsPage() {
         </div>
       </div>
 
+      <motion.div
+        variants={stagger.container}
+        initial="hidden"
+        animate="show"
+        style={{ width: '100%' }}
+      >
       <Space orientation="vertical" size="middle" style={{ width: '100%' }}>
         {/* Toolbar card */}
-        <div className="fg-card fg-card-toolbar">
+        <motion.div variants={stagger.item} className="fg-card fg-card-toolbar">
           <Row gutter={[12, 12]} align="middle">
             <Col flex="auto">
               <Space wrap size={8}>
@@ -509,7 +518,7 @@ export default function ProductsPage() {
               </Space>
             </Col>
           </Row>
-        </div>
+        </motion.div>
 
         {isError && (
           <Alert
@@ -525,45 +534,47 @@ export default function ProductsPage() {
           />
         )}
 
-        <Table<Product>
-          rowKey="id"
-          columns={columns}
-          dataSource={productItems}
-          loading={isLoading}
-          scroll={{ x: 'max-content' }}
-          rowSelection={{
-            selectedRowKeys,
-            onChange: (keys) => setSelectedRowKeys(keys),
-          }}
-          pagination={{
-            current: page,
-            pageSize: size,
-            total: data?.total ?? 0,
-            showSizeChanger: true,
-            showTotal: (totalCount) => `共 ${totalCount} 条`,
-            onChange: (nextPage, nextSize) => {
-              setPage(nextPage)
-              if (nextSize) setSize(nextSize)
-            },
-          }}
-          locale={{
-            emptyText: (
-              <div style={{ padding: '40px 0', textAlign: 'center' }}>
-                <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 330, color: 'var(--color-muted)', marginBottom: 16 }}>
-                  暂无商品，点击添加第一个
-                </p>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined style={{ fontSize: 14 }} />}
-                  onClick={() => setCreateFormOpen(true)}
-                  className="fg-btn-primary"
-                >
-                  添加第一个商品
-                </Button>
-              </div>
-            ),
-          }}
-        />
+        <motion.div variants={stagger.item}>
+          <Table<Product>
+            rowKey="id"
+            columns={columns}
+            dataSource={productItems}
+            loading={isLoading}
+            scroll={{ x: 'max-content' }}
+            rowSelection={{
+              selectedRowKeys,
+              onChange: (keys) => setSelectedRowKeys(keys),
+            }}
+            pagination={{
+              current: page,
+              pageSize: size,
+              total: data?.total ?? 0,
+              showSizeChanger: true,
+              showTotal: (totalCount) => `共 ${totalCount} 条`,
+              onChange: (nextPage, nextSize) => {
+                setPage(nextPage)
+                if (nextSize) setSize(nextSize)
+              },
+            }}
+            locale={{
+              emptyText: (
+                <div style={{ padding: '40px 0', textAlign: 'center' }}>
+                  <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 330, color: 'var(--color-muted)', marginBottom: 16 }}>
+                    暂无商品，点击添加第一个
+                  </p>
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined style={{ fontSize: 14 }} />}
+                    onClick={() => setCreateFormOpen(true)}
+                    className="fg-btn-primary"
+                  >
+                    添加第一个商品
+                  </Button>
+                </div>
+              ),
+            }}
+          />
+        </motion.div>
 
         {selectedRowKeys.length > 0 && (
           <div style={{ color: 'var(--color-muted)', fontSize: 12 }}>
@@ -571,6 +582,7 @@ export default function ProductsPage() {
           </div>
         )}
       </Space>
+      </motion.div>
 
       <div
         className="fg-card"

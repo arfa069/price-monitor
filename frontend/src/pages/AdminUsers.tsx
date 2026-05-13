@@ -1,13 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { App, Table, Button, Space, Modal, Form, Input, Select, Popconfirm, Switch, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { adminApi, type UserCreate, type UserUpdate } from '@/api/admin'
 import { useAuth } from '@/contexts/AuthContext'
+import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
 import type { User } from '@/types'
+
+type AdminApiError = {
+  response?: {
+    data?: {
+      detail?: string
+    }
+  }
+}
+
+type UserFormValues = {
+  username: string
+  email: string
+  password?: string
+  role?: string
+  is_active?: boolean
+}
+
+type FormValidationError = {
+  errorFields?: unknown[]
+}
+
+function getAdminErrorMessage(error: unknown, fallback: string) {
+  const detail = (error as AdminApiError).response?.data?.detail
+  return detail || fallback
+}
+
+function isFormValidationError(error: unknown): error is FormValidationError {
+  return Array.isArray((error as FormValidationError).errorFields)
+}
 
 export default function AdminUsersPage() {
   const message = App.useApp().message
   const { user: currentUser } = useAuth()
+  const stagger = useStaggerAnimation(0.05, 0.05)
   const isSuperAdmin = currentUser?.role === 'super_admin'
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(false)
@@ -21,22 +53,23 @@ export default function AdminUsersPage() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [form] = Form.useForm()
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const response = await adminApi.listUsers({ page, page_size: pageSize, search, role: roleFilter })
       setUsers(response.items)
       setTotal(response.total)
-    } catch (error: any) {
-      message.error(error.response?.data?.detail || '获取用户列表失败')
+    } catch (error: unknown) {
+      message.error(getAdminErrorMessage(error, '获取用户列表失败'))
     } finally {
       setLoading(false)
     }
-  }
+  }, [message, page, pageSize, roleFilter, search])
 
   useEffect(() => {
-    fetchUsers()
-  }, [page, pageSize, search, roleFilter])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchUsers()
+  }, [fetchUsers])
 
   const handleCreate = () => {
     setEditingUser(null)
@@ -57,7 +90,7 @@ export default function AdminUsersPage() {
 
   const handleSubmit = async () => {
     try {
-      const values = await form.validateFields()
+      const values = await form.validateFields() as UserFormValues
       if (editingUser) {
         const updateData: UserUpdate = {
           username: values.username,
@@ -71,7 +104,7 @@ export default function AdminUsersPage() {
         const createData: UserCreate = {
           username: values.username,
           email: values.email,
-          password: values.password,
+          password: values.password ?? '',
           role: values.role || 'user',
         }
         await adminApi.createUser(createData)
@@ -79,9 +112,9 @@ export default function AdminUsersPage() {
       }
       setModalOpen(false)
       fetchUsers()
-    } catch (error: any) {
-      if (!error.errorFields) {
-        message.error(error.response?.data?.detail || '操作失败')
+    } catch (error: unknown) {
+      if (!isFormValidationError(error)) {
+        message.error(getAdminErrorMessage(error, '操作失败'))
       }
     }
   }
@@ -91,8 +124,8 @@ export default function AdminUsersPage() {
       await adminApi.deleteUser(id)
       message.success('用户已删除')
       fetchUsers()
-    } catch (error: any) {
-      message.error(error.response?.data?.detail || '删除失败')
+    } catch (error: unknown) {
+      message.error(getAdminErrorMessage(error, '删除失败'))
     }
   }
 
@@ -120,7 +153,7 @@ export default function AdminUsersPage() {
     { title: '注册时间', dataIndex: 'created_at', render: (v: string) => new Date(v).toLocaleString() },
     {
       title: '操作',
-      render: (_: any, record: User) => {
+      render: (_value: unknown, record: User) => {
         // Admin cannot edit/delete super_admin users
         const canEdit = isSuperAdmin || record.role !== 'super_admin'
         return (
@@ -159,50 +192,54 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Toolbar */}
-      <div style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-        <Input.Search
-          aria-label="搜索用户名或邮箱"
-          placeholder="搜索用户名或邮箱"
-          onSearch={setSearch}
-          style={{ width: 200, fontFamily: 'var(--font-body)' }}
-          className="fg-input"
-        />
-        <Select
-          placeholder="筛选角色"
-          allowClear
-          style={{ width: 120, fontFamily: 'var(--font-body)' }}
-          onChange={setRoleFilter}
-          className="fg-select"
-        >
-          <Select.Option value="user">普通用户</Select.Option>
-          <Select.Option value="admin">管理员</Select.Option>
-        </Select>
-        <Button
-          icon={<PlusOutlined style={{ fontSize: 14 }} />}
-          onClick={handleCreate}
-          className="fg-btn-secondary"
-        >
-          新建用户
-        </Button>
-        <div style={{ flex: 1 }} />
-      </div>
+      <motion.div variants={stagger.container} initial="hidden" animate="show">
+        {/* Toolbar */}
+        <motion.div variants={stagger.item} style={{ marginBottom: 16, display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Input.Search
+            aria-label="搜索用户名或邮箱"
+            placeholder="搜索用户名或邮箱"
+            onSearch={setSearch}
+            style={{ width: 200, fontFamily: 'var(--font-body)' }}
+            className="fg-input"
+          />
+          <Select
+            placeholder="筛选角色"
+            allowClear
+            style={{ width: 120, fontFamily: 'var(--font-body)' }}
+            onChange={setRoleFilter}
+            className="fg-select"
+          >
+            <Select.Option value="user">普通用户</Select.Option>
+            <Select.Option value="admin">管理员</Select.Option>
+          </Select>
+          <Button
+            icon={<PlusOutlined style={{ fontSize: 14 }} />}
+            onClick={handleCreate}
+            className="fg-btn-secondary"
+          >
+            新建用户
+          </Button>
+          <div style={{ flex: 1 }} />
+        </motion.div>
 
-      <Table
-        columns={columns}
-        dataSource={users}
-        rowKey="id"
-        loading={loading}
-        scroll={{ x: 'max-content' }}
-        pagination={{
-          current: page,
-          pageSize,
-          total,
-          showSizeChanger: true,
-          showTotal: (total) => `共 ${total} 条`,
-          onChange: (p, ps) => { setPage(p); setPageSize(ps) },
-        }}
-      />
+        <motion.div variants={stagger.item}>
+          <Table
+            columns={columns}
+            dataSource={users}
+            rowKey="id"
+            loading={loading}
+            scroll={{ x: 'max-content' }}
+            pagination={{
+              current: page,
+              pageSize,
+              total,
+              showSizeChanger: true,
+              showTotal: (total) => `共 ${total} 条`,
+              onChange: (p, ps) => { setPage(p); setPageSize(ps) },
+            }}
+          />
+        </motion.div>
+      </motion.div>
 
       <Modal
         title={editingUser ? '编辑用户' : '新建用户'}

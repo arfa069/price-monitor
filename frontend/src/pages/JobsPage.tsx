@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Card, Tabs } from 'antd'
 import {
   useCrawlAllJobs,
@@ -16,10 +17,12 @@ import JobList from '@/components/JobList'
 import MatchResultList from '@/components/MatchResultList'
 import ResumeManager from '@/components/ResumeManager'
 import { useAuth } from '@/contexts/AuthContext'
+import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
 import type { Job, JobSearchConfigCreate } from '@/types'
 
 export default function JobsPage() {
   const { user } = useAuth()
+  const stagger = useStaggerAnimation(0.05, 0.05)
   const canCrawl = user?.role !== 'admin'
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(20)
@@ -155,13 +158,20 @@ export default function JobsPage() {
       </div>
 
       {/* Tab sections */}
-      <div style={{ marginTop: 24 }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={items}
-        />
-      </div>
+      <motion.div
+        variants={stagger.container}
+        initial="hidden"
+        animate="show"
+        style={{ marginTop: 24 }}
+      >
+        <motion.div variants={stagger.item}>
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={items}
+          />
+        </motion.div>
+      </motion.div>
 
       <JobDrawer open={drawerOpen} job={selectedJob} onClose={() => setDrawerOpen(false)} />
     </div>

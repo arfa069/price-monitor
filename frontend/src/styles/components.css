@@ -876,28 +876,28 @@
 
 /* ---- AppLayout main content — unified page entry ---- */
 .app-content {
-  animation: fadeInUp 200ms ease-out forwards;
+  /* spring: framer-motion - see PageTransition.tsx */
 }
 
 /* ---- Page root container ---- */
 .page-root {
-  animation: fadeInUp 200ms ease-out forwards;
+  /* spring: framer-motion - see PageTransition.tsx */
 }
 
 /* ---- Page header color block ---- */
 .page-header {
-  animation: fadeInUp 200ms ease-out forwards;
+  /* spring: framer-motion - see PageTransition.tsx */
 }
 
 /* ---- Toolbar and card elements ---- */
 .fg-card-toolbar,
 .fg-card-header {
-  animation: fadeInUp 200ms ease-out 50ms both;
+  /* spring: framer-motion - see PageTransition.tsx */
 }
 
 /* ---- Table wrapper ---- */
 .ant-table-wrapper {
-  animation: fadeInUp 200ms ease-out 100ms both;
+  /* spring: framer-motion - see PageTransition.tsx */
 }
 
 /* ---- Focus visible (accessibility) ---- */

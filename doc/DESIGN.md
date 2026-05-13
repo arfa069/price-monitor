@@ -110,11 +110,17 @@
   | nav | `0 1px 3px rgba(0,0,0,0.08)` | 顶部导航 |
 
 ## Motion
-- **Approach:** Intentional — 只有帮助理解的动效，没有炫技。
+- **Approach:** Intentional + Spring — 只有帮助理解的动效，没有炫技；页面级过渡使用轻量弹性，让后台页面切换更自然。
 - **Easing:**
   - Enter: `ease-out`（元素入场快速减速，感觉"到达"）
   - Exit: `ease-in`（元素退场加速离开）
   - Move: `ease-in-out`（状态切换平滑）
+- **Spring:**
+  | Speed | stiffness | damping | Usage |
+  |-------|-----------|---------|-------|
+  | fast | 400 | 25 | 快速响应，轻微回弹 |
+  | normal | 300 | 20 | 页面过渡默认值，平衡自然 |
+  | slow | 200 | 15 | 柔和，明显回弹 |
 - **Duration scale:**
   | Token | Duration | Usage |
   |-------|----------|-------|
@@ -123,11 +129,13 @@
   | medium | 200ms | 页面切换、内容区淡入 |
   | long | 300ms | 表格行数据更新闪烁、模态框出现 |
 - **Specific patterns:**
-  - 入场：元素从下方 8px 淡入，`opacity 0→1, translateY(8px)→0`，150ms ease-out
+  - 入场：元素从下方淡入；普通元素使用 `opacity 0→1, translateY(8px)→0`，页面使用 spring `translateY(30px)→0`
   - 状态切换：按钮/卡片 hover，`opacity/transform/border-color`，100ms ease-out
   - 数据更新：表格行背景色闪烁至色块对应色 10%，300ms ease-in-out
-  - 页面切换：内容区淡入，`opacity 0→1`，200ms ease-out
-  - **绝不使用：** 弹跳（bounce）、弹性过冲（elastic）、滚动视差（parallax）
+  - 页面切换：AppLayout 内通过 Framer Motion `AnimatePresence mode="wait"` 串行切换；新页从下方轻弹进入，旧页向上滑出并淡出
+  - 组件错落入场：列表和表格容器使用 `staggerChildren: 0.05`，避免逐行干扰 Ant Design Table 虚拟化和布局计算
+  - 减少动画偏好：必须同时尊重 `prefers-reduced-motion` 和 Framer Motion `useReducedMotion()`
+  - **绝不使用：** 滚动视差（parallax）、无限循环装饰动画、强烈弹跳或夸张过冲
 
 ## Component Tokens
 - **Button:**
@@ -187,3 +195,4 @@
 | 2026-05-11 | Semantic color blocks | Each macaron block maps to a functional domain (lime=products, cream=jobs, mint=config, etc.) |
 | 2026-05-11 | Add motion spec | Previously zero motion; intentional micro-interactions improve perceived quality and state comprehension |
 | 2026-05-11 | Add dark mode strategy | Night usage scenario for a tool that runs 24/7; macaron blocks desaturate 15% in dark mode |
+| 2026-05-13 | Adopt light spring transitions | User selected Spring style; AppLayout owns route transitions and Settings exposes speed preference |

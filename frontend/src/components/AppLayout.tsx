@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons'
 import { useAuth } from '@/contexts/AuthContext'
 import { useThemeContext } from '@/components/ThemeProvider'
+import PageTransition from '@/components/PageTransition'
 
 const MOBILE_BREAKPOINT = 768
 
@@ -30,7 +31,7 @@ export default function AppLayout({
   const navigate = useNavigate()
   const location = useLocation()
   const { user, logout } = useAuth()
-  const { theme, toggleTheme } = useThemeContext()
+  const { theme, toggleTheme, motionSpeed } = useThemeContext()
 
   const handleLogout = () => {
     logout()
@@ -429,9 +430,12 @@ export default function AppLayout({
           background: 'var(--color-canvas)',
           minHeight: 'calc(100vh - 104px)',
           overflow: 'auto',
+          position: 'relative',
         }}
       >
-        {children}
+        <PageTransition pathname={location.pathname} speed={motionSpeed}>
+          {children}
+        </PageTransition>
       </div>
 
       {/* Footer */}

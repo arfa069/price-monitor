@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import {
   App,
   Button,
@@ -18,6 +19,7 @@ import {
   PlusOutlined,
 } from '@ant-design/icons'
 import JobConfigForm from '@/components/JobConfigForm'
+import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
 import type { JobSearchConfig, JobSearchConfigCreate } from '@/types'
 
 interface JobConfigListProps {
@@ -44,6 +46,7 @@ export default function JobConfigList({
   crawlLoading,
 }: JobConfigListProps) {
   const message = App.useApp().message
+  const stagger = useStaggerAnimation(0.05, 0.05)
   const [createOpen, setCreateOpen] = useState(false)
   const [editRecord, setEditRecord] = useState<JobSearchConfig | null>(null)
 
@@ -88,55 +91,63 @@ export default function JobConfigList({
       ) : !configs?.length ? (
         <Empty description="暂无配置" />
       ) : (
+        <motion.div
+          variants={stagger.container}
+          initial="hidden"
+          animate="show"
+          style={{ width: '100%' }}
+        >
         <Space orientation="vertical" style={{ width: '100%' }}>
           {configs.map((config) => (
-            <Card
-              key={config.id}
-              size="small"
-              title={config.name}
-              extra={
-                <Space>
-                  <Tag color={config.active ? 'success' : 'default'}>
-                    {config.active ? '启用' : '停用'}
-                  </Tag>
-                  <Tag color={config.notify_on_new ? 'processing' : 'default'}>
-                    {config.notify_on_new ? '新职位通知' : '通知关闭'}
-                  </Tag>
-                  <Switch
-                    size="small"
-                    checked={config.enable_match_analysis}
-                    checkedChildren="自动匹配"
-                    unCheckedChildren="自动匹配"
-                    onChange={(checked) => void handleToggleMatch(config, checked)}
-                  />
+            <motion.div key={config.id} variants={stagger.item}>
+              <Card
+                size="small"
+                title={config.name}
+                extra={
+                  <Space>
+                    <Tag color={config.active ? 'success' : 'default'}>
+                      {config.active ? '启用' : '停用'}
+                    </Tag>
+                    <Tag color={config.notify_on_new ? 'processing' : 'default'}>
+                      {config.notify_on_new ? '新职位通知' : '通知关闭'}
+                    </Tag>
+                    <Switch
+                      size="small"
+                      checked={config.enable_match_analysis}
+                      checkedChildren="自动匹配"
+                      unCheckedChildren="自动匹配"
+                      onChange={(checked) => void handleToggleMatch(config, checked)}
+                    />
+                  </Space>
+                }
+              >
+                <Typography.Paragraph ellipsis={{ rows: 1 }} style={{ marginBottom: 8 }}>
+                  {config.url}
+                </Typography.Paragraph>
+                <Space wrap size={8}>
+                  {onCrawl && (
+                    <Button
+                      icon={<PlayCircleOutlined />}
+                      loading={crawlLoading}
+                      onClick={() => onCrawl(config.id)}
+                    >
+                      抓取
+                    </Button>
+                  )}
+                  <Button icon={<EditOutlined />} onClick={() => setEditRecord(config)}>
+                    编辑
+                  </Button>
+                  <Popconfirm title="确认删除这条配置吗？" onConfirm={() => onDelete(config.id)}>
+                    <Button danger icon={<DeleteOutlined />}>
+                      删除
+                    </Button>
+                  </Popconfirm>
                 </Space>
-              }
-            >
-              <Typography.Paragraph ellipsis={{ rows: 1 }} style={{ marginBottom: 8 }}>
-                {config.url}
-              </Typography.Paragraph>
-              <Space wrap size={8}>
-                {onCrawl && (
-                  <Button
-                    icon={<PlayCircleOutlined />}
-                    loading={crawlLoading}
-                    onClick={() => onCrawl(config.id)}
-                  >
-                    抓取
-                  </Button>
-                )}
-                <Button icon={<EditOutlined />} onClick={() => setEditRecord(config)}>
-                  编辑
-                </Button>
-                <Popconfirm title="确认删除这条配置吗？" onConfirm={() => onDelete(config.id)}>
-                  <Button danger icon={<DeleteOutlined />}>
-                    删除
-                  </Button>
-                </Popconfirm>
-              </Space>
-            </Card>
+              </Card>
+            </motion.div>
           ))}
         </Space>
+        </motion.div>
       )}
 
       <JobConfigForm

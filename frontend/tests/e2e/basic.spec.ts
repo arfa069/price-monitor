@@ -13,7 +13,22 @@ import { test, expect } from '@playwright/test'
  * slow tests. They are skipped by default in CI environments.
  */
 const BASE_URL = process.env.E2E_BASE_URL || 'http://localhost:5173'
-const API_URL = process.env.E2E_API_URL || 'http://localhost:8000'
+
+async function setAuthToken(page: import('@playwright/test').Page) {
+  await page.addInitScript((token) => {
+    localStorage.setItem('auth_token', token)
+    localStorage.setItem(
+      'auth_user',
+      JSON.stringify({
+        id: 1,
+        username: 'e2e',
+        email: 'e2e@example.com',
+        role: 'super_admin',
+        is_active: true,
+      }),
+    )
+  }, process.env.E2E_TEST_LOGIN!)
+}
 
 test.describe('Login Page', () => {
   test.beforeEach(async ({ page }) => {
@@ -59,10 +74,7 @@ test.describe('Products Page (after login)', () => {
   test.skip(!process.env.E2E_TEST_LOGIN, 'Requires E2E_TEST_LOGIN env var with auth token')
 
   test('should display products table', async ({ page }) => {
-    // Set auth token
-    await page.evaluate((token) => {
-      localStorage.setItem('auth_token', token)
-    }, process.env.E2E_TEST_LOGIN!)
+    await setAuthToken(page)
 
     await page.goto(`${BASE_URL}/products`)
     await expect(page.locator('.ant-table')).toBeVisible({ timeout: 10000 })
@@ -73,11 +85,24 @@ test.describe('Jobs Page (after login)', () => {
   test.skip(!process.env.E2E_TEST_LOGIN, 'Requires E2E_TEST_LOGIN env var with auth token')
 
   test('should display jobs page', async ({ page }) => {
-    await page.evaluate((token) => {
-      localStorage.setItem('auth_token', token)
-    }, process.env.E2E_TEST_LOGIN!)
+    await setAuthToken(page)
 
     await page.goto(`${BASE_URL}/jobs`)
     await expect(page.locator('.ant-table').or(page.locator('.ant-empty'))).toBeVisible({ timeout: 10000 })
+  })
+
+  test('should keep transition wrapper visible when switching pages', async ({ page }) => {
+    await setAuthToken(page)
+
+    await page.goto(`${BASE_URL}/jobs`)
+    await expect(page.locator('[data-page-transition="/jobs"]')).toBeVisible({ timeout: 10000 })
+
+    await page.click('text=商品管理')
+    await expect(page).toHaveURL(/\/products/)
+    await expect(page.locator('[data-page-transition="/products"]')).toBeVisible({ timeout: 10000 })
+
+    await page.click('text=定时配置')
+    await expect(page).toHaveURL(/\/schedule/)
+    await expect(page.locator('[data-page-transition="/schedule"]')).toBeVisible({ timeout: 10000 })
   })
 })

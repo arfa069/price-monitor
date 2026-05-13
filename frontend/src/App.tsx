@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react'
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { App as AntdApp, ConfigProvider, Spin, theme } from 'antd'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import AppLayout from '@/components/AppLayout'
@@ -157,6 +157,16 @@ function PublicRoute({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
+function ProtectedLayoutRoute() {
+  return (
+    <ProtectedRoute>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+    </ProtectedRoute>
+  )
+}
+
 function AppRoutes() {
   const { theme: currentTheme } = useThemeContext()
 
@@ -236,76 +246,29 @@ function AppRoutes() {
             />
 
             {/* 受保护的路由 */}
-            <Route
-              path="/jobs"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <JobsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ProductsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/schedule"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ScheduleConfigPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/profile"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <ProfilePage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <SettingsPage />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/users"
-              element={
-                <AdminRoute>
-                  <AppLayout>
+            <Route element={<ProtectedLayoutRoute />}>
+              <Route path="/jobs" element={<JobsPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/schedule" element={<ScheduleConfigPage />} />
+              <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route
+                path="/admin/users"
+                element={
+                  <AdminRoute>
                     <AdminUsersPage />
-                  </AppLayout>
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="/admin/audit-logs"
-              element={
-                <AdminRoute>
-                  <AppLayout>
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/audit-logs"
+                element={
+                  <AdminRoute>
                     <AdminAuditLogsPage />
-                  </AppLayout>
-                </AdminRoute>
-              }
-            />
+                  </AdminRoute>
+                }
+              />
+            </Route>
 
             {/* 默认路由 */}
             <Route path="/" element={<Navigate to="/jobs" replace />} />

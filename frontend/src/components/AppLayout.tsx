@@ -419,6 +419,7 @@ export default function AppLayout({
 
       {/* Main Content */}
       <div
+        className="app-content"
         style={{
           flex: 1,
           marginTop: 56,

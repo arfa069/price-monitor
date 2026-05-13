@@ -866,6 +866,36 @@
 }
 
 
+/* ============================================================
+   Page Animations — Entrance Animations for Admin Pages
+   ============================================================ */
+
+/* ---- AppLayout main content — unified page entry ---- */
+.app-content {
+  animation: fadeInUp 200ms ease-out forwards;
+}
+
+/* ---- Page root container ---- */
+.page-root {
+  animation: fadeInUp 200ms ease-out forwards;
+}
+
+/* ---- Page header color block ---- */
+.page-header {
+  animation: fadeInUp 200ms ease-out forwards;
+}
+
+/* ---- Toolbar and card elements ---- */
+.fg-card-toolbar,
+.fg-card-header {
+  animation: fadeInUp 200ms ease-out 50ms both;
+}
+
+/* ---- Table wrapper ---- */
+.ant-table-wrapper {
+  animation: fadeInUp 200ms ease-out 100ms both;
+}
+
 /* ---- Focus visible (accessibility) ---- */
 *:focus-visible {
   outline: 2px solid var(--color-primary) !important;

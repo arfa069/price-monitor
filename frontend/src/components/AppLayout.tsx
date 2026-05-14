@@ -284,7 +284,6 @@ export default function AppLayout({
             borderRight: '1px solid var(--color-hairline)',
             marginTop: 8,
             marginBottom: 8,
-            transition: 'width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           }}
           width={200}
           collapsedWidth={60}

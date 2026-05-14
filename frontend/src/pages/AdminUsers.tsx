@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   App,
@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = useCallback(async (id: number) => {
     try {
       await adminApi.deleteUser(id);
       message.success("用户已删除");
@@ -161,9 +161,9 @@ export default function AdminUsersPage() {
     } catch (error: unknown) {
       message.error(getAdminErrorMessage(error, "删除失败"));
     }
-  };
+  }, [message, fetchUsers]);
 
-  const handleExpandEdit = (user: User) => {
+  const handleExpandEdit = useCallback((user: User) => {
     setExpandedUserId(user.id);
     setExpandedTab("info");
     editingInfoForm.setFieldsValue({
@@ -172,18 +172,13 @@ export default function AdminUsersPage() {
       role: user.role,
       is_active: user.is_active,
     });
-  };
+  }, [editingInfoForm]);
 
-  const handleExpandPermissions = (user: User) => {
-    setExpandedUserId(user.id);
-    setExpandedTab("permissions");
-  };
-
-  const handleExpandClose = () => {
+  const handleExpandClose = useCallback(() => {
     setExpandedUserId(null);
-  };
+  }, []);
 
-  const handleInfoSave = async () => {
+  const handleInfoSave = useCallback(async () => {
     try {
       const values = (await editingInfoForm.validateFields()) as UserFormValues;
       const updateData: UserUpdate = {
@@ -201,9 +196,9 @@ export default function AdminUsersPage() {
         message.error(getAdminErrorMessage(error, "操作失败"));
       }
     }
-  };
+  }, [editingInfoForm, expandedUserId, message, fetchUsers]);
 
-  const columns = [
+  const columns = useMemo(() => [
     { title: "ID", dataIndex: "id", width: 60 },
     { title: "用户名", dataIndex: "username" },
     { title: "邮箱", dataIndex: "email" },
@@ -248,12 +243,6 @@ export default function AdminUsersPage() {
             >
               编辑
             </Button>
-            <Button
-              size="small"
-              onClick={() => handleExpandPermissions(record)}
-            >
-              资源权限
-            </Button>
             <Popconfirm
               title={`确定删除用户 ${record.username}？此操作不可恢复。`}
               onConfirm={() => handleDelete(record.id)}
@@ -272,7 +261,41 @@ export default function AdminUsersPage() {
         );
       },
     },
-  ];
+  ], [isSuperAdmin, handleExpandEdit, handleDelete]);
+
+  const expandable = useMemo(
+    () => ({
+      expandedRowKeys: expandedUserId !== null ? [expandedUserId] : [],
+      expandedRowRender: (record: User) => (
+        <AnimatePresence initial={false}>
+          {expandedUserId === record.id && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{
+                height: { duration: 0.3, ease: [0.25, 0.46, 0.45, 0.94] },
+                opacity: { duration: 0.2 },
+              }}
+              style={{ overflow: "hidden" }}
+            >
+              <UserInlineEditor
+                user={record}
+                activeTab={expandedTab}
+                onTabChange={setExpandedTab}
+                onClose={handleExpandClose}
+                onInfoSave={handleInfoSave}
+                infoForm={editingInfoForm}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      ),
+      expandIcon: () => null,
+      rowExpandable: () => true,
+    }),
+    [expandedUserId, expandedTab, handleExpandClose, handleInfoSave, editingInfoForm],
+  );
 
   return (
     <div>
@@ -332,33 +355,8 @@ export default function AdminUsersPage() {
             dataSource={users}
             rowKey="id"
             loading={loading}
-            scroll={{ x: "max-content" }}
-            expandable={{
-              expandedRowKeys: expandedUserId !== null ? [expandedUserId] : [],
-              expandedRowRender: (record: User) => (
-                <AnimatePresence initial={false}>
-                  <motion.div
-                    key={record.id}
-                    initial={{ height: 0, opacity: 0, y: -8 }}
-                    animate={{ height: "auto", opacity: 1, y: 0 }}
-                    exit={{ height: 0, opacity: 0, y: -8 }}
-                    transition={{ duration: 0, ease: "easeInOut" }}
-                    style={{ overflow: "hidden" }}
-                  >
-                    <UserInlineEditor
-                      user={record}
-                      isExpanded={expandedUserId === record.id}
-                      activeTab={expandedTab}
-                      onTabChange={setExpandedTab}
-                      onClose={handleExpandClose}
-                      onInfoSave={handleInfoSave}
-                    />
-                  </motion.div>
-                </AnimatePresence>
-              ),
-              expandIcon: () => null,
-              rowExpandable: () => true,
-            }}
+            scroll={{ x: "100%" }}
+            expandable={expandable}
             pagination={{
               current: page,
               pageSize,
@@ -628,25 +626,22 @@ function GrantPermissionModal({
 
 interface UserInlineEditorProps {
   user: User;
-  isExpanded: boolean;
   activeTab: "info" | "permissions";
   onTabChange: (tab: "info" | "permissions") => void;
   onClose: () => void;
   onInfoSave: () => void;
+  infoForm: ReturnType<typeof Form.useForm>[0];
 }
 
 function UserInlineEditor({
   user,
-  isExpanded,
   activeTab,
   onTabChange,
   onClose,
   onInfoSave,
+  infoForm,
 }: UserInlineEditorProps) {
-  const [infoForm] = Form.useForm();
   const isSuperAdmin = true; // inline editing is for super_admin context
-
-  if (!isExpanded) return null;
 
   return (
     <div
@@ -791,24 +786,40 @@ function InlineResourcePermissionsEditor({
 
   return (
     <div>
-      <Table<ResourcePermission>
+      <Form form={editForm}>
+        <Table<ResourcePermission>
         dataSource={perms}
         rowKey="id"
         size="small"
         pagination={false}
         columns={[
-          { title: "资源类型", dataIndex: "resource_type", width: 90 },
+          {
+            title: "资源类型",
+            dataIndex: "resource_type",
+            width: 90,
+            render: (v: string, record: ResourcePermission) =>
+              editingPermId === record.id ? (
+                <Form.Item name="resource_type" style={{ margin: 0 }}>
+                  <Select size="small" style={{ width: 80 }}>
+                    <Select.Option value="product">商品</Select.Option>
+                    <Select.Option value="job">职位</Select.Option>
+                    <Select.Option value="user">用户</Select.Option>
+                  </Select>
+                </Form.Item>
+              ) : (
+                v
+              ),
+          },
           {
             title: "资源ID",
             dataIndex: "resource_id",
             ellipsis: true,
             render: (v: string, record: ResourcePermission) =>
               editingPermId === record.id ? (
-                <Form.Item style={{ margin: 0 }}>
+                <Form.Item name="resource_id" style={{ margin: 0 }}>
                   <Input
                     size="small"
                     style={{ width: 100 }}
-                    name="resource_id"
                     placeholder="例如 13 或 *"
                   />
                   <div
@@ -831,29 +842,12 @@ function InlineResourcePermissionsEditor({
             width: 100,
             render: (v: string, record: ResourcePermission) =>
               editingPermId === record.id ? (
-                <Form.Item style={{ margin: 0 }}>
+                <Form.Item name="permission" style={{ margin: 0 }}>
                   <Select size="small" style={{ width: 80 }}>
                     <Select.Option value="read">read</Select.Option>
                     <Select.Option value="write">write</Select.Option>
                     <Select.Option value="delete">delete</Select.Option>
                     <Select.Option value="*">*</Select.Option>
-                  </Select>
-                </Form.Item>
-              ) : (
-                v
-              ),
-          },
-          {
-            title: "资源类型",
-            dataIndex: "resource_type",
-            width: 90,
-            render: (v: string, record: ResourcePermission) =>
-              editingPermId === record.id ? (
-                <Form.Item style={{ margin: 0 }}>
-                  <Select size="small" style={{ width: 80 }}>
-                    <Select.Option value="product">商品</Select.Option>
-                    <Select.Option value="job">职位</Select.Option>
-                    <Select.Option value="user">用户</Select.Option>
                   </Select>
                 </Form.Item>
               ) : (
@@ -902,6 +896,7 @@ function InlineResourcePermissionsEditor({
           },
         ]}
       />
+      </Form>
       <Button
         style={{ marginTop: 12 }}
         size="small"

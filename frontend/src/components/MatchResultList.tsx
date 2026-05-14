@@ -8,7 +8,7 @@ import type { MatchResultWithJob } from '@/types'
 export default function MatchResultList() {
   const message = App.useApp().message
   const [resumeId, setResumeId] = useState<number | undefined>()
-  const [minScore, setMinScore] = useState<number | undefined>(70)
+  const [minScore, setMinScore] = useState<number>(70)
   const [page, setPage] = useState(1)
   const pageSize = 20
 
@@ -107,7 +107,7 @@ export default function MatchResultList() {
             setPage(1)
           }}
           options={[
-            { label: '全部分数', value: undefined },
+            { label: '全部分数', value: 0 },
             { label: '70 分以上', value: 70 },
             { label: '80 分以上', value: 80 },
             { label: '90 分以上', value: 90 },

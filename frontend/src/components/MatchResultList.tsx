@@ -23,24 +23,24 @@ export default function MatchResultList() {
 
   const handleTriggerMatch = async () => {
     if (!resumeId) {
-      message.warning('请先选择简历')
+      message.warning('Please select a resume first')
       return
     }
     try {
       const jobsResp = await jobsApi.getJobs({ page: 1, page_size: 100 })
       const jobIds = jobsResp.data.items.map((job) => job.id)
       await triggerMatch.mutateAsync({ resume_id: resumeId, job_ids: jobIds })
-      message.success('匹配分析完成')
+      message.success('Match analysis complete')
       refetch()
     } catch {
-      message.error('匹配分析失败')
+      message.error('Match analysis failed')
     }
   }
 
   const columns: ColumnsType<MatchResultWithJob> = useMemo(
     () => [
       {
-        title: '匹配分',
+        title: 'Match Score',
         dataIndex: 'match_score',
         width: 90,
         render: (score: number) => (
@@ -48,37 +48,37 @@ export default function MatchResultList() {
         ),
       },
       {
-        title: '建议',
+        title: 'Recommendation',
         dataIndex: 'apply_recommendation',
         width: 110,
         render: (value: string | null) => {
           const color =
-            value === '强烈推荐' ? 'green' : value === '可以考虑' ? 'blue' : 'default'
+            value === 'Strongly Recommended' ? 'green' : value === 'Consider' ? 'blue' : 'default'
           return <Tag color={color}>{value || '-'}</Tag>
         },
       },
-      { title: '职位', dataIndex: 'job_title', ellipsis: true },
-      { title: '公司', dataIndex: 'job_company', width: 160, ellipsis: true },
-      { title: '薪资', dataIndex: 'job_salary', width: 120 },
+      { title: 'Job Title', dataIndex: 'job_title', ellipsis: true },
+      { title: 'Company', dataIndex: 'job_company', width: 160, ellipsis: true },
+      { title: 'Salary', dataIndex: 'job_salary', width: 120 },
       {
-        title: '原因',
+        title: 'Reason',
         dataIndex: 'match_reason',
         ellipsis: true,
         render: (value: string | null) => value || '-',
       },
       {
-        title: '分析时间',
+        title: 'Analysis Time',
         dataIndex: 'updated_at',
         width: 180,
-        render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
+        render: (value: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
       },
       {
-        title: '链接',
+        title: 'Link',
         key: 'job_url',
         width: 60,
         render: (_: unknown, record: MatchResultWithJob) =>
           record.job_url ? (
-            <a href={record.job_url} target="_blank" rel="noopener noreferrer">查看</a>
+            <a href={record.job_url} target="_blank" rel="noopener noreferrer">View</a>
           ) : null,
       },
     ],
@@ -86,11 +86,11 @@ export default function MatchResultList() {
   )
 
   return (
-    <Card title="匹配结果">
+    <Card title="Match Results">
       <Space style={{ marginBottom: 16 }} wrap>
         <Select
           style={{ width: 220 }}
-          placeholder="选择简历"
+          placeholder="Select Resume"
           allowClear
           value={resumeId}
           onChange={(value) => {
@@ -107,14 +107,14 @@ export default function MatchResultList() {
             setPage(1)
           }}
           options={[
-            { label: '全部分数', value: 0 },
-            { label: '70 分以上', value: 70 },
-            { label: '80 分以上', value: 80 },
-            { label: '90 分以上', value: 90 },
+            { label: 'All Scores', value: 0 },
+            { label: '70+', value: 70 },
+            { label: '80+', value: 80 },
+            { label: '90+', value: 90 },
           ]}
         />
         <Button type="primary" disabled={!resumeId} loading={triggerMatch.isPending} onClick={handleTriggerMatch}>
-          重新分析
+          Re-analyze
         </Button>
       </Space>
 
@@ -123,7 +123,7 @@ export default function MatchResultList() {
           <Spin />
         </div>
       ) : !matchResults?.items.length ? (
-        <Empty description="暂无匹配结果" />
+        <Empty description="No Match Results" />
       ) : (
         <Table
           rowKey="id"

@@ -44,7 +44,7 @@ export default function JobList({
     () => [
       { title: 'ID', dataIndex: 'id', width: 80 },
       {
-        title: '匹配',
+        title: 'Match',
         key: 'match_score',
         width: 90,
         render: (_, record) => {
@@ -58,42 +58,42 @@ export default function JobList({
         },
       },
       {
-        title: '职位',
+        title: 'Job Title',
         dataIndex: 'title',
         ellipsis: true,
         render: (title: string, record) =>
           record.url ? (
-            <a href={record.url} target="_blank" rel="noopener noreferrer" title="在新标签页打开职位">
+            <a href={record.url} target="_blank" rel="noopener noreferrer" title="Open job in new tab">
               {title}
             </a>
           ) : (
             title
           ),
       },
-      { title: '公司', dataIndex: 'company', width: 200, ellipsis: true },
-      { title: '薪资', dataIndex: 'salary', width: 120 },
-      { title: '地点', dataIndex: 'location', width: 120, ellipsis: true },
+      { title: 'Company', dataIndex: 'company', width: 200, ellipsis: true },
+      { title: 'Salary', dataIndex: 'salary', width: 120 },
+      { title: 'Location', dataIndex: 'location', width: 120, ellipsis: true },
       {
-        title: '状态',
+        title: 'Status',
         dataIndex: 'is_active',
         width: 90,
         render: (active: boolean) => (
-          <Tag color={active ? 'success' : 'default'}>{active ? '活跃' : '失效'}</Tag>
+          <Tag color={active ? 'success' : 'default'}>{active ? 'Active' : 'Inactive'}</Tag>
         ),
       },
       {
-        title: '最近更新',
+        title: 'Last Updated',
         dataIndex: 'last_updated_at',
         width: 180,
-        render: (value: string) => new Date(value).toLocaleString('zh-CN'),
+        render: (value: string) => new Date(value).toLocaleString('en-US'),
       },
       {
-        title: '操作',
+        title: 'Actions',
         key: 'action',
         width: 100,
         render: (_, record) => (
           <Button size="small" onClick={(e) => { e.stopPropagation(); onViewDetail(record) }}>
-            查看
+            View
           </Button>
         ),
       },
@@ -102,12 +102,12 @@ export default function JobList({
   )
 
   return (
-    <Card style={{ marginTop: 16 }} title="职位列表">
+    <Card style={{ marginTop: 16 }} title="Job List">
       <Space style={{ marginBottom: 12 }} wrap>
         <Input
           allowClear
           prefix={<SearchOutlined />}
-          placeholder="关键词搜索职位或公司"
+          placeholder="Search jobs or companies"
           value={filters.keyword}
           autoComplete="off"
           onChange={(e) => onFilterChange({ ...filters, keyword: e.target.value })}
@@ -123,14 +123,14 @@ export default function JobList({
             })
           }
           options={[
-            { label: '全部状态', value: 'all' },
-            { label: '活跃', value: 'active' },
-            { label: '失效', value: 'inactive' },
+            { label: 'All Statuses', value: 'all' },
+            { label: 'Active', value: 'active' },
+            { label: 'Inactive', value: 'inactive' },
           ]}
         />
         {onCrawlAll && (
           <Button icon={<ReloadOutlined />} loading={crawlAllLoading} onClick={onCrawlAll}>
-            全量抓取
+            Crawl All
           </Button>
         )}
       </Space>

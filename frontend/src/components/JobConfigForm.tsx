@@ -59,22 +59,22 @@ export default function JobConfigForm({
 
   return (
     <Modal
-      title={record ? '编辑职位配置' : '新增职位配置'}
+      title={record ? 'Edit Job Config' : 'Add Job Config'}
       open={open}
       onCancel={handleCancel}
       onOk={handleOk}
       confirmLoading={confirmLoading}
     >
       <Form form={form} layout="vertical">
-        <Form.Item name="name" label="配置名称" rules={[{ required: true, message: '请输入配置名称' }]}>
-          <Input placeholder="例如：上海前端岗位" autoComplete="off" />
+        <Form.Item name="name" label="Config Name" rules={[{ required: true, message: 'Please enter config name' }]}>
+          <Input placeholder="e.g. Shanghai Frontend Jobs" autoComplete="off" />
         </Form.Item>
         <Form.Item
           name="url"
-          label="Boss 搜索 URL"
+          label="Boss Search URL"
           rules={[
-            { required: true, message: '请输入 URL' },
-            { type: 'url', message: 'URL 格式不正确' },
+            { required: true, message: 'Please enter URL' },
+            { type: 'url', message: 'Invalid URL format' },
           ]}
         >
           <Input
@@ -83,34 +83,34 @@ export default function JobConfigForm({
             onChange={handleUrlChange}
           />
         </Form.Item>
-        <Form.Item name="keyword" label="关键词">
-          <Input placeholder="例如：React" autoComplete="off" />
+        <Form.Item name="keyword" label="Keyword">
+          <Input placeholder="e.g. React" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="city_code" label="城市代码">
-          <Input placeholder="例如：101020100" autoComplete="off" />
+        <Form.Item name="city_code" label="City Code">
+          <Input placeholder="e.g. 101020100" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="salary_min" label="最低薪资 (K)">
+        <Form.Item name="salary_min" label="Min Salary (K)">
           <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item name="salary_max" label="最高薪资 (K)">
+        <Form.Item name="salary_max" label="Max Salary (K)">
           <InputNumber min={0} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item name="experience" label="经验要求">
-          <Input placeholder="例如：3-5年" autoComplete="off" />
+        <Form.Item name="experience" label="Experience">
+          <Input placeholder="e.g. 3-5 years" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="education" label="学历要求">
-          <Input placeholder="例如：本科" autoComplete="off" />
+        <Form.Item name="education" label="Education">
+          <Input placeholder="e.g. Bachelor" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="deactivation_threshold" label="失活阈值">
+        <Form.Item name="deactivation_threshold" label="Deactivation Threshold">
           <InputNumber min={1} style={{ width: '100%' }} />
         </Form.Item>
-        <Form.Item name="active" label="启用配置" valuePropName="checked">
+        <Form.Item name="active" label="Enable Config" valuePropName="checked">
           <Switch />
         </Form.Item>
-        <Form.Item name="notify_on_new" label="新职位通知" valuePropName="checked">
+        <Form.Item name="notify_on_new" label="New Job Notification" valuePropName="checked">
           <Switch />
         </Form.Item>
-        <Form.Item name="enable_match_analysis" label="抓取后自动匹配" valuePropName="checked">
+        <Form.Item name="enable_match_analysis" label="Auto Match After Crawl" valuePropName="checked">
           <Switch />
         </Form.Item>
       </Form>

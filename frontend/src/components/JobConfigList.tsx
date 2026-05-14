@@ -54,33 +54,33 @@ export default function JobConfigList({
     if (!data.name || !data.url) throw new Error('missing required fields')
     await onCreate(data as JobSearchConfigCreate)
     setCreateOpen(false)
-    message.success('配置创建成功')
+    message.success('Config created successfully')
   }
 
   const handleUpdate = async (data: Partial<JobSearchConfigCreate>) => {
     if (!editRecord) return
     await onUpdate(editRecord.id, data)
     setEditRecord(null)
-    message.success('配置更新成功')
+    message.success('Config updated successfully')
   }
 
   const handleToggleMatch = async (config: JobSearchConfig, checked: boolean) => {
     await onUpdate(config.id, { enable_match_analysis: checked })
-    message.success(checked ? '已开启自动匹配' : '已关闭自动匹配')
+    message.success(checked ? 'Auto-match enabled' : 'Auto-match disabled')
   }
 
   return (
     <div>
       <Space style={{ marginBottom: 12, width: '100%', justifyContent: 'space-between' }}>
         <Typography.Title level={5} style={{ margin: 0 }}>
-          职位搜索配置
+          Job Search Config
         </Typography.Title>
         <Button
           icon={<PlusOutlined />}
           onClick={() => setCreateOpen(true)}
           className="fg-btn-secondary"
         >
-          新增配置
+          Add Config
         </Button>
       </Space>
 
@@ -89,7 +89,7 @@ export default function JobConfigList({
           <Spin />
         </div>
       ) : !configs?.length ? (
-        <Empty description="暂无配置" />
+        <Empty description="No Configs" />
       ) : (
         <motion.div
           variants={stagger.container}
@@ -106,16 +106,16 @@ export default function JobConfigList({
                 extra={
                   <Space>
                     <Tag color={config.active ? 'success' : 'default'}>
-                      {config.active ? '启用' : '停用'}
+                      {config.active ? 'Enabled' : 'Disabled'}
                     </Tag>
                     <Tag color={config.notify_on_new ? 'processing' : 'default'}>
-                      {config.notify_on_new ? '新职位通知' : '通知关闭'}
+                      {config.notify_on_new ? 'New Job Notification' : 'Notification Off'}
                     </Tag>
                     <Switch
                       size="small"
                       checked={config.enable_match_analysis}
-                      checkedChildren="自动匹配"
-                      unCheckedChildren="自动匹配"
+                      checkedChildren="Auto-match"
+                      unCheckedChildren="Auto-match"
                       onChange={(checked) => void handleToggleMatch(config, checked)}
                     />
                   </Space>
@@ -131,15 +131,15 @@ export default function JobConfigList({
                       loading={crawlLoading}
                       onClick={() => onCrawl(config.id)}
                     >
-                      抓取
+                      Crawl
                     </Button>
                   )}
                   <Button icon={<EditOutlined />} onClick={() => setEditRecord(config)}>
-                    编辑
+                    Edit
                   </Button>
-                  <Popconfirm title="确认删除这条配置吗？" onConfirm={() => onDelete(config.id)}>
+                  <Popconfirm title="Confirm delete this config?" onConfirm={() => onDelete(config.id)}>
                     <Button danger icon={<DeleteOutlined />}>
-                      删除
+                      Delete
                     </Button>
                   </Popconfirm>
                 </Space>

@@ -34,11 +34,11 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
 
   const handleUpload = async () => {
     if (!resumeName.trim()) {
-      message.error('请输入简历名称')
+      message.error('Please enter resume name')
       return
     }
     if (!resumeText.trim()) {
-      message.error('请输入简历内容')
+      message.error('Please enter resume content')
       return
     }
     try {
@@ -46,31 +46,31 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
         name: resumeName.trim(),
         resume_text: resumeText.trim(),
       })
-      message.success('简历上传成功')
+      message.success('Resume uploaded successfully')
       setUploadOpen(false)
       setResumeName('')
       setResumeText('')
       refetch()
     } catch {
-      message.error('上传失败')
+      message.error('Upload failed')
     }
   }
 
   const handleDelete = async (id: number) => {
     try {
       await deleteResume.mutateAsync(id)
-      message.success('简历已删除')
+      message.success('Resume deleted')
       refetch()
     } catch {
-      message.error('删除失败')
+      message.error('Delete failed')
     }
   }
 
   return (
-    <Card title="简历管理">
+    <Card title="Resume Management">
       <Space style={{ marginBottom: 16 }}>
         <Button type="primary" icon={<UploadOutlined />} onClick={() => setUploadOpen(true)}>
-          上传简历
+          Upload Resume
         </Button>
       </Space>
 
@@ -79,7 +79,7 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
           <Spin />
         </div>
       ) : !resumes?.length ? (
-        <Empty description="暂无简历，请先上传一份简历" />
+        <Empty description="No resumes, please upload one first" />
       ) : (
         <motion.div
           variants={stagger.container}
@@ -100,19 +100,19 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
                         size="small"
                         onClick={() => onSelectResume(resume)}
                       >
-                        {selectedResumeId === resume.id ? '已选择' : '选择'}
+                        {selectedResumeId === resume.id ? 'Selected' : 'Select'}
                       </Button>
                     ) : null}
-                    <Popconfirm title="确认删除这份简历吗？" onConfirm={() => handleDelete(resume.id)}>
+                    <Popconfirm title="Confirm delete this resume?" onConfirm={() => handleDelete(resume.id)}>
                       <Button danger size="small" icon={<DeleteOutlined />}>
-                        删除
+                        Delete
                       </Button>
                     </Popconfirm>
                   </Space>
                 }
               >
                 <Typography.Text type="secondary">
-                  上传时间：{new Date(resume.created_at).toLocaleString('zh-CN')}
+                  Uploaded: {new Date(resume.created_at).toLocaleString('en-US')}
                 </Typography.Text>
               </Card>
             </motion.div>
@@ -121,7 +121,7 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
       )}
 
       <Modal
-        title="上传简历"
+        title="Upload Resume"
         open={uploadOpen}
         onOk={handleUpload}
         onCancel={() => setUploadOpen(false)}
@@ -130,25 +130,25 @@ export default function ResumeManager({ onSelectResume, selectedResumeId }: Resu
       >
         <Space orientation="vertical" style={{ width: '100%' }} size={16}>
           <div>
-            <Typography.Text strong>简历名称</Typography.Text>
+            <Typography.Text strong>Resume Name</Typography.Text>
             <Input
-              aria-label="简历名称"
+              aria-label="Resume Name"
               value={resumeName}
               onChange={(e) => setResumeName(e.target.value)}
-              placeholder="例如：前端简历 v1"
+              placeholder="e.g. Frontend Resume v1"
               style={{ marginTop: 6 }}
             />
           </div>
           <div>
-            <Typography.Text strong>简历内容</Typography.Text>
+            <Typography.Text strong>Resume Content</Typography.Text>
             <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 6 }}>
-              先用纯文本粘贴，后续如果要支持文件解析再扩展上传格式。
+              Paste as plain text for now. File parsing support may be added later.
             </Typography.Text>
             <Input.TextArea
-              aria-label="简历内容"
+              aria-label="Resume Content"
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
-              placeholder="粘贴完整简历内容"
+              placeholder="Paste full resume content"
               autoSize={{ minRows: 12, maxRows: 20 }}
             />
           </div>

@@ -12,6 +12,7 @@ from app.core.permissions import require_permission
 from app.core.security import get_password_hash
 from app.database import get_db
 from app.models.audit_log import UserAuditLog
+from app.models.resource_permission import ResourcePermission
 from app.models.user import User
 from app.schemas.admin import (
     AdminUserListResponse,
@@ -19,6 +20,10 @@ from app.schemas.admin import (
     AdminUserUpdate,
     AuditLogListResponse,
     AuditLogResponse,
+    ResourcePermissionGrant,
+    ResourcePermissionListResponse,
+    ResourcePermissionResponse,
+    ResourcePermissionUpdate,
     UserCreate,
 )
 from app.schemas.auth import MessageResponse
@@ -439,3 +444,208 @@ async def list_audit_logs(
         page=page,
         page_size=page_size,
     )
+
+
+# ── Resource Permission Endpoints ────────────────────────────────
+
+@admin_router.post("/resource-permissions", status_code=status.HTTP_201_CREATED)
+async def grant_resource_permission(
+    grant: ResourcePermissionGrant,
+    request: Request,
+    current_user: User = Depends(require_permission("user:manage")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Grant one or more resource permissions to a user."""
+    subject_result = await db.execute(
+        select(User).where(User.id == grant.subject_id, User.deleted_at.is_(None))
+    )
+    subject_user = subject_result.scalar_one_or_none()
+    if not subject_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="目标用户不存在或已删除",
+        )
+
+    granted_count = 0
+    for resource_id in grant.resource_ids:
+        db.add(
+            ResourcePermission(
+                subject_id=grant.subject_id,
+                subject_type="user",
+                resource_type=grant.resource_type,
+                resource_id=resource_id,
+                permission=grant.permission,
+                granted_by=current_user.id,
+            )
+        )
+        granted_count += 1
+
+    try:
+        await db.commit()
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="权限授予失败，所有变更已回滚",
+        )
+
+    await log_audit(
+        db=db,
+        action="permission.grant",
+        actor_user_id=current_user.id,
+        target_type="resource_permission",
+        target_id=None,
+        details={
+            "subject_id": grant.subject_id,
+            "resource_type": grant.resource_type,
+            "resource_ids": grant.resource_ids,
+            "permission": grant.permission,
+            "count": granted_count,
+        },
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
+    return {"granted": granted_count}
+
+
+@admin_router.get(
+    "/resource-permissions",
+    response_model=ResourcePermissionListResponse,
+)
+async def list_resource_permissions(
+    user_id: int | None = Query(None, description="过滤：指定用户 ID"),
+    resource_type: str | None = Query(None, pattern="^(product|job|user)$"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    current_user: User = Depends(require_permission("user:read")),
+    db: AsyncSession = Depends(get_db),
+):
+    """List resource permission grants."""
+    base_filter = true()
+    if user_id is not None:
+        base_filter = and_(base_filter, ResourcePermission.subject_id == user_id)
+    if resource_type is not None:
+        base_filter = and_(base_filter, ResourcePermission.resource_type == resource_type)
+
+    total_result = await db.execute(
+        select(func.count(ResourcePermission.id)).where(base_filter)
+    )
+    total = total_result.scalar_one_or_none() or 0
+
+    result = await db.execute(
+        select(ResourcePermission)
+        .where(base_filter)
+        .order_by(ResourcePermission.created_at.desc(), ResourcePermission.id.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    items = result.scalars().all()
+    return ResourcePermissionListResponse(
+        items=[ResourcePermissionResponse.model_validate(item) for item in items],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@admin_router.delete("/resource-permissions/{permission_id}")
+async def revoke_resource_permission(
+    permission_id: int,
+    request: Request,
+    current_user: User = Depends(require_permission("user:manage")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Revoke a resource permission grant."""
+    result = await db.execute(
+        select(ResourcePermission).where(ResourcePermission.id == permission_id)
+    )
+    permission = result.scalar_one_or_none()
+    if not permission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="资源权限不存在",
+        )
+
+    details = {
+        "subject_id": permission.subject_id,
+        "resource_type": permission.resource_type,
+        "resource_id": permission.resource_id,
+        "permission": permission.permission,
+    }
+    await db.delete(permission)
+    await db.commit()
+
+    await log_audit(
+        db=db,
+        action="permission.revoke",
+        actor_user_id=current_user.id,
+        target_type="resource_permission",
+        target_id=permission_id,
+        details=details,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
+    return {"message": "Resource permission revoked"}
+
+
+@admin_router.patch(
+    "/resource-permissions/{permission_id}",
+    response_model=ResourcePermissionResponse,
+)
+async def update_resource_permission(
+    permission_id: int,
+    update_data: ResourcePermissionUpdate,
+    request: Request,
+    current_user: User = Depends(require_permission("user:manage")),
+    db: AsyncSession = Depends(get_db),
+):
+    """Update an existing resource permission grant (resource_type, resource_id, permission)."""
+    result = await db.execute(
+        select(ResourcePermission).where(ResourcePermission.id == permission_id)
+    )
+    permission = result.scalar_one_or_none()
+    if not permission:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="资源权限不存在",
+        )
+
+    update_dict = update_data.model_dump(exclude_unset=True)
+
+    if "resource_id" in update_dict and update_dict["resource_id"] == "":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="资源 ID 不能为空",
+        )
+
+    for field, value in update_dict.items():
+        if value is not None:
+            setattr(permission, field, value)
+
+    try:
+        await db.commit()
+        await db.refresh(permission)
+    except IntegrityError:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="资源权限已存在，修改失败",
+        )
+
+    await log_audit(
+        db=db,
+        action="permission.update",
+        actor_user_id=current_user.id,
+        target_type="resource_permission",
+        target_id=permission_id,
+        details={"updated_fields": list(update_dict.keys())},
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent", "")[:512],
+        commit=True,
+    )
+
+    return ResourcePermissionResponse.model_validate(permission)

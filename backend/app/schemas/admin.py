@@ -62,3 +62,42 @@ class AdminUserListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class ResourcePermissionGrant(BaseModel):
+    """Schema for granting resource permissions."""
+    subject_id: int = Field(..., description="被授权用户 ID")
+    resource_type: str = Field(..., pattern="^(product|job|user)$")
+    resource_ids: list[str] = Field(
+        ..., min_length=1, description="资源 ID 列表，支持 '*' 表示全部"
+    )
+    permission: str = Field(..., pattern="^(read|write|delete|\\*)$")
+
+
+class ResourcePermissionResponse(BaseModel):
+    """Schema for a resource permission grant."""
+    id: int
+    subject_id: int
+    subject_type: str
+    resource_type: str
+    resource_id: str
+    permission: str
+    granted_by: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class ResourcePermissionUpdate(BaseModel):
+    """Schema for updating an existing resource permission."""
+    resource_type: str | None = Field(default=None, pattern="^(product|job|user)$")
+    resource_id: str | None = Field(default=None, max_length=255)
+    permission: str | None = Field(default=None, pattern="^(read|write|delete|\\*)$")
+
+
+class ResourcePermissionListResponse(BaseModel):
+    """Paginated resource permission list."""
+    items: list[ResourcePermissionResponse]
+    total: int
+    page: int
+    page_size: int

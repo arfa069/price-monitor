@@ -47,11 +47,17 @@ powershell.exe -Command "cd C:/Users/arfac/price-monitor/backend; ruff check ."
 - LLM provider 通过 `LLMProviderFactory` 切换，支持 Anthropic/OpenAI/Ollama
 
 ## 7.本地开发及验证流程
-- 「改 → 构建 → 启动 → 验证」完整闭环
-- 所有测试必须先重启前后端
+- 默认闭环：改动 → 检查/构建 → 重启服务 → 真实验证 → 报告证据。
+- 命令执行前先看第 3 节，Windows 下优先使用 `powershell.exe -Command "..."`。
+- 后端改动：运行相关 `pytest`；影响共享逻辑/权限/调度/爬虫/模型时运行完整 `pytest` 和 `ruff check .`。
+- 前端改动：运行相关检查；提交前默认运行 `npm run lint` 和 `npm run build`。
+- 涉及 UI/路由/弹窗/下拉/表单/权限/爬取触发时，必须启动前后端并用浏览器真实验证。
+- 涉及爬虫登录态时，必须确认 Edge CDP 可用：`http://127.0.0.1:9222/json/version` 返回 `webSocketDebuggerUrl`。
+- Boss/京东/淘宝等强反爬流程，默认用已登录的 Edge CDP 专用浏览器验证。
+- 无法执行的验证必须说明原因；未实际执行的检查不得声称通过。
 
 ## 8. Design System
-Always read DESIGN.md before making any visual or UI decisions.
-All font choices, colors, spacing, and aesthetic direction are defined there.
-Do not deviate without explicit user approval.
-In QA mode, flag any code that doesn't match DESIGN.md.
+- 在做任何视觉或 UI 决策前，必须先阅读 `DESIGN.md`。
+- 字体、颜色、间距、组件风格和整体美学方向均以 `DESIGN.md` 为准。
+- 未经用户明确批准，不得偏离设计系统。
+- 进行 UI 审查或 QA 时，必须指出任何不符合 `DESIGN.md` 的实现。

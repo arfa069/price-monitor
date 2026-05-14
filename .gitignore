@@ -36,6 +36,8 @@ Thumbs.db
 # Dev artifacts (to be ignored)
 TODOS.md
 plan/
+docs/2026-05-13-resource-permission-impl.md
+docs/whimsical-growing-sutton.md
 
 # AGENTS.md files in subdirectories
 alembic/AGENTS.md

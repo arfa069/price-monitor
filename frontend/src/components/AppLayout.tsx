@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import { App, Layout, Menu, Button, Drawer, Avatar, Space, Dropdown } from 'antd'
 import type { MenuProps } from 'antd'
 import { useNavigate, useLocation } from 'react-router-dom'
@@ -278,16 +279,96 @@ export default function AppLayout({
             bottom: 48,
             zIndex: 100,
             background: 'var(--color-surface-soft)',
-            overflow: 'auto',
+            overflow: 'hidden',
             borderRadius: '0 24px 24px 0',
             borderRight: '1px solid var(--color-hairline)',
             marginTop: 8,
             marginBottom: 8,
+            transition: 'width 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
           }}
           width={200}
           collapsedWidth={60}
           trigger={null}
         >
+          <motion.div
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{
+              duration: 0.4,
+              ease: [0.25, 0.46, 0.45, 0.94],
+              delay: 0.1,
+            }}
+          >
+            <Menu
+              mode="inline"
+              selectedKeys={[selectedKey]}
+              onClick={handleMenuClick}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                marginTop: 12,
+                padding: '0 8px',
+              }}
+              items={menuItems}
+            />
+          </motion.div>
+        </Layout.Sider>
+      )}
+
+      {/* Mobile Drawer */}
+      {isMobile && (
+        <Drawer
+          placement="left"
+          onClose={() => setDrawerOpen(false)}
+          open={drawerOpen}
+          width={220}
+          styles={{
+            body: { padding: 0, background: 'var(--color-surface-soft)' },
+            header: { display: 'none' },
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.05 }}
+          >
+            <div
+              style={{
+                padding: '16px',
+                borderBottom: '1px solid var(--color-hairline)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  borderRadius: 6,
+                  background: 'var(--color-primary)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--color-on-primary)',
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                价
+              </div>
+              <span
+                style={{
+                  fontWeight: 480,
+                  fontSize: 15,
+                  color: 'var(--color-ink)',
+                  fontFamily: "var(--font-body)",
+                }}
+              >
+                价格监控
+              </span>
+            </div>
+          </motion.div>
           <Menu
             mode="inline"
             selectedKeys={[selectedKey]}
@@ -295,15 +376,13 @@ export default function AppLayout({
             style={{
               border: 'none',
               background: 'transparent',
-              marginTop: 12,
+              marginTop: 8,
               padding: '0 8px',
             }}
             items={menuItems}
           />
-        </Layout.Sider>
+        </Drawer>
       )}
-
-      {/* Mobile Drawer */}
       {isMobile && (
         <Drawer
           placement="left"

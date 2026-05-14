@@ -94,8 +94,6 @@ export default function AppLayout({
           ? location.pathname
           : '/products'
 
-  const siderWidth = collapsed ? 60 : 200
-
   const handleMenuClick = ({ key }: { key: string }) => {
     navigate(key)
     if (isMobile) setDrawerOpen(false)
@@ -443,13 +441,19 @@ export default function AppLayout({
       )}
 
       {/* Main Content */}
-      <div
+      <motion.div
         className="app-content"
+        animate={{
+          marginLeft: isMobile ? 0 : (collapsed ? 60 : 200),
+        }}
+        transition={{
+          duration: 0.5,
+          ease: [0.25, 0.46, 0.45, 0.94],
+        }}
         style={{
           flex: 1,
           marginTop: 56,
           marginBottom: 48,
-          marginLeft: isMobile ? 0 : siderWidth,
           padding: '24px',
           background: 'var(--color-canvas)',
           minHeight: 'calc(100vh - 104px)',
@@ -460,7 +464,7 @@ export default function AppLayout({
         <PageTransition pathname={location.pathname} speed={motionSpeed}>
           {children}
         </PageTransition>
-      </div>
+      </motion.div>
 
       {/* Footer */}
       <Layout.Footer

@@ -21,7 +21,7 @@ const queryCache = new QueryCache({
       return
     }
     if (err.response?.status != null && err.response.status >= 400) {
-      message.error(`请求失败: ${err.message || '未知错误'}`)
+      message.error(`Request failed: ${err.message || 'Unknown error'}`)
     }
   },
 })

@@ -87,47 +87,47 @@ export default function ProductFormModal({
 
   return (
     <Modal
-      title={record ? '编辑商品' : '新增商品'}
+      title={record ? 'Edit Product' : 'Add Product'}
       open={open}
       onCancel={onCancel}
       onOk={handleOk}
       confirmLoading={confirmLoading}
     >
       <Form form={form} layout="vertical" style={{ marginTop: 20 }}>
-        <Form.Item name="platform" label="平台" rules={[{ required: true, message: '请选择平台' }]}>
+        <Form.Item name="platform" label="Platform" rules={[{ required: true, message: 'Please select platform' }]}>
           <Select
             options={[
-              { label: '淘宝', value: 'taobao' },
-              { label: '京东', value: 'jd' },
-              { label: '亚马逊', value: 'amazon' },
+              { label: 'Taobao', value: 'taobao' },
+              { label: 'JD', value: 'jd' },
+              { label: 'Amazon', value: 'amazon' },
             ]}
           />
         </Form.Item>
         <Form.Item
           name="url"
-          label="商品链接"
+          label="Product URL"
           rules={[
-            { required: true, message: '请输入商品链接' },
-            { type: 'url', message: 'URL 格式不正确' },
+            { required: true, message: 'Please enter product URL' },
+            { type: 'url', message: 'Invalid URL format' },
           ]}
         >
           <Input placeholder="https://..." onChange={handleUrlChange} autoComplete="off" />
         </Form.Item>
-        <Form.Item name="title" label="标题">
-          <Input placeholder="留空时自动抓取" autoComplete="off" />
+        <Form.Item name="title" label="Title">
+          <Input placeholder="Leave empty to auto-fetch" autoComplete="off" />
         </Form.Item>
-        <Form.Item name="active" label="启用" valuePropName="checked">
+        <Form.Item name="active" label="Active" valuePropName="checked">
           <Switch />
         </Form.Item>
 
         <Divider orientation="horizontal" plain>
           <Space>
             <AlertOutlined />
-            价格告警设置
+            Price Alert Settings
           </Space>
         </Divider>
 
-        <Form.Item name="alert_enabled" label="启用告警" valuePropName="checked">
+        <Form.Item name="alert_enabled" label="Enable Alert" valuePropName="checked">
           <Switch />
         </Form.Item>
         <Form.Item noStyle shouldUpdate={(prev, curr) => prev.alert_enabled !== curr.alert_enabled}>
@@ -135,8 +135,8 @@ export default function ProductFormModal({
             getFieldValue('alert_enabled') ? (
               <Form.Item
                 name="alert_threshold"
-                label="降价阈值"
-                rules={[{ required: true, message: '请输入阈值' }]}
+                label="Drop Threshold"
+                rules={[{ required: true, message: 'Please enter threshold' }]}
               >
                 <Space.Compact>
                   <InputNumber min={1} max={100} style={{ width: 80 }} />

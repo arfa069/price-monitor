@@ -30,10 +30,10 @@ function ErrorFallback() {
     }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
       <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-ink)', marginBottom: 8 }}>
-        页面加载失败
+        Page load failed
       </div>
       <div style={{ fontSize: 14, color: 'var(--color-muted)', marginBottom: 24 }}>
-        请刷新页面或联系管理员
+        Please refresh the page or contact an administrator
       </div>
       <button
         onClick={() => navigate('/login')}
@@ -47,7 +47,7 @@ function ErrorFallback() {
           fontSize: 14,
         }}
       >
-        返回登录页
+        Back to Login
       </button>
     </div>
   )
@@ -80,7 +80,7 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-// 受保护的路由组件 - 需要登录才能访问
+// Protected route component - requires login
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
   const location = useLocation()
@@ -100,14 +100,14 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    // 重定向到登录页，并记录当前位置以便登录后返回
+    // Redirect to login page, save current location to return after login
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   return <>{children}</>
 }
 
-// 管理员路由 - 需要 admin 或 super_admin 角色
+// Admin route - requires admin or super_admin role
 function AdminRoute({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth()
 
@@ -132,7 +132,7 @@ function AdminRoute({ children }: { children: ReactNode }) {
   return <>{children}</>
 }
 
-// 公开路由 - 已登录用户访问时跳转到首页
+// Public route - redirects authenticated users to home
 function PublicRoute({ children }: { children: ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth()
 
@@ -227,7 +227,7 @@ function AppRoutes() {
         <AntdApp>
           <BrowserRouter>
           <Routes>
-            {/* 公开路由 */}
+            {/* Public routes */}
             <Route
               path="/login"
               element={
@@ -245,7 +245,7 @@ function AppRoutes() {
               }
             />
 
-            {/* 受保护的路由 */}
+            {/* Protected routes */}
             <Route element={<ProtectedLayoutRoute />}>
               <Route path="/jobs" element={<JobsPage />} />
               <Route path="/products" element={<ProductsPage />} />
@@ -270,7 +270,7 @@ function AppRoutes() {
               />
             </Route>
 
-            {/* 默认路由 */}
+            {/* Default routes */}
             <Route path="/" element={<Navigate to="/jobs" replace />} />
             <Route path="*" element={<Navigate to="/jobs" replace />} />
           </Routes>

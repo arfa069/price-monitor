@@ -11,7 +11,7 @@ function getInitialTheme(): Theme {
       return stored
     }
   } catch {
-    // localStorage 不可用（隐私模式、存储配额满等），静默回退
+    // localStorage unavailable (private mode, quota full, etc.), silently fall back
   }
   if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
     return 'dark'
@@ -22,7 +22,7 @@ function getInitialTheme(): Theme {
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(getInitialTheme)
 
-  // 初始化时设置 data-theme（只在挂载时执行一次）
+  // Set data-theme on mount (runs once)
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     document.documentElement.style.colorScheme = theme
@@ -37,7 +37,7 @@ export function useTheme() {
     try {
       localStorage.setItem(STORAGE_KEY, newTheme)
     } catch {
-      // localStorage 不可用，静默回退
+      // localStorage unavailable, silently fall back
     }
     document.documentElement.setAttribute('data-theme', newTheme)
     document.documentElement.style.colorScheme = newTheme
@@ -51,7 +51,7 @@ export function useTheme() {
     setTheme(theme === 'light' ? 'dark' : 'light')
   }, [theme, setTheme])
 
-  // 监听系统偏好变化
+  // Listen for system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const handleChange = (e: MediaQueryListEvent) => {
@@ -68,7 +68,7 @@ export function useTheme() {
           )
         }
       } catch {
-        // localStorage 不可用，直接跟随系统
+        // localStorage unavailable, follow system preference directly
         setThemeState(e.matches ? 'dark' : 'light')
       }
     }

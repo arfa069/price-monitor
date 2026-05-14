@@ -8,9 +8,9 @@ const BADGE_CLASS: Record<NonNullable<PermissionLevel>, string> = {
 };
 
 const BADGE_LABEL: Record<NonNullable<PermissionLevel>, string> = {
-  manage: "可管理",
-  edit: "可编辑",
-  read: "只读",
+  manage: "Manage",
+  edit: "Edit",
+  read: "Read",
 };
 
 interface Props {

@@ -19,7 +19,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // 初始化时从 localStorage 恢复认证状态
+  // Restore auth state from localStorage on init
   useEffect(() => {
     const initAuth = async () => {
       const token = localStorage.getItem(TOKEN_KEY)
@@ -27,13 +27,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (token && savedUser) {
         try {
-          // 尝试从服务器获取最新用户信息
+          // Try to fetch latest user info from server
           const response = await authApi.getMe()
           setUser(response.data)
-          // 更新本地存储的用户信息
+          // Update locally cached user info
           localStorage.setItem(USER_KEY, JSON.stringify(response.data))
         } catch {
-          // token 失效，清除存储
+          // Token expired, clear storage
           localStorage.removeItem(TOKEN_KEY)
           localStorage.removeItem(USER_KEY)
         }

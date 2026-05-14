@@ -338,7 +338,7 @@ export default function ScheduleConfigPage() {
 
   return (
     <div>
-      {/* Page header — mint color block (DESIGN.md: Mint — 配置) */}
+      {/* Page header — mint color block (DESIGN.md: Mint — Config) */}
       <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>

@@ -23,7 +23,7 @@ type TimeRange = 7 | 30 | 90 | 0
 
 const formatTooltipValue = (value: TooltipValueType | undefined) => {
   const amount = Array.isArray(value) ? Number(value[0] ?? 0) : Number(value ?? 0)
-  return [`¥${amount.toFixed(2)}`, '价格'] as const
+  return [`¥${amount.toFixed(2)}`, 'Price'] as const
 }
 
 const formatTooltipLabel = (label: ReactNode) => {
@@ -44,7 +44,7 @@ export default function PriceTrendModal({
 
   return (
     <Modal
-      title={`${product.title || '商品'} 价格趋势`}
+      title={`${product.title || 'Product'} Price Trend`}
       open={open}
       onCancel={onCancel}
       footer={null}
@@ -96,25 +96,25 @@ function PriceTrendContent({
     const percent = first === 0 ? 0 : Number((((diff / first) * 100)).toFixed(1))
 
     if (diff < 0) {
-      return { color: 'green', text: `下降 ${Math.abs(percent)}%` }
+      return { color: 'green', text: `Drop ${Math.abs(percent)}%` }
     }
     if (diff > 0) {
-      return { color: 'red', text: `上涨 ${percent}%` }
+      return { color: 'red', text: `Rise ${percent}%` }
     }
-    return { color: 'default', text: '持平' }
+    return { color: 'default', text: 'Flat' }
   }, [data])
 
   const reversedData = useMemo(() => [...data].reverse(), [data])
 
   const tableColumns: ColumnsType<PriceHistoryRecord> = [
     {
-      title: '时间',
+      title: 'Date',
       dataIndex: 'scraped_at',
       width: 180,
       render: (value: string) => new Date(value).toLocaleString('zh-CN'),
     },
     {
-      title: '价格',
+      title: 'Price',
       dataIndex: 'price',
       render: (value: number, _record: PriceHistoryRecord, index: number) => {
         const numericValue = Number(value)
@@ -138,7 +138,7 @@ function PriceTrendContent({
   if (error) {
     return (
       <Empty
-        description={`加载失败: ${error instanceof Error ? error.message : '未知错误'}`}
+        description={`Load failed: ${error instanceof Error ? error.message : 'Unknown error'}`}
         style={{ margin: '40px 0' }}
       />
     )
@@ -147,7 +147,7 @@ function PriceTrendContent({
   if (data.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
-        <Empty description="暂无价格记录" />
+        <Empty description="No price records yet" />
       </div>
     )
   }
@@ -158,10 +158,10 @@ function PriceTrendContent({
         value={timeRange}
         onChange={(value) => onTimeRangeChange(value as TimeRange)}
         options={[
-          { label: '7天', value: 7 },
-          { label: '30天', value: 30 },
-          { label: '90天', value: 90 },
-          { label: '全部', value: 0 },
+          { label: '7d', value: 7 },
+          { label: '30d', value: 30 },
+          { label: '90d', value: 90 },
+          { label: 'All', value: 0 },
         ]}
         style={{ marginBottom: 16 }}
       />
@@ -175,25 +175,25 @@ function PriceTrendContent({
         }}
       >
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>最低价</div>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>Lowest</div>
           <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-success)' }}>
             ¥{stats?.minPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>最高价</div>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>Highest</div>
           <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-error)' }}>
             ¥{stats?.maxPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>当前价</div>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>Current</div>
           <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-info)' }}>
             ¥{stats?.currentPrice.toFixed(2)}
           </div>
         </Card>
         <Card size="small" style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>降价次数</div>
+          <div style={{ fontSize: 12, color: 'var(--color-muted)' }}>Drops</div>
           <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--color-warning)' }}>
             {stats?.dropCount}
           </div>
@@ -203,7 +203,7 @@ function PriceTrendContent({
       {priceTrend && (
         <div style={{ marginBottom: 16 }}>
           <Tag color={priceTrend.color} style={{ fontSize: 14, padding: '4px 12px' }}>
-            周期变化: {priceTrend.text}
+            Period change: {priceTrend.text}
           </Tag>
         </div>
       )}

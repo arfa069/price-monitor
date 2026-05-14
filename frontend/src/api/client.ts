@@ -11,7 +11,7 @@ const api = axios.create({
   timeout: 300000,
 })
 
-// 请求拦截器：添加 Authorization header
+// Request interceptor: add Authorization header
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(TOKEN_KEY)
@@ -25,7 +25,7 @@ api.interceptors.request.use(
 
 const handleServerError = (status: number, msg: string) => {
   notification.error({
-    message: `服务器错误 (${status})`,
+    message: `Server Error (${status})`,
     description: msg,
     duration: 6,
     placement: 'topRight',
@@ -34,8 +34,8 @@ const handleServerError = (status: number, msg: string) => {
 
 const handleTimeout = () => {
   notification.warning({
-    message: '请求超时',
-    description: '服务器响应过慢，请稍后重试',
+    message: 'Request Timeout',
+    description: 'Server is responding slowly, please try again later',
     duration: 6,
     placement: 'topRight',
   })
@@ -63,7 +63,7 @@ api.interceptors.response.use(
     } else if (err.response?.status && err.response.status >= 400) {
       err.message = formatDetail(
         err.response.data?.detail,
-        `请求失败 (${err.response.status})`,
+        `Request failed (${err.response.status})`,
       )
     } else if (err.code === 'ECONNABORTED' || !err.response) {
       handleTimeout()

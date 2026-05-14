@@ -267,7 +267,7 @@ export default function AdminUsersPage() {
     () => ({
       expandedRowKeys: expandedUserId !== null ? [expandedUserId] : [],
       expandedRowRender: (record: User) => (
-        <AnimatePresence initial={false}>
+        <AnimatePresence>
           {expandedUserId === record.id && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}

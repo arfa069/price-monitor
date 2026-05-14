@@ -268,10 +268,9 @@ export default function AppLayout({
 
       {/* Desktop Sidebar */}
       {!isMobile && (
-        <Layout.Sider
-          collapsible
-          collapsed={collapsed}
-          onCollapse={setCollapsed}
+        <motion.div
+          animate={{ width: collapsed ? 60 : 200 }}
+          transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
           style={{
             position: 'fixed',
             top: 56,
@@ -285,9 +284,6 @@ export default function AppLayout({
             marginTop: 8,
             marginBottom: 8,
           }}
-          width={200}
-          collapsedWidth={60}
-          trigger={null}
         >
           <motion.div
             initial={{ opacity: 0, x: -16 }}
@@ -297,9 +293,11 @@ export default function AppLayout({
               ease: [0.25, 0.46, 0.45, 0.94],
               delay: 0.1,
             }}
+            style={{ width: 200 }}
           >
             <Menu
               mode="inline"
+              inlineCollapsed={collapsed}
               selectedKeys={[selectedKey]}
               onClick={handleMenuClick}
               style={{
@@ -311,7 +309,7 @@ export default function AppLayout({
               items={menuItems}
             />
           </motion.div>
-        </Layout.Sider>
+        </motion.div>
       )}
 
       {/* Mobile Drawer */}

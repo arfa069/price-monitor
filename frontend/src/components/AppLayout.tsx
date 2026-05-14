@@ -34,7 +34,7 @@ export default function AppLayout({
 
   const handleLogout = () => {
     logout()
-    appMessage.success('已退出登录')
+    appMessage.success('Logged out')
     navigate('/login', { replace: true })
   }
 
@@ -42,13 +42,13 @@ export default function AppLayout({
     {
       key: 'profile',
       icon: <UserOutlined style={{ fontSize: 14 }} />,
-      label: '个人信息',
+      label: 'Profile',
       onClick: () => navigate('/profile'),
     },
     {
       key: 'settings',
       icon: <SettingOutlined style={{ fontSize: 14 }} />,
-      label: '账号设置',
+      label: 'Account Settings',
       onClick: () => navigate('/settings'),
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
@@ -56,13 +56,13 @@ export default function AppLayout({
         {
           key: 'admin/users',
           icon: <TeamOutlined style={{ fontSize: 14 }} />,
-          label: '用户管理',
+          label: 'User Management',
           onClick: () => navigate('/admin/users'),
         },
         {
           key: 'admin/audit-logs',
           icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
-          label: '审计日志',
+          label: 'Audit Logs',
           onClick: () => navigate('/admin/audit-logs'),
         },
       ]
@@ -71,7 +71,7 @@ export default function AppLayout({
     {
       key: 'logout',
       icon: <LogoutOutlined style={{ fontSize: 14 }} />,
-      label: '退出登录',
+      label: 'Log Out',
       danger: true,
       onClick: handleLogout,
     },
@@ -103,29 +103,29 @@ export default function AppLayout({
     {
       key: '/jobs',
       icon: <TeamOutlined style={{ fontSize: 14 }} />,
-      label: '职位管理',
+      label: 'Job Management',
     },
     {
       key: '/products',
       icon: <ShoppingCartOutlined style={{ fontSize: 14 }} />,
-      label: '商品管理',
+      label: 'Product Management',
     },
     {
       key: '/schedule',
       icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
-      label: '定时配置',
+      label: 'Schedule Config',
     },
     ...(user?.role === 'admin' || user?.role === 'super_admin'
       ? [
         {
           key: '/admin/users',
           icon: <TeamOutlined style={{ fontSize: 14 }} />,
-          label: '用户管理',
+          label: 'User Management',
         },
         {
           key: '/admin/audit-logs',
           icon: <ScheduleOutlined style={{ fontSize: 14 }} />,
-          label: '审计日志',
+          label: 'Audit Logs',
         },
       ]
       : []),
@@ -168,7 +168,7 @@ export default function AppLayout({
               letterSpacing: '-0.5px',
             }}
           >
-            价
+            P
           </div>
           <div
             style={{
@@ -179,7 +179,7 @@ export default function AppLayout({
               fontFamily: "var(--font-body)",
             }}
           >
-            价格监控
+            Price Monitor
           </div>
         </div>
 
@@ -191,7 +191,7 @@ export default function AppLayout({
             icon={<BarsOutlined />}
             style={{ color: 'var(--color-ink)', fontSize: 16 }}
             onClick={() => setDrawerOpen(true)}
-            aria-label="打开菜单"
+            aria-label="Open Menu"
           />
         ) : (
           <>
@@ -206,7 +206,7 @@ export default function AppLayout({
                 height: 36,
                 fontSize: 16,
               }}
-              aria-label={theme === 'light' ? '切换到暗色模式' : '切换到亮色模式'}
+              aria-label={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
             >
               {theme === 'light' ? '🌙' : '☀️'}
             </Button>
@@ -227,7 +227,7 @@ export default function AppLayout({
                   fontWeight: 400,
                   borderRadius: 50,
                 }}
-                aria-label="用户菜单"
+                aria-label="User Menu"
               >
                 <Space size={6}>
                   <Avatar
@@ -241,7 +241,7 @@ export default function AppLayout({
                     }}
                   />
                   <span style={{ fontSize: 14, fontWeight: 400 }}>
-                    {user?.username || '用户'}
+                    {user?.username || 'User'}
                   </span>
                 </Space>
               </Button>
@@ -258,7 +258,7 @@ export default function AppLayout({
                 height: 36,
               }}
               onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? '展开侧边栏' : '收起侧边栏'}
+              aria-label={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             />
           </>
         )}
@@ -350,7 +350,7 @@ export default function AppLayout({
                   fontWeight: 700,
                 }}
               >
-                价
+              P
               </div>
               <span
                 style={{
@@ -360,7 +360,7 @@ export default function AppLayout({
                   fontFamily: "var(--font-body)",
                 }}
               >
-                价格监控
+              Price Monitor
               </span>
             </div>
           </motion.div>
@@ -412,7 +412,7 @@ export default function AppLayout({
                 fontWeight: 700,
               }}
             >
-              价
+            P
             </div>
             <span
               style={{
@@ -422,7 +422,7 @@ export default function AppLayout({
                 fontFamily: "var(--font-body)",
               }}
             >
-              价格监控
+            Price Monitor
             </span>
           </div>
           <Menu
@@ -486,7 +486,7 @@ export default function AppLayout({
           borderTop: '1px solid var(--color-hairline)',
         }}
       >
-        价格监控系统 © 2026
+        Price Monitor © 2026
       </Layout.Footer>
     </Layout>
   )

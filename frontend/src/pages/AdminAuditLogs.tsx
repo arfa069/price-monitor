@@ -3,22 +3,22 @@ import { App, Table, Tag } from 'antd'
 import { adminApi, type AuditLog } from '@/api/admin'
 
 const ACTION_LABELS: Record<string, string> = {
-  'user.create': '创建用户',
-  'user.update': '更新用户',
-  'user.delete': '删除用户',
-  'user.register': '用户注册',
-  'user.password_change': '修改密码',
-  'user.wechat_bind': '绑定微信',
-  'auth.login': '用户登录',
-  'auth.logout': '用户登出',
-  'product.update': '更新商品',
-  'product.delete': '删除商品',
-  'schedule.create': '创建定时配置',
-  'schedule.update': '更新定时配置',
-  'schedule.delete': '删除定时配置',
-  'job_config.create': '创建职位配置',
-  'job_config.update': '更新职位配置',
-  'job_config.delete': '删除职位配置',
+  'user.create': 'Create User',
+  'user.update': 'Update User',
+  'user.delete': 'Delete User',
+  'user.register': 'User Register',
+  'user.password_change': 'Change Password',
+  'user.wechat_bind': 'Bind WeChat',
+  'auth.login': 'User Login',
+  'auth.logout': 'User Logout',
+  'product.update': 'Update Product',
+  'product.delete': 'Delete Product',
+  'schedule.create': 'Create Schedule',
+  'schedule.update': 'Update Schedule',
+  'schedule.delete': 'Delete Schedule',
+  'job_config.create': 'Create Job Config',
+  'job_config.update': 'Update Job Config',
+  'job_config.delete': 'Delete Job Config',
 }
 
 const ACTION_COLORS: Record<string, string> = {
@@ -55,7 +55,7 @@ export default function AdminAuditLogsPage() {
       setLogs(response.items)
       setTotal(response.total)
     } catch (error: any) {
-      message.error(error.response?.data?.detail || '获取审计日志失败')
+      message.error(error.response?.data?.detail || 'Failed to fetch audit logs')
     } finally {
       setLoading(false)
     }
@@ -68,7 +68,7 @@ export default function AdminAuditLogsPage() {
   const columns = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     {
-      title: '操作',
+      title: 'Action',
       dataIndex: 'action',
       render: (action: string) => (
         <Tag color={ACTION_COLORS[action] || 'default'}>
@@ -76,11 +76,11 @@ export default function AdminAuditLogsPage() {
         </Tag>
       ),
     },
-    { title: '操作者ID', dataIndex: 'actor_user_id', width: 90 },
-    { title: '目标类型', dataIndex: 'target_type' },
-    { title: '目标ID', dataIndex: 'target_id' },
+    { title: 'Actor ID', dataIndex: 'actor_user_id', width: 90 },
+    { title: 'Target Type', dataIndex: 'target_type' },
+    { title: 'Target ID', dataIndex: 'target_id' },
     {
-      title: '详情',
+      title: 'Details',
       dataIndex: 'details',
       render: (details: Record<string, unknown> | null) =>
         details ? (
@@ -98,9 +98,9 @@ export default function AdminAuditLogsPage() {
           </pre>
         ) : null,
     },
-    { title: 'IP地址', dataIndex: 'ip_address' },
+    { title: 'IP Address', dataIndex: 'ip_address' },
     {
-      title: '时间',
+      title: 'Time',
       dataIndex: 'created_at',
       render: (v: string) => new Date(v).toLocaleString(),
     },
@@ -111,9 +111,9 @@ export default function AdminAuditLogsPage() {
       <div className="page-header bg-admin-lilac">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">系统管理</p>
-            <h1 className="page-title">审计日志</h1>
-            <p className="page-subtitle">查看系统操作审计记录</p>
+            <p className="page-eyebrow">System Admin</p>
+            <h1 className="page-title">Audit Logs</h1>
+            <p className="page-subtitle">View system operation audit records</p>
           </div>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function AdminAuditLogsPage() {
           pageSize,
           total,
           showSizeChanger: true,
-          showTotal: (total) => `共 ${total} 条`,
+          showTotal: (total) => `Total ${total} records`,
           onChange: (p, ps) => { setPage(p); setPageSize(ps) },
         }}
       />

@@ -40,10 +40,10 @@ export default function LoginPage() {
         role: user.role || 'user',
       })
 
-      message.success(`欢迎回来，${user.username}！`)
+      message.success(`Welcome back, ${user.username}!`)
       navigate(from, { replace: true })
     } catch {
-      message.error('用户名或密码错误')
+      message.error('Invalid username or password')
       form.resetFields(['password'])
     } finally {
       setLoading(false)
@@ -69,18 +69,18 @@ export default function LoginPage() {
                 />
               </svg>
             </div>
-            <span className="login-logo-name">价格监控</span>
+            <span className="login-logo-name">Price Monitor</span>
           </div>
 
           {/* Hero copy */}
           <div className="login-hero">
             <h1 className="login-headline">
-              全网价格<br />
-              一站掌控
+              All Prices<br />
+              One Dashboard
             </h1>
             <p className="login-subhead">
-              实时追踪淘宝、京东、亚马逊商品价格<br />
-              降价自动推送，不错过任何优惠
+              Track prices across Taobao, JD, and Amazon<br />
+              Auto alerts on price drops, never miss a deal
             </p>
           </div>
         </div>
@@ -93,8 +93,8 @@ export default function LoginPage() {
       <div className="login-form-panel">
         <div className="login-form-card">
           <div className="login-form-header">
-            <h2 className="login-form-title">欢迎回来</h2>
-            <p className="login-form-subtitle">登录到价格监控系统</p>
+            <h2 className="login-form-title">Welcome Back</h2>
+            <p className="login-form-subtitle">Sign in to Price Monitor</p>
           </div>
 
           <Form
@@ -108,10 +108,10 @@ export default function LoginPage() {
           >
             <Form.Item
               name="username"
-              label="邮箱"
+              label="Email"
               rules={[
-                { required: true, message: '请输入用户名或邮箱' },
-                { min: 2, message: '用户名至少2个字符' },
+                { required: true, message: 'Please enter username or email' },
+                { min: 2, message: 'Username must be at least 2 characters' },
               ]}
             >
               <Input
@@ -124,10 +124,10 @@ export default function LoginPage() {
 
             <Form.Item
               name="password"
-              label="密码"
+              label="Password"
               rules={[
-                { required: true, message: '请输入密码' },
-                { min: 6, message: '密码至少6个字符' },
+                { required: true, message: 'Please enter password' },
+                { min: 6, message: 'Password must be at least 6 characters' },
               ]}
             >
               <Input.Password
@@ -147,7 +147,7 @@ export default function LoginPage() {
                 block
                 className="login-btn-primary"
               >
-                {loading ? '登录中...' : '登录'}
+                {loading ? 'Signing in...' : 'Sign In'}
               </Button>
             </Form.Item>
           </Form>
@@ -165,22 +165,22 @@ export default function LoginPage() {
                 fontFamily: 'var(--font-body)',
               }}
             >
-              微信登录（暂不可用）
+              WeChat Login (Coming Soon)
             </Button>
           </div>
 
           <div className="login-form-footer">
             <Text className="login-footer-text">
-              还没有账号？{' '}
+              Don't have an account?{' '}
             </Text>
             <Link to="/register" className="login-footer-link">
-              立即注册
+              Sign Up
             </Link>
           </div>
         </div>
 
         <Text className="login-copyright">
-          价格监控系统 © 2026
+          Price Monitor © 2026
         </Text>
       </div>
 

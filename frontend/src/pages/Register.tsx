@@ -21,7 +21,7 @@ export default function RegisterPage() {
 
   const handleSubmit = async (values: RegisterFormValues) => {
     if (values.password !== values.password_confirm) {
-      message.error('两次输入的密码不一致')
+      message.error('Passwords do not match')
       return
     }
 
@@ -33,10 +33,10 @@ export default function RegisterPage() {
         password: values.password,
         password_confirm: values.password_confirm,
       })
-      message.success('注册成功！请登录')
+      message.success('Registration successful! Please sign in')
       navigate('/login', { replace: true })
     } catch {
-      message.error('注册失败，请检查输入信息')
+      message.error('Registration failed, please check your input')
       form.resetFields(['password', 'password_confirm'])
     } finally {
       setLoading(false)
@@ -45,9 +45,9 @@ export default function RegisterPage() {
 
   const validatePasswordConfirm = () => ({
     validator(_: unknown, value: string) {
-      if (!value) return Promise.reject(new Error('请确认密码'))
+      if (!value) return Promise.reject(new Error('Please confirm password'))
       if (value !== form.getFieldValue('password'))
-        return Promise.reject(new Error('两次输入的密码不一致'))
+        return Promise.reject(new Error('Passwords do not match'))
       return Promise.resolve()
     },
   })
@@ -71,26 +71,26 @@ export default function RegisterPage() {
                 />
               </svg>
             </div>
-            <span className="login-logo-name">价格监控</span>
+            <span className="login-logo-name">Price Monitor</span>
           </div>
 
           {/* Hero copy */}
           <div className="login-hero">
             <h1 className="login-headline">
-              加入我们<br />
-              开启监控
+              Join Us<br />
+              Start Monitoring
             </h1>
             <p className="login-subhead">
-              创建账号，免费开始追踪全网商品价格<br />
-              第一时间获取降价提醒
+              Create an account and start tracking prices for free<br />
+              Get price drop alerts instantly
             </p>
           </div>
 
           {/* Feature pills */}
           <div className="login-features">
-            <span className="feature-chip">免费使用</span>
-            <span className="feature-chip">即时提醒</span>
-            <span className="feature-chip">数据安全</span>
+            <span className="feature-chip">Free to Use</span>
+            <span className="feature-chip">Instant Alerts</span>
+            <span className="feature-chip">Data Secure</span>
           </div>
         </div>
 
@@ -102,8 +102,8 @@ export default function RegisterPage() {
       <div className="login-form-panel">
         <div className="login-form-card">
           <div className="login-form-header">
-            <h2 className="login-form-title">创建账号</h2>
-            <p className="login-form-subtitle">加入价格监控系统</p>
+            <h2 className="login-form-title">Create Account</h2>
+            <p className="login-form-subtitle">Join Price Monitor</p>
           </div>
 
           <Form
@@ -118,15 +118,15 @@ export default function RegisterPage() {
             <Form.Item
               name="username"
               rules={[
-                { required: true, message: '请输入用户名' },
-                { min: 3, message: '用户名至少3个字符' },
-                { max: 20, message: '用户名最多20个字符' },
-                { pattern: /^[a-zA-Z0-9_]+$/, message: '只能包含字母、数字和下划线' },
+                { required: true, message: 'Please enter username' },
+                { min: 3, message: 'Username must be at least 3 characters' },
+                { max: 20, message: 'Username must be no more than 20 characters' },
+                { pattern: /^[a-zA-Z0-9_]+$/, message: 'Only letters, numbers, and underscores allowed' },
               ]}
             >
               <Input
                 prefix={<UserOutlined className="input-icon" />}
-                placeholder="用户名"
+                placeholder="Username"
                 size="large"
                 autoComplete="username"
                 className="login-input"
@@ -136,13 +136,13 @@ export default function RegisterPage() {
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: '请输入邮箱' },
-                { type: 'email', message: '请输入有效的邮箱地址' },
+                { required: true, message: 'Please enter email' },
+                { type: 'email', message: 'Please enter a valid email address' },
               ]}
             >
               <Input
                 prefix={<MailOutlined className="input-icon" />}
-                placeholder="邮箱"
+                placeholder="Email"
                 size="large"
                 autoComplete="email"
                 className="login-input"
@@ -152,15 +152,15 @@ export default function RegisterPage() {
             <Form.Item
               name="password"
               rules={[
-                { required: true, message: '请输入密码' },
-                { min: 6, message: '密码至少6个字符' },
-                { max: 50, message: '密码最多50个字符' },
+                { required: true, message: 'Please enter password' },
+                { min: 6, message: 'Password must be at least 6 characters' },
+                { max: 50, message: 'Password must be no more than 50 characters' },
               ]}
               hasFeedback
             >
               <Input.Password
                 prefix={<LockOutlined className="input-icon" />}
-                placeholder="密码"
+                placeholder="Password"
                 size="large"
                 autoComplete="new-password"
                 className="login-input"
@@ -170,7 +170,7 @@ export default function RegisterPage() {
             <Form.Item
               name="password_confirm"
               rules={[
-                { required: true, message: '请确认密码' },
+                { required: true, message: 'Please confirm password' },
                 validatePasswordConfirm,
               ]}
               dependencies={['password']}
@@ -178,7 +178,7 @@ export default function RegisterPage() {
             >
               <Input.Password
                 prefix={<LockOutlined className="input-icon" />}
-                placeholder="确认密码"
+                placeholder="Confirm Password"
                 size="large"
                 autoComplete="new-password"
                 className="login-input"
@@ -194,21 +194,21 @@ export default function RegisterPage() {
                 block
                 className="login-btn-primary"
               >
-                {loading ? '注册中...' : '注册'}
+                {loading ? 'Creating account...' : 'Sign Up'}
               </Button>
             </Form.Item>
           </Form>
 
           <div className="login-form-footer">
-            <Text className="login-footer-text">已有账号？</Text>
+            <Text className="login-footer-text">Already have an account?</Text>
             <Link to="/login" className="login-footer-link">
-              立即登录
+              Sign In
             </Link>
           </div>
         </div>
 
         <Text className="login-copyright">
-          价格监控系统 © 2026
+          Price Monitor © 2026
         </Text>
       </div>
 

@@ -103,7 +103,7 @@ export default function AdminUsersPage() {
       setUsers(response.items);
       setTotal(response.total);
     } catch (error: unknown) {
-      message.error(getAdminErrorMessage(error, "获取用户列表失败"));
+      message.error(getAdminErrorMessage(error, "Failed to fetch user list"));
     } finally {
       setLoading(false);
     }
@@ -133,7 +133,7 @@ export default function AdminUsersPage() {
           is_active: values.is_active,
         };
         await adminApi.updateUser(editingUser.id, updateData);
-        message.success("用户已更新");
+        message.success("User updated");
       } else {
         const createData: UserCreate = {
           username: values.username,
@@ -142,13 +142,13 @@ export default function AdminUsersPage() {
           role: values.role || "user",
         };
         await adminApi.createUser(createData);
-        message.success("用户已创建");
+        message.success("User created");
       }
       setModalOpen(false);
       fetchUsers();
     } catch (error: unknown) {
       if (!isFormValidationError(error)) {
-        message.error(getAdminErrorMessage(error, "操作失败"));
+        message.error(getAdminErrorMessage(error, "Operation failed"));
       }
     }
   };
@@ -156,10 +156,10 @@ export default function AdminUsersPage() {
   const handleDelete = useCallback(async (id: number) => {
     try {
       await adminApi.deleteUser(id);
-      message.success("用户已删除");
+      message.success("User deleted");
       fetchUsers();
     } catch (error: unknown) {
-      message.error(getAdminErrorMessage(error, "删除失败"));
+      message.error(getAdminErrorMessage(error, "Delete failed"));
     }
   }, [message, fetchUsers]);
 
@@ -188,48 +188,48 @@ export default function AdminUsersPage() {
         is_active: values.is_active,
       };
       await adminApi.updateUser(expandedUserId!, updateData);
-      message.success("用户已更新");
+      message.success("User updated");
       setExpandedUserId(null);
       fetchUsers();
     } catch (error: unknown) {
       if (!isFormValidationError(error)) {
-        message.error(getAdminErrorMessage(error, "操作失败"));
+        message.error(getAdminErrorMessage(error, "Operation failed"));
       }
     }
   }, [editingInfoForm, expandedUserId, message, fetchUsers]);
 
   const columns = useMemo(() => [
     { title: "ID", dataIndex: "id", width: 60 },
-    { title: "用户名", dataIndex: "username" },
-    { title: "邮箱", dataIndex: "email" },
+    { title: "Username", dataIndex: "username" },
+    { title: "Email", dataIndex: "email" },
     {
-      title: "角色",
+      title: "Role",
       dataIndex: "role",
       render: (role: string) => {
         const map: Record<string, string> = {
-          user: "普通用户",
-          admin: "管理员",
-          super_admin: "系统管理员",
+          user: "User",
+          admin: "Admin",
+          super_admin: "Super Admin",
         };
         return map[role] || role;
       },
     },
     {
-      title: "状态",
+      title: "Status",
       dataIndex: "is_active",
       render: (active: boolean) => (
         <Tag color={active ? "success" : "error"}>
-          {active ? "正常" : "已禁用"}
+          {active ? "Active" : "Disabled"}
         </Tag>
       ),
     },
     {
-      title: "注册时间",
+      title: "Registered",
       dataIndex: "created_at",
       render: (v: string) => new Date(v).toLocaleString(),
     },
     {
-      title: "操作",
+      title: "Actions",
       render: (_value: unknown, record: User) => {
         // Admin cannot edit/delete super_admin users
         const canEdit = isSuperAdmin || record.role !== "super_admin";
@@ -241,10 +241,10 @@ export default function AdminUsersPage() {
               onClick={() => handleExpandEdit(record)}
               disabled={!canEdit}
             >
-              编辑
+              Edit
             </Button>
             <Popconfirm
-              title={`确定删除用户 ${record.username}？此操作不可恢复。`}
+              title={`Delete user ${record.username}? This action cannot be undone.`}
               onConfirm={() => handleDelete(record.id)}
               disabled={!canEdit}
             >
@@ -254,7 +254,7 @@ export default function AdminUsersPage() {
                 icon={<DeleteOutlined />}
                 disabled={!canEdit}
               >
-                删除
+                Delete
               </Button>
             </Popconfirm>
           </Space>
@@ -299,13 +299,13 @@ export default function AdminUsersPage() {
 
   return (
     <div>
-      {/* Page header — lilac for admin section (DESIGN.md: Lilac — 用户) */}
+      {/* Page header — lilac for admin section (DESIGN.md: Lilac — User) */}
       <div className="page-header bg-admin">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">系统管理</p>
-            <h1 className="page-title">用户管理</h1>
-            <p className="page-subtitle">管理系统用户账号、角色与访问权限</p>
+            <p className="page-eyebrow">System Admin</p>
+            <h1 className="page-title">User Management</h1>
+            <p className="page-subtitle">Manage user accounts, roles, and access permissions</p>
           </div>
         </div>
       </div>
@@ -323,28 +323,28 @@ export default function AdminUsersPage() {
           }}
         >
           <Input.Search
-            aria-label="搜索用户名或邮箱"
-            placeholder="搜索用户名或邮箱"
+            aria-label="Search username or email"
+            placeholder="Search username or email"
             onSearch={setSearch}
             style={{ width: 200, fontFamily: "var(--font-body)" }}
             className="fg-input"
           />
           <Select
-            placeholder="筛选角色"
+            placeholder="Filter by Role"
             allowClear
             style={{ width: 120, fontFamily: "var(--font-body)" }}
             onChange={setRoleFilter}
             className="fg-select"
           >
-            <Select.Option value="user">普通用户</Select.Option>
-            <Select.Option value="admin">管理员</Select.Option>
+            <Select.Option value="user">User</Select.Option>
+            <Select.Option value="admin">Admin</Select.Option>
           </Select>
           <Button
             icon={<PlusOutlined style={{ fontSize: 14 }} />}
             onClick={handleCreate}
             className="fg-btn-secondary"
           >
-            新建用户
+            New User
           </Button>
           <div style={{ flex: 1 }} />
         </motion.div>
@@ -362,7 +362,7 @@ export default function AdminUsersPage() {
               pageSize,
               total,
               showSizeChanger: true,
-              showTotal: (total) => `共 ${total} 条`,
+              showTotal: (total) => `Total ${total} items`,
               onChange: (p, ps) => {
                 setPage(p);
                 setPageSize(ps);
@@ -374,11 +374,11 @@ export default function AdminUsersPage() {
       </motion.div>
 
       <Modal
-        title={editingUser ? "编辑用户" : "新建用户"}
+        title={editingUser ? "Edit User" : "New User"}
         open={modalOpen}
         onOk={modalTab === "info" ? handleSubmit : undefined}
         onCancel={() => setModalOpen(false)}
-        okText={editingUser ? "保存" : "创建"}
+        okText={editingUser ? "Save" : "Create"}
         footer={modalTab === "info" ? undefined : null}
         width={editingUser ? 720 : 520}
         forceRender
@@ -389,19 +389,19 @@ export default function AdminUsersPage() {
           items={[
             {
               key: "info",
-              label: "基本信息",
+              label: "Basic Info",
               children: (
                 <Form form={form} layout="vertical">
                   <Form.Item
                     name="username"
-                    label="用户名"
+                    label="Username"
                     rules={[{ required: true, min: 3 }]}
                   >
                     <Input />
                   </Form.Item>
                   <Form.Item
                     name="email"
-                    label="邮箱"
+                    label="Email"
                     rules={[{ required: true, type: "email" }]}
                   >
                     <Input />
@@ -409,19 +409,19 @@ export default function AdminUsersPage() {
                   {!editingUser && (
                     <Form.Item
                       name="password"
-                      label="密码"
+                      label="Password"
                       rules={[{ required: true, min: 6 }]}
                     >
                       <Input.Password />
                     </Form.Item>
                   )}
-                  <Form.Item name="role" label="角色" initialValue="user">
+                  <Form.Item name="role" label="Role" initialValue="user">
                     <Select>
-                      <Select.Option value="user">普通用户</Select.Option>
-                      <Select.Option value="admin">管理员</Select.Option>
+                      <Select.Option value="user">User</Select.Option>
+                      <Select.Option value="admin">Admin</Select.Option>
                       {isSuperAdmin && (
                         <Select.Option value="super_admin">
-                          系统管理员
+                          Super Admin
                         </Select.Option>
                       )}
                     </Select>
@@ -429,10 +429,10 @@ export default function AdminUsersPage() {
                   {editingUser && (
                     <Form.Item
                       name="is_active"
-                      label="状态"
+                      label="Status"
                       valuePropName="checked"
                     >
-                      <Switch checkedChildren="正常" unCheckedChildren="禁用" />
+                      <Switch checkedChildren="Active" unCheckedChildren="Disabled" />
                     </Form.Item>
                   )}
                 </Form>
@@ -440,7 +440,7 @@ export default function AdminUsersPage() {
             },
             {
               key: "permissions",
-              label: "资源权限",
+              label: "Resource Permissions",
               disabled: !editingUser,
               children: grantTargetUser ? (
                 <ResourcePermissionsTab
@@ -485,9 +485,9 @@ function ResourcePermissionsTab({
         }}
       >
         <LockOutlined style={{ fontSize: 32, marginBottom: 8 }} />
-        <p>暂无资源权限</p>
+        <p>No resource permissions</p>
         <Button size="small" onClick={onGrant}>
-          授予权限
+          Grant Permission
         </Button>
       </div>
     );
@@ -501,26 +501,26 @@ function ResourcePermissionsTab({
         size="small"
         pagination={false}
         columns={[
-          { title: "资源类型", dataIndex: "resource_type", width: 90 },
-          { title: "资源ID", dataIndex: "resource_id", ellipsis: true },
-          { title: "权限", dataIndex: "permission", width: 90 },
+          { title: "Resource Type", dataIndex: "resource_type", width: 90 },
+          { title: "Resource ID", dataIndex: "resource_id", ellipsis: true },
+          { title: "Permission", dataIndex: "permission", width: 90 },
           {
-            title: "授予时间",
+            title: "Granted At",
             dataIndex: "created_at",
             width: 130,
             render: (value: string) =>
               new Date(value).toLocaleDateString("zh-CN"),
           },
           {
-            title: "操作",
+            title: "Actions",
             width: 90,
             render: (_value: unknown, record: ResourcePermission) => (
               <Popconfirm
-                title="确定撤销此权限？"
+                title="Revoke this permission?"
                 onConfirm={() => revoke.mutate(record.id)}
               >
                 <Button size="small" danger loading={revoke.isPending}>
-                  撤销
+                  Revoke
                 </Button>
               </Popconfirm>
             ),
@@ -528,7 +528,7 @@ function ResourcePermissionsTab({
         ]}
       />
       <Button style={{ marginTop: 12 }} size="small" onClick={onGrant}>
-        授予新权限
+        Grant Permission
       </Button>
     </div>
   );
@@ -562,7 +562,7 @@ function GrantPermissionModal({
       resource_ids: resourceIds,
       permission,
     });
-    message.success(`已授予 ${result.granted} 项权限`);
+    message.success(`Granted ${result.granted} permissions`);
     setRawResourceIds("");
     setPermission(undefined);
     onClose();
@@ -570,17 +570,17 @@ function GrantPermissionModal({
 
   return (
     <Modal
-      title="授予资源权限"
+      title="Grant Resource Permission"
       open={open}
       onOk={handleSubmit}
       onCancel={onClose}
       width={480}
-      okText="确认授予"
+      okText="Confirm Grant"
       confirmLoading={grant.isPending}
       okButtonProps={{ disabled: !resourceIds.length || !permission }}
     >
       <Form layout="vertical">
-        <Form.Item label="资源类型">
+        <Form.Item label="Resource Type">
           <Select
             value={resourceType}
             onChange={(value) => {
@@ -588,32 +588,32 @@ function GrantPermissionModal({
               setRawResourceIds("");
             }}
             options={[
-              { label: "商品", value: "product" },
-              { label: "职位", value: "job" },
-              { label: "用户", value: "user" },
+              { label: "Product", value: "product" },
+              { label: "Job", value: "job" },
+              { label: "User", value: "user" },
             ]}
           />
         </Form.Item>
         <Form.Item
-          label="资源ID"
-          extra="填列表中的内部 ID；* 表示该类型全部资源。多个 ID 用英文逗号分隔。"
+          label="Resource ID"
+          extra="Enter internal ID; * for all resources of this type. Separate multiple IDs with commas."
         >
           <Input
             value={rawResourceIds}
-            placeholder="多个资源 ID 用英文逗号分隔，* 表示全部"
+            placeholder="Separate multiple resource IDs with commas, * for all"
             onChange={(event) => setRawResourceIds(event.target.value)}
           />
         </Form.Item>
-        <Form.Item label="权限">
+        <Form.Item label="Permission">
           <Select
             value={permission}
-            placeholder="选择权限"
+            placeholder="Select Permission"
             onChange={setPermission}
             options={[
-              { label: "读取 (read)", value: "read" },
-              { label: "编辑 (write)", value: "write" },
-              { label: "删除 (delete)", value: "delete" },
-              { label: "全部 (*)", value: "*" },
+              { label: "Read", value: "read" },
+              { label: "Write", value: "write" },
+              { label: "Delete", value: "delete" },
+              { label: "All (*)", value: "*" },
             ]}
           />
         </Form.Item>
@@ -654,10 +654,10 @@ function UserInlineEditor({
     >
       <div style={{ display: "flex", alignItems: "center", marginBottom: 12 }}>
         <span style={{ fontWeight: 600, color: "var(--color-text)" }}>
-          正在编辑：{user.username}（{user.email}）
+          Editing: {user.username} ({user.email})
         </span>
         <Button size="small" onClick={onClose} style={{ marginLeft: "auto" }}>
-          收起
+          Collapse
         </Button>
       </div>
       <Tabs
@@ -666,7 +666,7 @@ function UserInlineEditor({
         items={[
           {
             key: "info",
-            label: "基本信息",
+            label: "Basic Info",
             children: (
               <Form
                 form={infoForm}
@@ -681,7 +681,7 @@ function UserInlineEditor({
                 <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
                   <Form.Item
                     name="username"
-                    label="用户名"
+                    label="Username"
                     rules={[{ required: true, min: 3 }]}
                     style={{ flex: 1, minWidth: 120 }}
                   >
@@ -689,44 +689,44 @@ function UserInlineEditor({
                   </Form.Item>
                   <Form.Item
                     name="email"
-                    label="邮箱"
+                    label="Email"
                     rules={[{ required: true, type: "email" }]}
                     style={{ flex: 1, minWidth: 160 }}
                   >
                     <Input />
                   </Form.Item>
-                  <Form.Item name="role" label="角色" style={{ width: 140 }}>
+                  <Form.Item name="role" label="Role" style={{ width: 140 }}>
                     <Select>
-                      <Select.Option value="user">普通用户</Select.Option>
-                      <Select.Option value="admin">管理员</Select.Option>
+                      <Select.Option value="user">User</Select.Option>
+                      <Select.Option value="admin">Admin</Select.Option>
                       {isSuperAdmin && (
                         <Select.Option value="super_admin">
-                          系统管理员
+                          Super Admin
                         </Select.Option>
                       )}
                     </Select>
                   </Form.Item>
                   <Form.Item
                     name="is_active"
-                    label="状态"
+                    label="Status"
                     valuePropName="checked"
                     style={{ width: 100 }}
                   >
-                    <Switch checkedChildren="正常" unCheckedChildren="禁用" />
+                    <Switch checkedChildren="Active" unCheckedChildren="Disabled" />
                   </Form.Item>
                 </div>
                 <Space style={{ marginTop: 8 }}>
                   <Button type="primary" onClick={onInfoSave}>
-                    保存
+                    Save
                   </Button>
-                  <Button onClick={onClose}>取消</Button>
+                  <Button onClick={onClose}>Cancel</Button>
                 </Space>
               </Form>
             ),
           },
           {
             key: "permissions",
-            label: "资源权限",
+            label: "Resource Permissions",
             children: <InlineResourcePermissionsEditor userId={user.id} />,
           },
         ]}
@@ -775,10 +775,10 @@ function InlineResourcePermissionsEditor({
         id: editingPermId!,
         data: values as ResourcePermissionUpdate,
       });
-      message.success("权限已更新");
+      message.success("Permission updated");
       setEditingPermId(null);
     } catch (error: unknown) {
-      message.error(getAdminErrorMessage(error, "更新失败"));
+      message.error(getAdminErrorMessage(error, "Update failed"));
     }
   };
 
@@ -794,16 +794,16 @@ function InlineResourcePermissionsEditor({
         pagination={false}
         columns={[
           {
-            title: "资源类型",
+            title: "Resource Type",
             dataIndex: "resource_type",
             width: 90,
             render: (v: string, record: ResourcePermission) =>
               editingPermId === record.id ? (
                 <Form.Item name="resource_type" style={{ margin: 0 }}>
                   <Select size="small" style={{ width: 80 }}>
-                    <Select.Option value="product">商品</Select.Option>
-                    <Select.Option value="job">职位</Select.Option>
-                    <Select.Option value="user">用户</Select.Option>
+                    <Select.Option value="product">Product</Select.Option>
+                    <Select.Option value="job">Job</Select.Option>
+                    <Select.Option value="user">User</Select.Option>
                   </Select>
                 </Form.Item>
               ) : (
@@ -811,7 +811,7 @@ function InlineResourcePermissionsEditor({
               ),
           },
           {
-            title: "资源ID",
+            title: "Resource ID",
             dataIndex: "resource_id",
             ellipsis: true,
             render: (v: string, record: ResourcePermission) =>
@@ -820,7 +820,7 @@ function InlineResourcePermissionsEditor({
                   <Input
                     size="small"
                     style={{ width: 100 }}
-                    placeholder="例如 13 或 *"
+                    placeholder="e.g. 13 or *"
                   />
                   <div
                     style={{
@@ -829,7 +829,7 @@ function InlineResourcePermissionsEditor({
                       marginTop: 2,
                     }}
                   >
-                    修改单条授权只填一个 ID 或 *
+                    For single grant, enter one ID or *
                   </div>
                 </Form.Item>
               ) : (
@@ -837,7 +837,7 @@ function InlineResourcePermissionsEditor({
               ),
           },
           {
-            title: "权限",
+            title: "Permission",
             dataIndex: "permission",
             width: 100,
             render: (v: string, record: ResourcePermission) =>
@@ -855,13 +855,13 @@ function InlineResourcePermissionsEditor({
               ),
           },
           {
-            title: "授予时间",
+            title: "Granted At",
             dataIndex: "created_at",
             width: 130,
             render: (v: string) => new Date(v).toLocaleDateString("zh-CN"),
           },
           {
-            title: "操作",
+            title: "Actions",
             width: 120,
             render: (_v: unknown, record: ResourcePermission) =>
               editingPermId === record.id ? (
@@ -872,23 +872,23 @@ function InlineResourcePermissionsEditor({
                     loading={update.isPending}
                     onClick={saveEdit}
                   >
-                    保存
+                    Save
                   </Button>
                   <Button size="small" onClick={cancelEdit}>
-                    取消
+                    Cancel
                   </Button>
                 </Space>
               ) : (
                 <Space size={4}>
                   <Button size="small" onClick={() => startEdit(record)}>
-                    编辑
+                    Edit
                   </Button>
                   <Popconfirm
-                    title="确定撤销此权限？"
+                    title="Revoke this permission?"
                     onConfirm={() => revoke.mutate(record.id)}
                   >
                     <Button size="small" danger loading={revoke.isPending}>
-                      撤销
+                      Revoke
                     </Button>
                   </Popconfirm>
                 </Space>
@@ -902,7 +902,7 @@ function InlineResourcePermissionsEditor({
         size="small"
         onClick={() => setGrantModalOpen(true)}
       >
-        授予新权限
+        Grant Permission
       </Button>
       {grantModalOpen && (
         <GrantPermissionModal

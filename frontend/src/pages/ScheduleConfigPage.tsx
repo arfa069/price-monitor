@@ -22,9 +22,9 @@ const isValidCronFormat = (value: string): boolean => {
 }
 
 const PLATFORM_LABELS: Record<string, string> = {
-  taobao: '淘宝',
-  jd: '京东',
-  amazon: '亚马逊',
+  taobao: 'Taobao',
+  jd: 'JD',
+  amazon: 'Amazon',
 }
 
 export default function ScheduleConfigPage() {
@@ -78,7 +78,7 @@ export default function ScheduleConfigPage() {
       })
       setPlatformCronInputs(inputs)
     } catch {
-      message.error('加载商品定时配置失败')
+      message.error('Failed to load product schedule config')
     } finally {
       setPlatformLoading(false)
     }
@@ -104,7 +104,7 @@ export default function ScheduleConfigPage() {
       })
       setCronInputs(inputs)
     } catch {
-      message.error('加载职位定时配置失败')
+      message.error('Failed to load job schedule config')
     } finally {
       setConfigLoading(false)
     }
@@ -126,31 +126,31 @@ export default function ScheduleConfigPage() {
   const handleSaveRetention = async () => {
     try {
       await updateMutation.mutateAsync({ data_retention_days: retentionDays })
-      message.success('保留天数已保存')
+      message.success('Retention days saved')
       refetch()
     } catch {
-      message.error('保存失败')
+      message.error('Save failed')
     }
   }
 
   const handleSaveWebhook = async () => {
     try {
       await updateMutation.mutateAsync({ feishu_webhook_url: feishuWebhookUrl })
-      message.success('Webhook URL 已保存')
+      message.success('Webhook URL saved')
       refetch()
     } catch {
-      message.error('保存失败')
+      message.error('Save failed')
     }
   }
 
   const handleAddPlatformCron = async () => {
     if (!addPlatform) {
-      message.error('请选择平台')
+      message.error('Please select a platform')
       return
     }
     const value = addCron.trim() || null
     if (value && !isValidCronFormat(value)) {
-      message.error('Cron 表达式不合法')
+      message.error('Invalid cron expression')
       return
     }
     setAddSaving(true)
@@ -160,13 +160,13 @@ export default function ScheduleConfigPage() {
         cron_expression: value,
         cron_timezone: 'Asia/Shanghai',
       })
-      message.success('已添加')
+      message.success('Added')
       setAddModalOpen(false)
       setAddPlatform(undefined)
       setAddCron('')
       void loadPlatformData()
     } catch {
-      message.error('添加失败')
+      message.error('Add failed')
     } finally {
       setAddSaving(false)
     }
@@ -174,15 +174,15 @@ export default function ScheduleConfigPage() {
 
   const handleDeletePlatformCron = async (platform: string) => {
     Modal.confirm({
-      title: '删除定时配置',
-      content: `确定删除 ${PLATFORM_LABELS[platform] || platform} 的定时配置？`,
+      title: 'Delete Schedule Config',
+      content: `Delete schedule config for ${PLATFORM_LABELS[platform] || platform}?`,
       onOk: async () => {
         try {
           await productsApi.deleteCronConfig(platform)
-          message.success('已删除')
+          message.success('Deleted')
           void loadPlatformData()
         } catch {
-          message.error('删除失败')
+          message.error('Delete failed')
         }
       },
     })
@@ -191,7 +191,7 @@ export default function ScheduleConfigPage() {
   const handleSavePlatformCron = async (platform: string) => {
     const value = platformCronInputs[platform]?.trim() || null
     if (value && !isValidCronFormat(value)) {
-      message.error('Cron 表达式不合法')
+      message.error('Invalid cron expression')
       return
     }
     setPlatformSaving((prev) => ({ ...prev, [platform]: true }))
@@ -200,10 +200,10 @@ export default function ScheduleConfigPage() {
         cron_expression: value,
         cron_timezone: 'Asia/Shanghai',
       })
-      message.success('已保存')
+      message.success('Saved')
       void loadPlatformData()
     } catch {
-      message.error('保存失败')
+      message.error('Save failed')
     } finally {
       setPlatformSaving((prev) => ({ ...prev, [platform]: false }))
     }
@@ -212,7 +212,7 @@ export default function ScheduleConfigPage() {
   const handleSaveConfigCron = async (configId: number) => {
     const value = cronInputs[configId]?.trim() || null
     if (value && !isValidCronFormat(value)) {
-      message.error('Cron 表达式不合法')
+      message.error('Invalid cron expression')
       return
     }
     setSavingCron((prev) => ({ ...prev, [configId]: true }))
@@ -221,10 +221,10 @@ export default function ScheduleConfigPage() {
         cron_expression: value,
         cron_timezone: 'Asia/Shanghai',
       })
-      message.success('已保存')
+      message.success('Saved')
       void loadConfigData()
     } catch {
-      message.error('保存失败')
+      message.error('Save failed')
     } finally {
       setSavingCron((prev) => ({ ...prev, [configId]: false }))
     }
@@ -232,14 +232,14 @@ export default function ScheduleConfigPage() {
 
   const platformColumns: ColumnsType<ProductPlatformCron> = [
     {
-      title: '平台',
+      title: 'Platform',
       dataIndex: 'platform',
       key: 'platform',
       width: 200,
       render: (value: string) => PLATFORM_LABELS[value] || value,
     },
     {
-      title: 'Cron 表达式',
+      title: 'Cron Expression',
       key: 'cron',
       width: 450,
       render: (_: unknown, record: ProductPlatformCron) => (
@@ -259,32 +259,32 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
             className="fg-btn-secondary"
           >
-            保存
+            Save
           </Button>
         </Space>
       ),
     },
     {
-      title: '下次执行',
+      title: 'Next Run',
       key: 'next_run',
       render: (_, record) => {
         const schedule = platformSchedules[record.platform]
         const nextRun = schedule?.next_run_at
-          ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
+          ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
           : null
-        return nextRun ? nextRun : <Tag>未调度</Tag>
+        return nextRun ? nextRun : <Tag>Unscheduled</Tag>
       },
     },
     ...(isReadOnly
       ? []
       : [
           {
-            title: '操作',
+            title: 'Actions',
             key: 'action',
             width: 90,
             render: (_: unknown, record: ProductPlatformCron) => (
               <Button danger size="small" icon={<DeleteOutlined />} onClick={() => void handleDeletePlatformCron(record.platform)}>
-                删除
+                Delete
               </Button>
             ),
           },
@@ -293,14 +293,14 @@ export default function ScheduleConfigPage() {
 
   const configColumns: ColumnsType<JobSearchConfig> = [
     {
-      title: '配置名称',
+      title: 'Config Name',
       dataIndex: 'name',
       key: 'name',
       width: 200,
       ellipsis: true,
     },
     {
-      title: 'Cron 表达式',
+      title: 'Cron Expression',
       key: 'cron',
       width: 450,
       render: (_, record) => (
@@ -318,20 +318,20 @@ export default function ScheduleConfigPage() {
             disabled={isReadOnly}
             className="fg-btn-secondary"
           >
-            保存
+            Save
           </Button>
         </Space>
       ),
     },
     {
-      title: '下次执行',
+      title: 'Next Run',
       key: 'next_run',
       render: (_, record) => {
         const schedule = configSchedules[record.id]
         const nextRun = schedule?.next_run_at
-          ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
+          ? new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(schedule.next_run_at))
           : null
-        return nextRun ? nextRun : <Tag>未调度</Tag>
+        return nextRun ? nextRun : <Tag>Unscheduled</Tag>
       },
     },
   ]
@@ -342,9 +342,9 @@ export default function ScheduleConfigPage() {
       <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">自动化</p>
-            <h1 className="page-title">定时配置</h1>
-            <p className="page-subtitle">配置商品和职位的定时爬取计划与通知渠道</p>
+            <p className="page-eyebrow">Automation</p>
+            <h1 className="page-title">Schedule Config</h1>
+            <p className="page-subtitle">Configure product and job crawl schedules and notification channels</p>
           </div>
         </div>
       </div>
@@ -352,8 +352,8 @@ export default function ScheduleConfigPage() {
       {isReadOnly && (
         <Alert
           type="warning"
-          message="只读模式"
-          description="管理员账号无权修改定时配置，请联系系统管理员。"
+          message="Read-only Mode"
+          description="Admin accounts cannot modify schedule configs. Please contact the system administrator."
           style={{ marginBottom: 24 }}
           showIcon
         />
@@ -362,11 +362,11 @@ export default function ScheduleConfigPage() {
       {isError && !isLoading && (
         <Alert
           type="error"
-          message="加载失败"
-          description="无法获取配置，请稍后重试。"
+          message="Load Failed"
+          description="Unable to fetch configuration. Please try again later."
           action={
             <Button size="small" onClick={() => void refetch()} className="fg-btn-secondary fg-btn-sm">
-              重试
+              Retry
             </Button>
           }
           style={{ marginBottom: 24 }}
@@ -377,13 +377,13 @@ export default function ScheduleConfigPage() {
       <div className="fg-card" style={{ marginTop: 24 }}>
         <div className="fg-card-header">
           <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
-            Cron 定时配置
+            Cron Schedule Configuration
           </span>
         </div>
         <div style={{ padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px' }}>
             <h4 style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 480, color: 'var(--color-ink)', margin: 0 }}>
-              商品抓取定时配置
+              Product Crawl Schedule Config
             </h4>
             {!isReadOnly && (
               <Button
@@ -391,7 +391,7 @@ export default function ScheduleConfigPage() {
                 onClick={() => setAddModalOpen(true)}
                 className="fg-btn-secondary fg-btn-sm"
               >
-                新增商品定时器
+                Add Product Timer
               </Button>
             )}
           </div>
@@ -403,13 +403,13 @@ export default function ScheduleConfigPage() {
             pagination={false}
             size="small"
             scroll={{ x: 1000 }}
-            locale={{ emptyText: '暂无商品定时配置' }}
+            locale={{ emptyText: 'No product schedule configs' }}
           />
 
           <Divider style={{ margin: '16px 0' }} />
 
           <h4 style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 480, color: 'var(--color-ink)', margin: '0 0 12px' }}>
-            职位抓取定时配置
+            Job Crawl Schedule Config
           </h4>
           <Table
             dataSource={configList}
@@ -419,7 +419,7 @@ export default function ScheduleConfigPage() {
             pagination={false}
             size="small"
             scroll={{ x: 1000 }}
-            locale={{ emptyText: '暂无职位搜索配置' }}
+            locale={{ emptyText: 'No job search configs' }}
           />
         </div>
       </div>
@@ -428,13 +428,13 @@ export default function ScheduleConfigPage() {
       <div className="fg-card" style={{ marginTop: 16 }}>
         <div className="fg-card-header">
           <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
-            数据保留与通知配置
+            Data Retention & Notification Config
           </span>
         </div>
         <div style={{ padding: '20px 24px' }}>
           <div style={{ marginBottom: 20 }}>
             <div style={{ marginBottom: 6, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
-              飞书 Webhook URL
+              Feishu Webhook URL
             </div>
             <Space>
               <Input
@@ -450,14 +450,14 @@ export default function ScheduleConfigPage() {
                 disabled={isReadOnly}
                 className="fg-btn-secondary"
               >
-                保存
+                Save
               </Button>
             </Space>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>
-              数据保留天数
+              Data Retention Days
             </span>
             <Space>
               <InputNumber
@@ -475,7 +475,7 @@ export default function ScheduleConfigPage() {
                 disabled={isReadOnly}
                 className="fg-btn-secondary"
               >
-                保存
+                Save
               </Button>
             </Space>
           </div>
@@ -483,7 +483,7 @@ export default function ScheduleConfigPage() {
       </div>
 
       <Modal
-        title="新增商品抓取定时器"
+        title="Add Product Crawl Timer"
         open={addModalOpen}
         onOk={() => void handleAddPlatformCron()}
         onCancel={() => {
@@ -492,28 +492,28 @@ export default function ScheduleConfigPage() {
           setAddCron('')
         }}
         confirmLoading={addSaving}
-        okText="添加"
+        okText="Add"
       >
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 16 }}>
           <div>
             <div style={{ marginBottom: 4, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
-              平台
+              Platform
             </div>
             <Select
               value={addPlatform}
               onChange={setAddPlatform}
-              placeholder="选择平台"
+              placeholder="Select platform"
               style={{ width: '100%', fontFamily: 'var(--font-body)' }}
               options={[
-                { value: 'taobao', label: '淘宝' },
-                { value: 'jd', label: '京东' },
-                { value: 'amazon', label: '亚马逊' },
+                { value: 'taobao', label: 'Taobao' },
+                { value: 'jd', label: 'JD' },
+                { value: 'amazon', label: 'Amazon' },
               ]}
             />
           </div>
           <div>
             <div style={{ marginBottom: 4, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
-              Cron 表达式
+              Cron Expression
             </div>
             <Input
               value={addCron}

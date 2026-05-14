@@ -97,7 +97,7 @@ export default function JobsPage() {
   const items = [
     {
       key: 'configs',
-      label: '搜索配置',
+      label: 'Search Config',
       children: (
         <>
           <Card size="small">
@@ -134,12 +134,12 @@ export default function JobsPage() {
     },
     {
       key: 'resume',
-      label: '简历管理',
+      label: 'Resume Management',
       children: <ResumeManager />,
     },
     {
       key: 'matches',
-      label: '匹配结果',
+      label: 'Match Results',
       children: <MatchResultList />,
     },
   ]
@@ -150,9 +150,9 @@ export default function JobsPage() {
       <div className="page-header bg-cream">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">职位搜索</p>
-            <h1 className="page-title">职位管理</h1>
-            <p className="page-subtitle">配置 Boss 直聘职位搜索规则，智能匹配候选人</p>
+            <p className="page-eyebrow">Job Search</p>
+            <h1 className="page-title">Job Management</h1>
+            <p className="page-subtitle">Configure Boss Zhipin job search rules, intelligently match candidates</p>
           </div>
         </div>
       </div>

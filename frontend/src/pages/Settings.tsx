@@ -17,11 +17,11 @@ export default function SettingsPage() {
     setLoading(true)
     try {
       await configApi.update(values)
-      message.success('设置已保存')
+      message.success('Settings saved')
       window.location.reload()
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ detail?: string }>
-      message.error(axiosError.response?.data?.detail || '保存失败')
+      message.error(axiosError.response?.data?.detail || 'Save failed')
     } finally {
       setLoading(false)
     }
@@ -33,9 +33,9 @@ export default function SettingsPage() {
       <div className="page-header bg-mint">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">偏好设置</p>
-            <h1 className="page-title">账号设置</h1>
-            <p className="page-subtitle">配置通知渠道与数据保留策略</p>
+            <p className="page-eyebrow">Preferences</p>
+            <h1 className="page-title">Account Settings</h1>
+            <p className="page-subtitle">Configure notification channels and data retention</p>
           </div>
         </div>
       </div>
@@ -44,7 +44,7 @@ export default function SettingsPage() {
         <div className="fg-card">
           <div className="fg-card-header">
             <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
-              个人设置
+              Personal Settings
             </span>
           </div>
           <div style={{ padding: '20px 24px' }}>
@@ -70,7 +70,7 @@ export default function SettingsPage() {
               </Form.Item>
               <Form.Item
                 name="data_retention_days"
-                label="数据保留天数"
+                label="Data Retention (Days)"
                 rules={[{ type: 'number', min: 1, max: 3650 }]}
               >
                 <InputNumber
@@ -79,20 +79,20 @@ export default function SettingsPage() {
                   style={{ width: 200, fontFamily: 'var(--font-body)' }}
                 />
               </Form.Item>
-              <Form.Item label="页面过渡速度">
+              <Form.Item label="Page Transition Speed">
                 <Segmented
                   value={motionSpeed}
                   onChange={(value) => setMotionSpeed(value as MotionSpeed)}
                   options={[
-                    { label: '快', value: 'fast' },
-                    { label: '正常', value: 'normal' },
-                    { label: '慢', value: 'slow' },
+                    { label: 'Fast', value: 'fast' },
+                    { label: 'Normal', value: 'normal' },
+                    { label: 'Slow', value: 'slow' },
                   ]}
                 />
               </Form.Item>
               <Form.Item style={{ marginBottom: 0 }}>
                 <Button type="primary" htmlType="submit" loading={loading} className="fg-btn-primary">
-                  保存
+                  Save
                 </Button>
               </Form.Item>
             </Form>

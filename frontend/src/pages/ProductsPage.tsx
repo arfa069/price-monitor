@@ -64,9 +64,9 @@ const PLATFORM_BADGE_CLASS: Record<string, string> = {
 }
 
 const PLATFORM_LABEL: Record<string, string> = {
-  taobao: '淘宝',
-  jd: '京东',
-  amazon: '亚马逊',
+  taobao: 'Taobao',
+  jd: 'JD',
+  amazon: 'Amazon',
 }
 
 function PlatformBadge({ value }: { value: string | null | undefined }) {
@@ -84,7 +84,7 @@ type AlertInfo = {
 }
 
 const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : '未知错误'
+  error instanceof Error ? error.message : 'Unknown error'
 
 export default function ProductsPage() {
   const { user } = useAuth()
@@ -152,10 +152,10 @@ export default function ProductsPage() {
     const successCount = results.filter((item) => item.success).length
     const failedItems = results.filter((item) => !item.success)
 
-    message.success(`${action}: ${successCount} 项成功`)
+    message.success(`${action}: ${successCount} succeeded`)
     if (failedItems.length > 0) {
       notification.error({
-        message: `${action}: ${failedItems.length} 项失败`,
+        message: `${action}: ${failedItems.length} failed`,
         description: failedItems
           .map((item) => `${item.url || `ID:${item.id}`} - ${item.error}`)
           .join('\n'),
@@ -171,9 +171,9 @@ export default function ProductsPage() {
         if (shouldGoPrev) {
           setPage((current) => Math.max(1, current - 1))
         }
-        message.success('删除成功')
+        message.success('Deleted successfully')
       },
-      onError: () => message.error('删除失败'),
+      onError: () => message.error('Delete failed'),
     })
   }
 
@@ -187,10 +187,10 @@ export default function ProductsPage() {
         if (shouldGoPrev) {
           setPage((current) => Math.max(1, current - 1))
         }
-        showBatchResult('批量删除', response.data)
+        showBatchResult('Batch Delete', response.data)
         setSelectedRowKeys([])
       },
-      onError: (error) => message.error(`批量操作失败: ${getErrorMessage(error)}`),
+      onError: (error) => message.error(`Batch operation failed: ${getErrorMessage(error)}`),
     })
   }
 
@@ -208,7 +208,7 @@ export default function ProductsPage() {
         productId = editModal.record.id
       } else {
         if (!productValues.platform) {
-          throw new Error('请选择平台')
+          throw new Error('Please select a platform')
         }
         const result = await createMutation.mutateAsync({
           ...productValues,
@@ -237,12 +237,12 @@ export default function ProductsPage() {
         })
       }
 
-      message.success(editModal.record ? '更新成功' : '添加成功')
+      message.success(editModal.record ? 'Updated successfully' : 'Added successfully')
       setEditModal({ open: false })
       setCreateFormOpen(false)
     } catch (error) {
       message.error(
-        `${editModal.record ? '更新' : '添加'}失败: ${getErrorMessage(error)}`,
+        `${editModal.record ? 'Update' : 'Add'} failed: ${getErrorMessage(error)}`,
       )
     }
   }
@@ -255,39 +255,39 @@ export default function ProductsPage() {
     }))
     batchCreate.mutate(payload, {
       onSuccess: (response) => {
-        showBatchResult('批量导入', response.data)
+        showBatchResult('Batch Import', response.data)
         setBatchImportOpen(false)
       },
-      onError: (error) => message.error(`导入失败: ${getErrorMessage(error)}`),
+      onError: (error) => message.error(`Import failed: ${getErrorMessage(error)}`),
     })
   }
 
   const handleCrawlNow = () => {
-    message.loading({ content: '正在启动爬取任务…', key: 'crawl', duration: 0 })
+    message.loading({ content: 'Starting crawl task...', key: 'crawl', duration: 0 })
     crawlNow.mutate(undefined, {
       onSuccess: (result: CrawlNowMutationResult) => {
         if (result.type === 'skipped') {
           message.warning({
-            content: '没有需要爬取的活跃商品',
+            content: 'No active products to crawl',
             key: 'crawl',
           })
           return
         }
         if (result.type === 'error') {
           message.error({
-            content: `爬取失败: ${result.reason || '未知错误'}`,
+            content: `Crawl failed: ${result.reason || 'Unknown error'}`,
             key: 'crawl',
           })
           return
         }
         message.success({
-          content: `爬取完成: ${result.success} 成功, ${result.errors} 失败`,
+          content: `Crawl completed: ${result.success} succeeded, ${result.errors} failed`,
           key: 'crawl',
         })
       },
       onError: (error) => {
         message.error({
-          content: `爬取请求失败: ${getErrorMessage(error)}`,
+          content: `Crawl request failed: ${getErrorMessage(error)}`,
           key: 'crawl',
         })
       },
@@ -297,41 +297,41 @@ export default function ProductsPage() {
   const columns: ColumnsType<Product> = [
     { title: 'ID', dataIndex: 'id', width: 60 },
     {
-      title: '平台',
+      title: 'Platform',
       dataIndex: 'platform',
       width: 90,
       render: (value: string) => <PlatformBadge value={value} />,
     },
-    { title: '标题', dataIndex: 'title', ellipsis: true },
+    { title: 'Title', dataIndex: 'title', ellipsis: true },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'active',
       width: 80,
       render: (value: boolean) =>
-        value ? <Tag color="success">启用</Tag> : <Tag color="error">停用</Tag>,
+        value ? <Tag color="success">Active</Tag> : <Tag color="error">Inactive</Tag>,
     },
     {
-      title: '创建时间',
+      title: 'Created',
       dataIndex: 'created_at',
       width: 180,
-      render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
+      render: (value: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
     },
     {
-      title: '告警',
+      title: 'Alert',
       key: 'alert',
       width: 80,
       render: (_value: unknown, record: Product) => {
         const alert = alertMap.get(record.id)
-        if (!alert) return <Tag>未设置</Tag>
+        if (!alert) return <Tag>Not set</Tag>
         return alert.active ? (
           <Tag color="orange">{String(alert.threshold_percent)}%</Tag>
         ) : (
-          <Tag color="default">停用</Tag>
+          <Tag color="default">Inactive</Tag>
         )
       },
     },
     {
-      title: '操作',
+      title: 'Actions',
       key: 'action',
       width: 380,
       render: (_value: unknown, record: Product) => (
@@ -339,28 +339,28 @@ export default function ProductsPage() {
           <Button
             size="small"
             icon={<ExportOutlined />}
-            aria-label="在新窗口打开商品链接"
+            aria-label="Open product link in new window"
             onClick={() => window.open(record.url, '_blank')}
           >
-            查看
+            View
           </Button>
           <Button
             size="small"
             icon={<LineChartOutlined />}
             onClick={() => setTrendModal({ open: true, product: record })}
           >
-            趋势
+            Trend
           </Button>
           <Button
             size="small"
             icon={<EditOutlined />}
             onClick={() => setEditModal({ open: true, record })}
           >
-            编辑
+            Edit
           </Button>
-          <Popconfirm title="确定删除此商品？" onConfirm={() => handleDelete(record.id)}>
+          <Popconfirm title="Delete this product?" onConfirm={() => handleDelete(record.id)}>
             <Button size="small" danger icon={<DeleteOutlined />}>
-              删除
+              Delete
             </Button>
           </Popconfirm>
         </Space>
@@ -370,39 +370,39 @@ export default function ProductsPage() {
 
   const crawlLogColumns: ColumnsType<CrawlLog> = [
     {
-      title: '时间',
+      title: 'Time',
       dataIndex: 'timestamp',
       width: 160,
-      render: (value: string) => new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
+      render: (value: string) => new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value)),
     },
     {
-      title: '平台',
+      title: 'Platform',
       dataIndex: 'platform',
       width: 80,
       render: (value: string | null) => <PlatformBadge value={value} />,
     },
     {
-      title: '状态',
+      title: 'Status',
       dataIndex: 'status',
       width: 100,
       render: (value: string | null) => {
         const configMap: Record<string, { color: string; text: string }> = {
-          SUCCESS: { color: 'success', text: '成功' },
-          ERROR: { color: 'error', text: '失败' },
-          SKIPPED: { color: 'default', text: '跳过' },
+          SUCCESS: { color: 'success', text: 'Success' },
+          ERROR: { color: 'error', text: 'Failed' },
+          SKIPPED: { color: 'default', text: 'Skipped' },
         }
         const config = value ? configMap[value] : undefined
         return <Tag color={config?.color || 'default'}>{config?.text || value || '-'}</Tag>
       },
     },
     {
-      title: '价格',
+      title: 'Price',
       dataIndex: 'price',
       width: 100,
       render: (value: number | null) => (value ? `¥${value}` : '-'),
     },
     {
-      title: '错误信息',
+      title: 'Error',
       dataIndex: 'error_message',
       ellipsis: true,
       render: (value: string | null) =>
@@ -422,9 +422,9 @@ export default function ProductsPage() {
       <div className="page-header bg-lime">
         <div className="page-header-inner">
           <div>
-            <p className="page-eyebrow">数据管理</p>
-            <h1 className="page-title">商品管理</h1>
-            <p className="page-subtitle">追踪淘宝、京东、亚马逊商品价格变化</p>
+            <p className="page-eyebrow">Data Management</p>
+            <h1 className="page-title">Product Management</h1>
+            <p className="page-subtitle">Track price changes for Taobao, JD, and Amazon products</p>
           </div>
         </div>
       </div>
@@ -446,10 +446,10 @@ export default function ProductsPage() {
                   onClick={() => setBatchImportOpen(true)}
                   className="fg-btn-secondary"
                 >
-                  批量导入
+                  Batch Import
                 </Button>
                 <Popconfirm
-                  title="确定删除选中项？"
+                  title="Delete selected items?"
                   onConfirm={handleBatchDelete}
                   disabled={selectedRowKeys.length === 0}
                 >
@@ -459,7 +459,7 @@ export default function ProductsPage() {
                     disabled={selectedRowKeys.length === 0}
                     className="fg-btn-danger"
                   >
-                    批量删除
+                    Batch Delete
                   </Button>
                 </Popconfirm>
                 <Button
@@ -467,7 +467,7 @@ export default function ProductsPage() {
                   onClick={() => setCreateFormOpen(true)}
                   className="fg-btn-secondary"
                 >
-                  新增商品
+                  Add Product
                 </Button>
                 {canCrawl && (
                   <Button
@@ -476,7 +476,7 @@ export default function ProductsPage() {
                     loading={crawlNow.isPending}
                     className="fg-btn-secondary"
                   >
-                    手动爬取
+                    Crawl Now
                   </Button>
                 )}
               </Space>
@@ -484,7 +484,7 @@ export default function ProductsPage() {
             <Col>
               <Space size={8}>
                 <Input
-                  placeholder="搜索标题或 URL"
+                  placeholder="Search title or URL"
                   prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
                   allowClear
                   autoComplete="off"
@@ -493,24 +493,24 @@ export default function ProductsPage() {
                   className="fg-input"
                 />
                 <Select
-                  placeholder="平台"
+                  placeholder="Platform"
                   allowClear
                   style={{ width: 110, fontFamily: 'var(--font-body)' }}
                   options={[
-                    { label: '淘宝', value: 'taobao' },
-                    { label: '京东', value: 'jd' },
-                    { label: '亚马逊', value: 'amazon' },
+                    { label: 'Taobao', value: 'taobao' },
+                    { label: 'JD', value: 'jd' },
+                    { label: 'Amazon', value: 'amazon' },
                   ]}
                   onChange={(value) => setPlatform(value)}
                   className="fg-select"
                 />
                 <Select
-                  placeholder="状态"
+                  placeholder="Status"
                   allowClear
                   style={{ width: 95, fontFamily: 'var(--font-body)' }}
                   options={[
-                    { label: '启用', value: true },
-                    { label: '停用', value: false },
+                    { label: 'Active', value: true },
+                    { label: 'Inactive', value: false },
                   ]}
                   onChange={(value) => setActive(value)}
                   className="fg-select"
@@ -523,11 +523,11 @@ export default function ProductsPage() {
         {isError && (
           <Alert
             type="error"
-            message="加载失败"
-            description="无法获取商品列表，请检查网络或重试。"
+            message="Load Failed"
+            description="Unable to fetch product list. Please check your network or try again."
             action={
               <Button size="small" onClick={() => refetch()}>
-                重试
+                Retry
               </Button>
             }
             style={{ marginBottom: 16 }}
@@ -550,7 +550,7 @@ export default function ProductsPage() {
               pageSize: size,
               total: data?.total ?? 0,
               showSizeChanger: true,
-              showTotal: (totalCount) => `共 ${totalCount} 条`,
+              showTotal: (totalCount) => `Total ${totalCount} items`,
               onChange: (nextPage, nextSize) => {
                 setPage(nextPage)
                 if (nextSize) setSize(nextSize)
@@ -560,7 +560,7 @@ export default function ProductsPage() {
               emptyText: (
                 <div style={{ padding: '40px 0', textAlign: 'center' }}>
                   <p style={{ fontFamily: 'var(--font-body)', fontSize: 16, fontWeight: 330, color: 'var(--color-muted)', marginBottom: 16 }}>
-                    暂无商品，点击添加第一个
+                    No products yet. Click to add your first one.
                   </p>
                   <Button
                     type="primary"
@@ -568,7 +568,7 @@ export default function ProductsPage() {
                     onClick={() => setCreateFormOpen(true)}
                     className="fg-btn-primary"
                   >
-                    添加第一个商品
+                    Add First Product
                   </Button>
                 </div>
               ),
@@ -578,7 +578,7 @@ export default function ProductsPage() {
 
         {selectedRowKeys.length > 0 && (
           <div style={{ color: 'var(--color-muted)', fontSize: 12 }}>
-            已选择 {selectedRowKeys.length} 项（仅当前页有效）
+            Selected {selectedRowKeys.length} items (current page only)
           </div>
         )}
       </Space>
@@ -592,11 +592,11 @@ export default function ProductsPage() {
           <Space>
             <HistoryOutlined style={{ fontSize: 14 }} />
             <span style={{ fontFamily: 'var(--font-body)', fontSize: 15, fontWeight: 480, color: 'var(--color-ink)' }}>
-              最近爬取记录
+              Recent Crawl Logs
             </span>
             {crawlLogItems.length > 0 && (
               <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'var(--color-muted)', letterSpacing: '0.4px' }}>
-                ({crawlLogItems.length} 条)
+                ({crawlLogItems.length} items)
               </span>
             )}
           </Space>
@@ -607,12 +607,12 @@ export default function ProductsPage() {
             loading={logsLoading}
             className="fg-btn-secondary fg-btn-sm"
           >
-            刷新
+            Refresh
           </Button>
         </div>
         {logsLoading && crawlLogItems.length === 0 ? (
           <div style={{ padding: 20, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--color-muted)' }}>
-            加载中…
+            Loading...
           </div>
         ) : crawlLogItems.length > 0 ? (
           <Table
@@ -625,7 +625,7 @@ export default function ProductsPage() {
           />
         ) : (
           <div style={{ padding: 20, textAlign: 'center', fontFamily: 'var(--font-body)', fontSize: 14, color: 'var(--color-muted)' }}>
-            暂无爬取记录
+            No crawl records
           </div>
         )}
       </div>

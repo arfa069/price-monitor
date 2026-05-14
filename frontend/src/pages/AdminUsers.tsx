@@ -337,23 +337,23 @@ export default function AdminUsersPage() {
               expandedRowKeys: expandedUserId !== null ? [expandedUserId] : [],
               expandedRowRender: (record: User) => (
                 <AnimatePresence initial={false}>
-                  {expandedUserId === record.id && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0, y: -8 }}
-                      animate={{ height: "auto", opacity: 1, y: 0 }}
-                      exit={{ height: 0, opacity: 0, y: -8 }}
-                      transition={{ duration: 0, ease: "easeInOut" }}
-                      style={{ overflow: "hidden" }}
-                    >
-                      <UserInlineEditor
-                        user={record}
-                        activeTab={expandedTab}
-                        onTabChange={setExpandedTab}
-                        onClose={handleExpandClose}
-                        onInfoSave={handleInfoSave}
-                      />
-                    </motion.div>
-                  )}
+                  <motion.div
+                    key={record.id}
+                    initial={{ height: 0, opacity: 0, y: -8 }}
+                    animate={{ height: "auto", opacity: 1, y: 0 }}
+                    exit={{ height: 0, opacity: 0, y: -8 }}
+                    transition={{ duration: 0, ease: "easeInOut" }}
+                    style={{ overflow: "hidden" }}
+                  >
+                    <UserInlineEditor
+                      user={record}
+                      isExpanded={expandedUserId === record.id}
+                      activeTab={expandedTab}
+                      onTabChange={setExpandedTab}
+                      onClose={handleExpandClose}
+                      onInfoSave={handleInfoSave}
+                    />
+                  </motion.div>
                 </AnimatePresence>
               ),
               expandIcon: () => null,
@@ -628,6 +628,7 @@ function GrantPermissionModal({
 
 interface UserInlineEditorProps {
   user: User;
+  isExpanded: boolean;
   activeTab: "info" | "permissions";
   onTabChange: (tab: "info" | "permissions") => void;
   onClose: () => void;
@@ -636,6 +637,7 @@ interface UserInlineEditorProps {
 
 function UserInlineEditor({
   user,
+  isExpanded,
   activeTab,
   onTabChange,
   onClose,
@@ -643,6 +645,8 @@ function UserInlineEditor({
 }: UserInlineEditorProps) {
   const [infoForm] = Form.useForm();
   const isSuperAdmin = true; // inline editing is for super_admin context
+
+  if (!isExpanded) return null;
 
   return (
     <div

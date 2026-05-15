@@ -19,6 +19,12 @@ import {
 	FilePdfOutlined,
 	UploadOutlined,
 } from "@ant-design/icons";
+// Vite transforms this at build time — resolves to the worker file URL
+const _pdfWorkerUrl = new URL(
+	"pdfjs-dist/build/pdf.worker.min.mjs",
+	import.meta.url,
+).toString();
+
 import {
 	useCreateResume,
 	useDeleteResume,
@@ -80,7 +86,7 @@ export default function ResumeManager({
 		setPdfLoading(true);
 		try {
 			const pdfjs = await import("pdfjs-dist");
-			pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+			pdfjs.GlobalWorkerOptions.workerSrc = _pdfWorkerUrl;
 
 			const arrayBuffer = await file.arrayBuffer();
 			const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
@@ -129,7 +135,10 @@ export default function ResumeManager({
 				return trimmed;
 			});
 
-			const markdown = mdLines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+			const markdown = mdLines
+				.join("\n")
+				.replace(/\n{3,}/g, "\n\n")
+				.trim();
 
 			setResumeText(markdown);
 
@@ -138,7 +147,9 @@ export default function ResumeManager({
 				setResumeName(file.name.replace(/\.pdf$/i, ""));
 			}
 
-			message.success(`PDF parsed: ${pdf.numPages} page(s), converted to Markdown`);
+			message.success(
+				`PDF parsed: ${pdf.numPages} page(s), converted to Markdown`,
+			);
 		} catch (err) {
 			console.error("PDF parse error:", err);
 			message.error("Failed to parse PDF. Try copying text manually.");
@@ -301,22 +312,17 @@ export default function ResumeManager({
 							textAlign: "center",
 							cursor: "pointer",
 						}}
-						onClick={() =>
-							document.getElementById("pdf-upload-input")?.click()
-						}
+						onClick={() => document.getElementById("pdf-upload-input")?.click()}
 						onDragOver={(e) => {
 							e.preventDefault();
-							e.currentTarget.style.borderColor =
-								"var(--color-primary)";
+							e.currentTarget.style.borderColor = "var(--color-primary)";
 						}}
 						onDragLeave={(e) => {
-							e.currentTarget.style.borderColor =
-								"var(--color-hairline)";
+							e.currentTarget.style.borderColor = "var(--color-hairline)";
 						}}
 						onDrop={(e) => {
 							e.preventDefault();
-							e.currentTarget.style.borderColor =
-								"var(--color-hairline)";
+							e.currentTarget.style.borderColor = "var(--color-hairline)";
 							const file = e.dataTransfer?.files?.[0];
 							if (file && file.type === "application/pdf") {
 								handlePdfUpload(file);
@@ -353,24 +359,18 @@ export default function ResumeManager({
 										fontSize: 13,
 									}}
 								>
-									Click or drag a PDF here to auto-convert to
-									Markdown
+									Click or drag a PDF here to auto-convert to Markdown
 								</div>
 							</>
 						)}
 					</div>
 
-					<Typography.Text
-						type="secondary"
-						style={{ fontSize: 12 }}
-					>
+					<Typography.Text type="secondary" style={{ fontSize: 12 }}>
 						… or paste content manually below
 					</Typography.Text>
 
 					<div>
-						<Typography.Text strong>
-							Resume Content (Markdown)
-						</Typography.Text>
+						<Typography.Text strong>Resume Content (Markdown)</Typography.Text>
 						<Input.TextArea
 							aria-label="Resume Content"
 							value={resumeText}

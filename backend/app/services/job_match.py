@@ -103,15 +103,19 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
     user = await get_cached_user_config(db)
 
     # 4. Analyze in batches of 3 (concurrent)
-    BATCH_SIZE = 3
+    BATCH_SIZE = 10
     provider = get_llm_provider()
-    notify_jobs = []  #高分职位，汇总后发一条飞书
+    notify_jobs = []  # 高分职位，汇总后发一条飞书
 
     for i in range(0, len(jobs_to_analyze), BATCH_SIZE):
-        batch = jobs_to_analyze[i:i + BATCH_SIZE]
+        batch = jobs_to_analyze[i : i + BATCH_SIZE]
 
         # 过滤无内容的 job
-        valid_jobs = [j for j in batch if any([j.title, j.company, j.salary, j.location, j.description])]
+        valid_jobs = [
+            j
+            for j in batch
+            if any([j.title, j.company, j.salary, j.location, j.description])
+        ]
 
         if not valid_jobs:
             task.errors += len(batch)
@@ -156,9 +160,16 @@ async def _execute_match_analysis(task, resume_id, job_ids, db) -> None:
     webhook_url = user.get("feishu_webhook_url") if user else None
     if notify_jobs and webhook_url:
         try:
-            lines = [f"职位匹配提醒（共 {len(notify_jobs)} 个高分职位）", f"简历：{resume.name}"]
-            for job, analysis in sorted(notify_jobs, key=lambda x: x[1].match_score, reverse=True):
-                lines.append(f"• {job.title or '-'} / {job.company or '-'}（{analysis.match_score}分）")
+            lines = [
+                f"职位匹配提醒（共 {len(notify_jobs)} 个高分职位）",
+                f"简历：{resume.name}",
+            ]
+            for job, analysis in sorted(
+                notify_jobs, key=lambda x: x[1].match_score, reverse=True
+            ):
+                lines.append(
+                    f"• {job.title or '-'} / {job.company or '-'}（{analysis.match_score}分）"
+                )
             lines.append(f"结论：{analysis.apply_recommendation}")
             await send_feishu_notification(webhook_url, "\n".join(lines))
         except Exception:
@@ -173,13 +184,21 @@ def should_notify_match(score: int) -> bool:
     return score > 70
 
 
-async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None = None) -> dict:
+async def analyze_resume_vs_jobs(
+    resume_id: int, job_ids: Iterable[int] | None = None
+) -> dict:
     """Analyze a resume against selected or all jobs for the user."""
 
     async with AsyncSessionLocal() as db:
         resume = await db.get(UserResume, resume_id)
         if not resume or resume.user_id != 1:
-            return {"processed": 0, "created": 0, "updated": 0, "skipped": 0, "items": []}
+            return {
+                "processed": 0,
+                "created": 0,
+                "updated": 0,
+                "skipped": 0,
+                "items": [],
+            }
 
         query = (
             select(Job)
@@ -192,7 +211,13 @@ async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None =
         jobs_result = await db.execute(query)
         jobs = list(jobs_result.scalars().all())
         if not jobs:
-            return {"processed": 0, "created": 0, "updated": 0, "skipped": 0, "items": []}
+            return {
+                "processed": 0,
+                "created": 0,
+                "updated": 0,
+                "skipped": 0,
+                "items": [],
+            }
 
         user = await get_cached_user_config(db)
         webhook_url = user.get("feishu_webhook_url") if user else None
@@ -201,14 +226,23 @@ async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None =
         created = 0
         updated = 0
         skipped = 0
+        BATCH_SIZE = 10
+        notify_jobs = []
 
-        for job in jobs:
-            if not any([job.title, job.company, job.salary, job.location, job.description]):
-                skipped += 1
-                continue
+        # Batch valid jobs first
+        valid_jobs = [
+            j
+            for j in jobs
+            if any([j.title, j.company, j.salary, j.location, j.description])
+        ]
+        skipped = len(jobs) - len(valid_jobs)
 
-            try:
-                analysis = await provider.analyze_match(
+        for i in range(0, len(valid_jobs), BATCH_SIZE):
+            batch = valid_jobs[i : i + BATCH_SIZE]
+
+            # Concurrent LLM analysis for the batch
+            tasks = [
+                provider.analyze_match(
                     resume_text=resume.resume_text,
                     job_title=job.title or "",
                     job_company=job.company or "",
@@ -218,39 +252,47 @@ async def analyze_resume_vs_jobs(resume_id: int, job_ids: Iterable[int] | None =
                     job_education=job.education or "",
                     job_description=job.description or "",
                 )
+                for job in batch
+            ]
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            for job, result in zip(batch, results):
+                if isinstance(result, Exception):
+                    skipped += 1
+                    continue
+
                 _, was_created = await upsert_match_result(
                     db=db,
                     user_id=resume.user_id,
                     resume_id=resume.id,
                     job_id=job.id,
-                    analysis=analysis,
+                    analysis=result,
                 )
                 if was_created:
                     created += 1
                 else:
                     updated += 1
+                await db.commit()
 
-                if should_notify_match(analysis.match_score) and webhook_url:
-                    try:
-                        await send_feishu_notification(
-                            webhook_url,
-                            (
-                                f"职位匹配提醒\n"
-                                f"简历：{resume.name}\n"
-                                f"职位：{job.title or '-'} / {job.company or '-'}\n"
-                                f"分数：{analysis.match_score}\n"
-                                f"结论：{analysis.apply_recommendation}\n"
-                                f"原因：{analysis.match_reason}"
-                            ),
-                        )
-                    except Exception:
-                        # Notification failure should not fail the match analysis.
-                        pass
+                if should_notify_match(result.match_score):
+                    notify_jobs.append((job, result))
+
+        # Batch notification (one message with all high-score jobs)
+        if notify_jobs and webhook_url:
+            try:
+                lines = [
+                    f"职位匹配提醒（共 {len(notify_jobs)} 个高分职位）",
+                    f"简历：{resume.name}",
+                ]
+                for job, analysis in sorted(
+                    notify_jobs, key=lambda x: x[1].match_score, reverse=True
+                ):
+                    lines.append(
+                        f"• {job.title or '-'} / {job.company or '-'}（{analysis.match_score}分）"
+                    )
+                await send_feishu_notification(webhook_url, "\n".join(lines))
             except Exception:
-                skipped += 1
-                continue
-
-        await db.commit()
+                pass
 
         items_result = await db.execute(
             select(MatchResult)
@@ -281,8 +323,10 @@ async def upsert_match_result(
 
     # 直接用 SQL 查询是否存在
     result = await db.execute(
-        text("SELECT id FROM match_results WHERE resume_id = :resume_id AND job_id = :job_id"),
-        {"resume_id": resume_id, "job_id": job_id}
+        text(
+            "SELECT id FROM match_results WHERE resume_id = :resume_id AND job_id = :job_id"
+        ),
+        {"resume_id": resume_id, "job_id": job_id},
     )
     existing_id = result.scalar_one_or_none()
 
@@ -301,8 +345,8 @@ async def upsert_match_result(
                 "reason": analysis.match_reason,
                 "rec": analysis.apply_recommendation,
                 "model": analysis.model_used,
-                "id": existing_id
-            }
+                "id": existing_id,
+            },
         )
         return await db.get(MatchResult, existing_id), False
 
@@ -322,7 +366,7 @@ async def upsert_match_result(
             "reason": analysis.match_reason,
             "rec": analysis.apply_recommendation,
             "model": analysis.model_used,
-        }
+        },
     )
     new_id = result.scalar()
     return await db.get(MatchResult, new_id), True

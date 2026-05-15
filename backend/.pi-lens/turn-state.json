@@ -1,0 +1,28 @@
+{
+  "files": {
+    "app/routers/products.py": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 675
+        }
+      ],
+      "importsChanged": false,
+      "lastEdit": "2026-05-15T02:22:25.590Z"
+    },
+    "app/services/job_match.py": {
+      "modifiedRanges": [
+        {
+          "start": 1,
+          "end": 373
+        }
+      ],
+      "importsChanged": true,
+      "lastEdit": "2026-05-15T02:55:18.129Z"
+    }
+  },
+  "turnCycles": 0,
+  "maxCycles": 3,
+  "lastUpdated": "2026-05-15T02:55:18.129Z",
+  "sessionId": "lens-mp6aemiv-d078105f"
+}

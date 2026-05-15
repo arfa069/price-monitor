@@ -23,4 +23,8 @@ export const jobMatchApi = {
   }) => api.get<MatchResultListResponse>('/jobs/match-results', { params }),
   triggerMatch: (data: MatchAnalyzeRequest) =>
     api.post<MatchAnalyzeResponse>('/jobs/match-results/analyze', data),
+  triggerMatchAsync: (data: MatchAnalyzeRequest) =>
+    api.post<{ status: string; task_id: string | null; total: number }>('/jobs/match-results/analyze-async', data),
+  getMatchTaskStatus: (taskId: string) =>
+    api.get<{ task_id: string; status: string; total: number; success: number; errors: number; reason?: string }>(`/jobs/tasks/${taskId}`),
 }

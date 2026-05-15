@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Button, Card, Input, Select, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
-import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
+import { ReloadOutlined } from "@ant-design/icons";
 import type { Job } from "@/types";
 
 interface JobListProps {
@@ -123,18 +123,16 @@ export default function JobList({
 	return (
 		<Card style={{ marginTop: 16 }} title="Job List">
 			<Space style={{ marginBottom: 12 }} wrap>
-				<Input
+				<Input.Search
 					allowClear
-					suffix={
-						<SearchOutlined
-							style={{ fontSize: 14, color: "var(--color-muted)" }}
-						/>
-					}
 					placeholder="Search jobs or companies"
 					value={filters.keyword}
 					autoComplete="off"
 					onChange={(e) =>
 						onFilterChange({ ...filters, keyword: e.target.value })
+					}
+					onSearch={(value) =>
+						onFilterChange({ ...filters, keyword: value })
 					}
 					style={{
 						width: 320,

@@ -79,9 +79,9 @@
 
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
-  :where(*:not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *)),
-  :where(*:not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *))::before,
-  :where(*:not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *))::after {
+  :where(*:not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *)),
+  :where(*:not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *))::before,
+  :where(*:not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(.ant-select-dropdown):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *))::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

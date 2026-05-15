@@ -93,7 +93,7 @@ export default function MatchResultList() {
 				} catch {
 					// polling error, retry next interval
 				}
-			}, 5000);
+			}, 2000);
 		} catch (err) {
 			console.error("Match analysis failed:", err);
 			message.error("Match analysis failed to start");

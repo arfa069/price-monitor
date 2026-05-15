@@ -106,15 +106,17 @@ export default function JobList({
       <Space style={{ marginBottom: 12 }} wrap>
         <Input
           allowClear
-          prefix={<SearchOutlined />}
+          prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
           placeholder="Search jobs or companies"
           value={filters.keyword}
           autoComplete="off"
           onChange={(e) => onFilterChange({ ...filters, keyword: e.target.value })}
-          style={{ width: 240 }}
+          style={{ width: 200, fontFamily: 'var(--font-body)' }}
+          className="fg-input"
         />
         <Select
-          style={{ width: 140 }}
+          style={{ width: 140, fontFamily: 'var(--font-body)' }}
+          className="fg-select"
           value={statusValue}
           onChange={(value: StatusFilterValue) =>
             onFilterChange({

@@ -20,6 +20,7 @@ import {
   EditOutlined,
   DeleteOutlined,
   LockOutlined,
+  SearchOutlined,
 } from "@ant-design/icons";
 import { adminApi, type UserCreate, type UserUpdate } from "@/api/admin";
 import { useAuth } from "@/contexts/AuthContext";
@@ -322,12 +323,15 @@ export default function AdminUsersPage() {
             flexWrap: "wrap",
           }}
         >
-          <Input.Search
+          <Input
             aria-label="Search username or email"
             placeholder="Search username or email"
-            onSearch={setSearch}
+            prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
+            allowClear
+            autoComplete="off"
             style={{ width: 200, fontFamily: "var(--font-body)" }}
             className="fg-input"
+            onChange={(e) => setSearch(e.target.value)}
           />
           <Select
             placeholder="Filter by Role"

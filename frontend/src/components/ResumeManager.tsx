@@ -97,44 +97,72 @@ export default function ResumeManager({
 				const page = await pdf.getPage(i);
 				const content = await page.getTextContent();
 
-				// Group items by y-position using Math.round for precision
+				// Group items by y-position, keep x for gap detection
 				const items = content.items as { str: string; transform: number[] }[];
-				const linesMap = new Map<number, string[]>();
+				const linesMap = new Map<number, { text: string; x: number }[]>();
 				for (const item of items) {
 					const y = Math.round(item.transform[5]);
 					if (!linesMap.has(y)) linesMap.set(y, []);
-					linesMap.get(y)!.push(item.str);
+					linesMap.get(y)!.push({ text: item.str, x: item.transform[4] });
 				}
 
-				// Sort lines top to bottom, join items on same line with space
+				// Sort lines top to bottom; within each line sort left to right
 				const lines = Array.from(linesMap.entries())
 					.sort(([yA], [yB]) => yB - yA)
-					.map(([, items]) => items.join(" ").trim())
-					.filter(Boolean);
+					.map(([, rowItems]) => {
+						rowItems.sort((a, b) => a.x - b.x);
+						// If gap between items > 80px, insert line break
+						const parts: string[] = [];
+						let line = "";
+						let prevX: number | null = null;
+						for (const item of rowItems) {
+							if (prevX !== null && item.x - prevX > 80) {
+								parts.push(line.trim());
+								line = item.text;
+							} else {
+								line += (line ? " " : "") + item.text;
+							}
+							prevX = item.x;
+						}
+						parts.push(line.trim());
+						return parts;
+					})
+					.flat();
 
-				fullText += lines.join("\n") + "\n\n";
+				fullText += lines.filter(Boolean).join("\n") + "\n\n";
 			}
 
-			// Markdown conversion heuristics
-			const unlikelyHeader = (text: string): boolean => {
-				// Contains pipe separators (metadata bars like "男 | 电话")
-				if (text.includes("|")) return true;
-				// Has fullwidth Chinese punctuation (not a heading)
-				if (/[：；！？、]/.test(text)) return true;
-				// Email or @ symbol
-				if (text.includes("@")) return true;
-				// Date range pattern like "2018.11-2023.08" or "2018-2023"
-				if (/\d{4}[.-]\d{1,2}[.-]?\d{0,2}?/.test(text)) return true;
-				// Pure numbers or single characters
-				if (/^[\d\s()（）]+$/.test(text)) return true;
-				// Lines ending with colon → section labels, not headings
-				if (/[:：]\s*$/.test(text)) return true;
-				// Numbered list items like "1. xxx" or "1、xxx"
-				if (/^\d+[.、]/.test(text.trimStart())) return true;
+			// Markdown conversion — only whitelisted lines become headings
+			const resumeSectionHeaders = [
+				"个人优势",
+				"工作经历",
+				"教育经历",
+				"专业技能",
+				"项目经验",
+				"自我评价",
+				"自我评估",
+				"实习经历",
+				"培训经历",
+				"校园经历",
+				"社会经历",
+				"证书",
+				"语言能力",
+				"兴趣爱好",
+				"求职意向",
+				"基本信息",
+				"联系方式",
+			];
+
+			const isLikelyHeader = (text: string): boolean => {
+				const trimmed = text.trim();
+				// Known resume section headers
+				if (resumeSectionHeaders.includes(trimmed)) return true;
+				// Name at top (first non-empty line, 2-4 Chinese chars, no punctuation)
+				// (Handled below by checking line index)
 				return false;
 			};
 
-			const mdLines = fullText.split("\n").map((line) => {
+			const mdLines = fullText.split("\n").map((line, idx) => {
 				const trimmed = line.trim();
 				if (!trimmed) return "";
 
@@ -143,13 +171,13 @@ export default function ResumeManager({
 					return trimmed.replace(/^[•\-*▪►]\s*/, "- ");
 				}
 
-				// Short standalone line → section header (if it looks like one)
-				if (
-					trimmed.length < 50 &&
-					!trimmed.includes("。") &&
-					!trimmed.includes("，") &&
-					!unlikelyHeader(trimmed)
-				) {
+				// First non-empty line → name heading
+				if (idx === 0 && trimmed.length < 10) {
+					return `## ${trimmed}`;
+				}
+
+				// Known resume section header
+				if (isLikelyHeader(trimmed)) {
 					return `## ${trimmed}`;
 				}
 

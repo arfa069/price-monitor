@@ -114,23 +114,42 @@ export default function ResumeManager({
 				fullText += lines.join("\n") + "\n\n";
 			}
 
-			// Basic Markdown conversion heuristics
+			// Markdown conversion heuristics
+			const unlikelyHeader = (text: string): boolean => {
+				// Contains pipe separators (metadata bars like "男 | 电话")
+				if (text.includes("|")) return true;
+				// Has fullwidth Chinese punctuation (not a heading)
+				if (/[：；！？、]/.test(text)) return true;
+				// Email or @ symbol
+				if (text.includes("@")) return true;
+				// Date range pattern like "2018.11-2023.08" or "2018-2023"
+				if (/\d{4}[.-]\d{1,2}[.-]?\d{0,2}?/.test(text)) return true;
+				// Pure numbers or single characters
+				if (/^[\d\s()（）]+$/.test(text)) return true;
+				// Lines ending with colon → section labels, not headings
+				if (/[:：]\s*$/.test(text)) return true;
+				// Numbered list items like "1. xxx" or "1、xxx"
+				if (/^\d+[.、]/.test(text.trimStart())) return true;
+				return false;
+			};
+
 			const mdLines = fullText.split("\n").map((line) => {
 				const trimmed = line.trim();
 				if (!trimmed) return "";
 
-				// Short standalone line → section header
+				// Lines starting with bullet chars → - list items
+				if (/^[•\-*▪►]\s*/.test(trimmed)) {
+					return trimmed.replace(/^[•\-*▪►]\s*/, "- ");
+				}
+
+				// Short standalone line → section header (if it looks like one)
 				if (
 					trimmed.length < 50 &&
 					!trimmed.includes("。") &&
-					!trimmed.includes("，")
+					!trimmed.includes("，") &&
+					!unlikelyHeader(trimmed)
 				) {
 					return `## ${trimmed}`;
-				}
-
-				// Lines starting with bullet chars
-				if (/^[•\-*▪►]\s*/.test(trimmed)) {
-					return trimmed.replace(/^[•\-*▪►]\s*/, "- ");
 				}
 
 				return trimmed;
@@ -405,10 +424,24 @@ export default function ResumeManager({
 					<ReactMarkdown
 						components={{
 							h1: ({ ...props }) => (
-								<h1 style={{ fontSize: 20, fontWeight: 600, margin: "16px 0 8px" }} {...props} />
+								<h1
+									style={{
+										fontSize: 20,
+										fontWeight: 600,
+										margin: "16px 0 8px",
+									}}
+									{...props}
+								/>
 							),
 							h2: ({ ...props }) => (
-								<h2 style={{ fontSize: 16, fontWeight: 600, margin: "14px 0 6px" }} {...props} />
+								<h2
+									style={{
+										fontSize: 16,
+										fontWeight: 600,
+										margin: "14px 0 6px",
+									}}
+									{...props}
+								/>
 							),
 							ul: ({ ...props }) => (
 								<ul style={{ paddingLeft: 20, margin: "6px 0" }} {...props} />
@@ -416,9 +449,7 @@ export default function ResumeManager({
 							li: ({ ...props }) => (
 								<li style={{ marginBottom: 4 }} {...props} />
 							),
-							p: ({ ...props }) => (
-								<p style={{ margin: "6px 0" }} {...props} />
-							),
+							p: ({ ...props }) => <p style={{ margin: "6px 0" }} {...props} />,
 						}}
 					>
 						{viewResume?.resume_text || ""}

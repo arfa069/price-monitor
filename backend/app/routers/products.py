@@ -1,4 +1,5 @@
 """Products API router."""
+
 from datetime import UTC, datetime, timedelta
 from urllib.parse import parse_qs, urlparse
 
@@ -111,14 +112,11 @@ async def list_products(
         base_query = base_query.where(Product.active == active)
     if keyword is not None:
         # Escape LIKE metacharacters to prevent pattern injection
-        escaped = (
-            keyword.replace("\\", "\\\\")
-                   .replace("%", "\\%")
-                   .replace("_", "\\_")
-        )
+        escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         kw = f"%{escaped}%"
         base_query = base_query.where(
-            (Product.title.ilike(kw, escape="\\")) | (Product.url.ilike(kw, escape="\\"))
+            (Product.title.ilike(kw, escape="\\"))
+            | (Product.url.ilike(kw, escape="\\"))
         )
 
     # Total count
@@ -128,7 +126,11 @@ async def list_products(
 
     # Paginated items
     offset = (page - 1) * size
-    items_query = base_query.order_by(desc(Product.created_at), desc(Product.id)).offset(offset).limit(size)
+    items_query = (
+        base_query.order_by(desc(Product.created_at), desc(Product.id))
+        .offset(offset)
+        .limit(size)
+    )
     items_result = await db.execute(items_query)
     items = items_result.scalars().all()
 
@@ -149,6 +151,7 @@ async def list_products(
 
 # ── Per-Platform Cron Management (must be before /{product_id} routes) ──
 
+
 @router.get("/cron-configs", response_model=list[ProductPlatformCronResponse])
 async def list_product_cron_configs(
     db: AsyncSession = Depends(get_db),
@@ -158,12 +161,16 @@ async def list_product_cron_configs(
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(ProductPlatformCron).where(ProductPlatformCron.user_id == current_user.id)
+        select(ProductPlatformCron).where(
+            ProductPlatformCron.user_id == current_user.id
+        )
     )
     return result.scalars().all()
 
 
-@router.post("/cron-configs", response_model=ProductPlatformCronResponse, status_code=201)
+@router.post(
+    "/cron-configs", response_model=ProductPlatformCronResponse, status_code=201
+)
 async def create_product_cron_config(
     data: ProductPlatformCronCreate,
     request: Request,
@@ -182,7 +189,9 @@ async def create_product_cron_config(
         )
     )
     if existing.scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="Platform cron config already exists")
+        raise HTTPException(
+            status_code=409, detail="Platform cron config already exists"
+        )
 
     config = ProductPlatformCron(
         user_id=current_user.id,
@@ -197,9 +206,14 @@ async def create_product_cron_config(
     # Sync scheduler
     if config.cron_expression:
         from app.services.scheduler_job import ProductCronScheduler
-        scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+
+        scheduler: ProductCronScheduler = getattr(
+            request.app.state, "product_cron_scheduler", None
+        )
         if scheduler:
-            scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
+            scheduler.add_job(
+                config.platform, config.cron_expression, config.cron_timezone
+            )
 
     # Audit log
     ip_address = request.client.host if request.client else ""
@@ -241,7 +255,10 @@ async def delete_product_cron_config(
 
     # Remove scheduler job
     from app.services.scheduler_job import ProductCronScheduler
-    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+
+    scheduler: ProductCronScheduler = getattr(
+        request.app.state, "product_cron_scheduler", None
+    )
     if scheduler:
         scheduler.remove_job(platform)
 
@@ -294,10 +311,15 @@ async def update_product_cron_config(
 
     # Sync scheduler
     from app.services.scheduler_job import ProductCronScheduler
-    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+
+    scheduler: ProductCronScheduler = getattr(
+        request.app.state, "product_cron_scheduler", None
+    )
     if scheduler:
         if config.cron_expression:
-            scheduler.add_job(config.platform, config.cron_expression, config.cron_timezone)
+            scheduler.add_job(
+                config.platform, config.cron_expression, config.cron_timezone
+            )
         else:
             scheduler.remove_job(config.platform)
 
@@ -322,7 +344,10 @@ async def update_product_cron_config(
 async def get_product_cron_schedules(request: Request):
     """Get next run times for all per-platform product crawl schedules."""
     from app.services.scheduler_job import ProductCronScheduler
-    scheduler: ProductCronScheduler = getattr(request.app.state, "product_cron_scheduler", None)
+
+    scheduler: ProductCronScheduler = getattr(
+        request.app.state, "product_cron_scheduler", None
+    )
     if not scheduler:
         return {"platforms": {}}
     return {"platforms": scheduler.get_next_run_times()}
@@ -338,7 +363,9 @@ async def get_product(
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id == product_id, Product.user_id == current_user.id
+        )
     )
     product = result.scalar_one_or_none()
 
@@ -358,7 +385,9 @@ async def update_product(
 ):
     """Update a product."""
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id == product_id, Product.user_id == current_user.id
+        )
     )
     product = result.scalar_one_or_none()
 
@@ -398,7 +427,9 @@ async def delete_product(
 ):
     """Delete a product and its related data."""
     result = await db.execute(
-        select(Product).where(Product.id == product_id, Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id == product_id, Product.user_id == current_user.id
+        )
     )
     product = result.scalar_one_or_none()
 
@@ -458,7 +489,9 @@ async def batch_create_products(
     for item in batch.items:
         url = item.url.strip()
         if url in seen_urls:
-            results.append(BatchOperationResult(url=url, success=False, error="重复的 URL"))
+            results.append(
+                BatchOperationResult(url=url, success=False, error="重复的 URL")
+            )
             continue
         seen_urls.add(url)
         deduped_items.append(item)
@@ -476,16 +509,22 @@ async def batch_create_products(
         url = item.url.strip()
         # Skip if already in DB
         if url in existing_urls:
-            results.append(BatchOperationResult(url=url, success=False, error="该 URL 已存在"))
+            results.append(
+                BatchOperationResult(url=url, success=False, error="该 URL 已存在")
+            )
             continue
         # Basic URL format check (schema-level validation for ProductCreate catches most cases)
         if not (url.startswith("http://") or url.startswith("https://")):
-            results.append(BatchOperationResult(url=url, success=False, error="URL 格式不正确"))
+            results.append(
+                BatchOperationResult(url=url, success=False, error="URL 格式不正确")
+            )
             continue
         detected = _detect_platform(url)
         platform = item.platform if item.platform else detected
         if not platform:
-            results.append(BatchOperationResult(url=url, success=False, error="无法识别平台"))
+            results.append(
+                BatchOperationResult(url=url, success=False, error="无法识别平台")
+            )
             continue
         try:
             # Normalize URL to extract and preserve skuId for Tmall
@@ -500,9 +539,9 @@ async def batch_create_products(
             )
             db.add(product)
             await db.flush()
-            results.append(BatchOperationResult(
-                id=product.id, url=normalized_url, success=True
-            ))
+            results.append(
+                BatchOperationResult(id=product.id, url=normalized_url, success=True)
+            )
         except Exception as e:
             results.append(BatchOperationResult(url=url, success=False, error=str(e)))
 
@@ -522,14 +561,18 @@ async def batch_delete_products(
     results: list[BatchOperationResult] = []
 
     result = await db.execute(
-        select(Product).where(Product.id.in_(payload.ids), Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id.in_(payload.ids), Product.user_id == current_user.id
+        )
     )
     product_map = {p.id: p for p in result.scalars().all()}
     found_ids = set(product_map.keys())
 
     for pid in payload.ids:
         if pid not in found_ids:
-            results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
+            results.append(
+                BatchOperationResult(id=pid, success=False, error="商品不存在")
+            )
             continue
         try:
             await db.delete(product_map[pid])
@@ -562,14 +605,18 @@ async def batch_update_products(
     results: list[BatchOperationResult] = []
 
     result = await db.execute(
-        select(Product).where(Product.id.in_(payload.ids), Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id.in_(payload.ids), Product.user_id == current_user.id
+        )
     )
     product_map = {p.id: p for p in result.scalars().all()}
     found_ids = set(product_map.keys())
 
     for pid in payload.ids:
         if pid not in found_ids:
-            results.append(BatchOperationResult(id=pid, success=False, error="商品不存在"))
+            results.append(
+                BatchOperationResult(id=pid, success=False, error="商品不存在")
+            )
             continue
         try:
             if payload.active is not None:
@@ -593,7 +640,7 @@ async def batch_update_products(
 
 @router.get("/{product_id}/history", response_model=list[PriceHistoryResponse])
 async def get_product_history(
-    _product_id: int,
+    product_id: int,
     days: int = Query(default=30, ge=1, le=365),
     limit: int = Query(default=100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db),
@@ -604,7 +651,9 @@ async def get_product_history(
         raise HTTPException(status_code=401, detail="请先登录")
     # Verify product exists and belongs to user
     result = await db.execute(
-        select(Product).where(Product.id == _product_id, Product.user_id == current_user.id)
+        select(Product).where(
+            Product.id == product_id, Product.user_id == current_user.id
+        )
     )
     product = result.scalar_one_or_none()
 
@@ -616,7 +665,7 @@ async def get_product_history(
     result = await db.execute(
         select(PriceHistory)
         .where(
-            PriceHistory.product_id == _product_id,
+            PriceHistory.product_id == product_id,
             PriceHistory.scraped_at >= cutoff,
         )
         .order_by(desc(PriceHistory.scraped_at))

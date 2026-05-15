@@ -485,12 +485,11 @@ export default function ProductsPage() {
               <Space size={8}>
                 <Input
                   placeholder="Search title or URL"
-                  prefix={<SearchOutlined style={{ fontSize: 13, color: 'var(--color-muted)' }} />}
+                  suffix={<SearchOutlined style={{ fontSize: 14, color: 'var(--color-muted)' }} />}
                   allowClear
                   autoComplete="off"
-                  style={{ width: 200, fontFamily: 'var(--font-body)' }}
+                  style={{ width: 320, fontFamily: 'var(--font-body)', borderRadius: 'var(--radius-pill)' }}
                   onChange={(e) => setKeyword(e.target.value)}
-                  className="fg-input"
                 />
                 <Select
                   placeholder="Platform"

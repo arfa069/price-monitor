@@ -39,17 +39,25 @@ export default function MatchResultList() {
 			message.warning("Please select a resume first");
 			return;
 		}
+		const hideLoading = message.loading("Match analysis in progress...", 0);
 		try {
-			await triggerMatch.mutateAsync({ resume_id: resumeId });
-			message.success("Match analysis task started! Results will appear as they are processed.");
-			// 启动后台任务的 3 次自动刷新（每 15 秒一次）
+			const result = await triggerMatch.mutateAsync({ resume_id: resumeId });
+			hideLoading();
+			const totalJobs = result?.total ?? 0;
+			message.success({
+				content: `Match analysis completed for ${totalJobs} jobs.`,
+				duration: 10,
+			});
+			// 完成后自动刷新几次
+			refetch();
 			let count = 0;
 			const interval = setInterval(() => {
 				count++;
 				refetch();
-				if (count >= 12) clearInterval(interval); // 12×15s=3min 后停止
+				if (count >= 6) clearInterval(interval);
 			}, 15000);
 		} catch (err) {
+			hideLoading();
 			console.error("Match analysis failed:", err);
 			message.error("Match analysis failed to start");
 		}

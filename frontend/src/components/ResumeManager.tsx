@@ -163,8 +163,11 @@ export default function ResumeManager({
 			};
 
 			const mdLines = fullText.split("\n").map((line, idx) => {
-				const trimmed = line.trim();
+				let trimmed = line.trim();
 				if (!trimmed) return "";
+
+				// Normalize fullwidth period in numbered lists (1． → 1.)
+				trimmed = trimmed.replace(/^(\d+)．/, "$1.");
 
 				// Lines starting with bullet chars → - list items
 				if (/^[•\-*▪►]\s*/.test(trimmed)) {
@@ -173,8 +176,8 @@ export default function ResumeManager({
 
 				// Numbered list items: ensure space after "1." (e.g. "1.负责" → "1. 负责")
 				// Avoid dates like "2018.11" (digit-after) and already-spaced "1. 负责"
-				if (/^\d+\.(?![\d ])/.test(trimmed)) {
-					return trimmed.replace(/^(\d+\.)([^\d ])/, "$1 $2");
+				if (/^\d+\.(?!\d)/.test(trimmed)) {
+					return trimmed.replace(/^(\d+\.)(?=\S)/, "$1 ");
 				}
 
 				// First non-empty line → name heading
@@ -191,8 +194,8 @@ export default function ResumeManager({
 			});
 
 			const markdown = mdLines
-				.join("\n")
-				.replace(/\n{3,}/g, "\n\n")
+				.join("\n\n")
+				.replace(/\n{4,}/g, "\n\n\n")
 				.trim();
 
 			setResumeText(markdown);

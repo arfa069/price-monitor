@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 import { motion } from "framer-motion";
 import {
 	App,
@@ -382,7 +383,7 @@ export default function ResumeManager({
 				</Space>
 			</Modal>
 
-			{/* View Resume Modal */}
+			{/* View Resume Modal — renders Markdown */}
 			<Modal
 				title={viewResume?.name || "View Resume"}
 				open={!!viewResume}
@@ -390,20 +391,39 @@ export default function ResumeManager({
 				footer={<Button onClick={() => setViewResume(null)}>Close</Button>}
 				width={720}
 			>
-				<Typography.Paragraph
+				<div
 					style={{
-						whiteSpace: "pre-wrap",
-						fontFamily: "var(--font-mono)",
-						fontSize: 13,
-						lineHeight: 1.6,
 						background: "var(--color-surface-soft)",
-						padding: 16,
+						padding: 20,
 						borderRadius: 8,
-						margin: 0,
+						fontSize: 14,
+						lineHeight: 1.7,
+						overflowY: "auto",
+						maxHeight: 500,
 					}}
 				>
-					{viewResume?.resume_text}
-				</Typography.Paragraph>
+					<ReactMarkdown
+						components={{
+							h1: ({ ...props }) => (
+								<h1 style={{ fontSize: 20, fontWeight: 600, margin: "16px 0 8px" }} {...props} />
+							),
+							h2: ({ ...props }) => (
+								<h2 style={{ fontSize: 16, fontWeight: 600, margin: "14px 0 6px" }} {...props} />
+							),
+							ul: ({ ...props }) => (
+								<ul style={{ paddingLeft: 20, margin: "6px 0" }} {...props} />
+							),
+							li: ({ ...props }) => (
+								<li style={{ marginBottom: 4 }} {...props} />
+							),
+							p: ({ ...props }) => (
+								<p style={{ margin: "6px 0" }} {...props} />
+							),
+						}}
+					>
+						{viewResume?.resume_text || ""}
+					</ReactMarkdown>
+				</div>
 			</Modal>
 
 			{/* Edit Resume Modal */}

@@ -539,7 +539,7 @@ export default function ProductsPage() {
 										onChange={(e) => setKeyword(e.target.value)}
 										style={{
 											width: 400,
-											borderRadius: "var(--radius-pill)",
+											borderRadius: 50,
 										}}
 									/>
 									<Select

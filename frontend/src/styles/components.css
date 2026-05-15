@@ -104,6 +104,11 @@
   transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 
+/* Search bars: pill shape override */
+.ant-input-affix-wrapper.ant-input-affix-wrapper-lg {
+  border-radius: var(--radius-pill) !important;
+}
+
 .ant-input:hover,
 .ant-input-affix-wrapper:hover {
   border-color: var(--color-border-hover) !important;

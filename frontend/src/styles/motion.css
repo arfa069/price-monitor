@@ -116,31 +116,31 @@
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
 	:where(
-		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(
-			.ant-dropdown
-		):not(.ant-dropdown *):not(.ant-select-dropdown):not(
-			.ant-select-dropdown *
-		):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(
-			.ant-picker-dropdown *
-		):not(.ant-tooltip):not(.ant-tooltip *)
+		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(
+			.ant-spin *
+		):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(
+			.ant-select-dropdown
+		):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(
+			.ant-picker-dropdown
+		):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *)
 	),
 	:where(
-		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(
-			.ant-dropdown
-		):not(.ant-dropdown *):not(.ant-select-dropdown):not(
-			.ant-select-dropdown *
-		):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(
-			.ant-picker-dropdown *
-		):not(.ant-tooltip):not(.ant-tooltip *)
+		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(
+			.ant-spin *
+		):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(
+			.ant-select-dropdown
+		):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(
+			.ant-picker-dropdown
+		):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *)
 	)::before,
 	:where(
-		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(.ant-spin *):not(.ant-btn):not(.ant-btn *):not(
-			.ant-dropdown
-		):not(.ant-dropdown *):not(.ant-select-dropdown):not(
-			.ant-select-dropdown *
-		):not(.ant-popover):not(.ant-popover *):not(.ant-picker-dropdown):not(
-			.ant-picker-dropdown *
-		):not(.ant-tooltip):not(.ant-tooltip *)
+		*:not(.anticon-spin):not(.anticon-spin *):not(.ant-spin):not(
+			.ant-spin *
+		):not(.ant-btn):not(.ant-btn *):not(.ant-dropdown):not(.ant-dropdown *):not(
+			.ant-select-dropdown
+		):not(.ant-select-dropdown *):not(.ant-popover):not(.ant-popover *):not(
+			.ant-picker-dropdown
+		):not(.ant-picker-dropdown *):not(.ant-tooltip):not(.ant-tooltip *)
 	)::after {
 		animation-duration: 0.01ms !important;
 		animation-iteration-count: 1 !important;

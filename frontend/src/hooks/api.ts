@@ -409,29 +409,16 @@ export const useMatchResults = (params?: {
 export const useTriggerMatch = () => {
 	const qc = useQueryClient();
 	return useMutation({
-		mutationFn: async (data: MatchAnalyzeRequest) => {
-			const resp = await jobMatchApi.triggerMatchAsync(data);
-			const { task_id, total } = resp.data;
-
-			if (!task_id || total === 0) {
-				return { status: "completed", success: 0, total: 0 };
-			}
-
-			// 轮询任务状态直到完成
-			for (let attempt = 0; attempt < 240; attempt++) {
-				await new Promise((resolve) => setTimeout(resolve, 5000));
-				const statusRes = await jobMatchApi.getMatchTaskStatus(task_id);
-				const s = statusRes.data;
-				if (s.status === "completed") {
-					return { status: "completed", success: s.success, total: s.total };
-				}
-				if (s.status === "failed") {
-					throw new Error(s.reason || "Match analysis failed");
-				}
-			}
-			throw new Error("Match analysis polling timeout");
-		},
-		onSuccess: (result) => {
+		mutationFn: (data: MatchAnalyzeRequest) =>
+			jobMatchApi.triggerMatchAsync(data).then(
+				(resp) =>
+					resp.data as {
+						status: string;
+						task_id: string | null;
+						total: number;
+					},
+			),
+		onSuccess: () => {
 			qc.invalidateQueries({ queryKey: ["match-results"] });
 			qc.invalidateQueries({ queryKey: ["jobs"] });
 		},

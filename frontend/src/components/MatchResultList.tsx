@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
 	Button,
 	Card,
@@ -12,6 +12,7 @@ import {
 } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useMatchResults, useResumes, useTriggerMatch } from "@/hooks/api";
+import { jobMatchApi } from "@/api/job_match";
 import type { MatchResultWithJob } from "@/types";
 
 export default function MatchResultList() {
@@ -20,6 +21,11 @@ export default function MatchResultList() {
 	const [minScore, setMinScore] = useState<number>(70);
 	const [page, setPage] = useState(1);
 	const pageSize = 20;
+	const [taskProgress, setTaskProgress] = useState<{
+		total: number;
+		success: number;
+	} | null>(null);
+	const pollRef = useRef<ReturnType<typeof setInterval>>();
 
 	const { data: resumes } = useResumes();
 	const {
@@ -39,25 +45,50 @@ export default function MatchResultList() {
 			message.warning("Please select a resume first");
 			return;
 		}
-		const hideLoading = message.loading("Match analysis in progress...", 0);
+		// 清除之前的轮询
+		if (pollRef.current) clearInterval(pollRef.current);
+		setTaskProgress(null);
+
 		try {
 			const result = await triggerMatch.mutateAsync({ resume_id: resumeId });
-			hideLoading();
-			const totalJobs = result?.total ?? 0;
-			message.success({
-				content: `Match analysis completed for ${totalJobs} jobs.`,
-				duration: 10,
-			});
-			// 完成后自动刷新几次
-			refetch();
-			let count = 0;
-			const interval = setInterval(() => {
-				count++;
+			const { task_id, total } = result;
+
+			if (!task_id || total === 0) {
+				message.success("All jobs are already up to date.");
 				refetch();
-				if (count >= 6) clearInterval(interval);
-			}, 15000);
+				return;
+			}
+
+			setTaskProgress({ total, success: 0 });
+			message.success("Match analysis started.");
+
+			// 轮询进度
+			pollRef.current = setInterval(async () => {
+				try {
+					const statusRes = await jobMatchApi.getMatchTaskStatus(task_id);
+					const s = statusRes.data;
+					setTaskProgress({ total: s.total, success: s.success });
+					refetch();
+
+					if (s.status === "completed" || s.status === "failed") {
+						if (pollRef.current) clearInterval(pollRef.current);
+						pollRef.current = undefined;
+						if (s.status === "completed") {
+							message.success({
+								content: `Match analysis completed for ${s.total} jobs.`,
+								duration: 10,
+							});
+							setTimeout(() => setTaskProgress(null), 10000);
+						} else {
+							message.error("Match analysis failed.");
+							setTaskProgress(null);
+						}
+					}
+				} catch {
+					// polling error, retry next interval
+				}
+			}, 5000);
 		} catch (err) {
-			hideLoading();
 			console.error("Match analysis failed:", err);
 			message.error("Match analysis failed to start");
 		}
@@ -131,7 +162,23 @@ export default function MatchResultList() {
 	);
 
 	return (
-		<Card title="Match Results">
+		<Card
+			title={
+				<Space>
+					<span>Match Results</span>
+					{taskProgress && (
+						<span
+							style={{
+								fontSize: 12,
+								color: "var(--color-muted)",
+							}}
+						>
+							{taskProgress.success}/{taskProgress.total}
+						</span>
+					)}
+				</Space>
+			}
+		>
 			<Space style={{ marginBottom: 16 }} wrap>
 				<Select
 					style={{ width: 220 }}

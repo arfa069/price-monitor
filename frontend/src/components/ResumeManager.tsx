@@ -171,6 +171,12 @@ export default function ResumeManager({
 					return trimmed.replace(/^[•\-*▪►]\s*/, "- ");
 				}
 
+				// Numbered list items: ensure space after "1." (e.g. "1.负责" → "1. 负责")
+				// Avoid dates like "2018.11" (digit-after) and already-spaced "1. 负责"
+				if (/^\d+\.(?![\d ])/.test(trimmed)) {
+					return trimmed.replace(/^(\d+\.)([^\d ])/, "$1 $2");
+				}
+
 				// First non-empty line → name heading
 				if (idx === 0 && trimmed.length < 10) {
 					return `## ${trimmed}`;

@@ -97,15 +97,16 @@ export default function ResumeManager({
 				const page = await pdf.getPage(i);
 				const content = await page.getTextContent();
 
-				// Group items by y-position to form lines
+				// Group items by y-position using Math.round for precision
+				const items = content.items as { str: string; transform: number[] }[];
 				const linesMap = new Map<number, string[]>();
-				for (const item of content.items) {
-					const y = Math.round((item as { transform: number[] }).transform[5]);
+				for (const item of items) {
+					const y = Math.round(item.transform[5]);
 					if (!linesMap.has(y)) linesMap.set(y, []);
-					linesMap.get(y)!.push((item as { str: string }).str);
+					linesMap.get(y)!.push(item.str);
 				}
 
-				// Sort lines top to bottom
+				// Sort lines top to bottom, join items on same line with space
 				const lines = Array.from(linesMap.entries())
 					.sort(([yA], [yB]) => yB - yA)
 					.map(([, items]) => items.join(" ").trim())

@@ -25,6 +25,7 @@ import {
 	PlusOutlined,
 	ReloadOutlined,
 	RocketOutlined,
+	SearchOutlined,
 } from "@ant-design/icons";
 import type { ColumnsType } from "antd/es/table";
 import BatchImportModal from "@/components/BatchImportModal";
@@ -523,17 +524,24 @@ export default function ProductsPage() {
 							</Col>
 							<Col>
 								<Space size={8}>
-									<Input.Search
+									<Input
 										placeholder="Search title or URL"
-										allowClear
 										autoComplete="off"
-										style={{
-											width: 320,
-											fontFamily: "var(--font-body)",
-											borderRadius: "var(--radius-pill)",
-										}}
-										onSearch={(value) => setKeyword(value)}
+										suffix={
+											<SearchOutlined
+												style={{
+													color: "var(--color-muted)",
+													fontSize: 16,
+												}}
+											/>
+										}
 										onChange={(e) => setKeyword(e.target.value)}
+										style={{
+											width: 400,
+											borderRadius: "var(--radius-pill)",
+											padding: "6px 20px",
+											fontFamily: "var(--font-body)",
+										}}
 									/>
 									<Select
 										placeholder="Platform"

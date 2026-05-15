@@ -527,7 +527,6 @@ export default function ProductsPage() {
 									<Input
 										placeholder="Search title or URL"
 										autoComplete="off"
-										size="large"
 										suffix={
 											<SearchOutlined
 												style={{
@@ -538,8 +537,7 @@ export default function ProductsPage() {
 										}
 										onChange={(e) => setKeyword(e.target.value)}
 										style={{
-											width: 400,
-											borderRadius: 50,
+											width: 260,
 										}}
 									/>
 									<Select

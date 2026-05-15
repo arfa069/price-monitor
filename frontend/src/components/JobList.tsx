@@ -127,7 +127,6 @@ export default function JobList({
 					placeholder="Search jobs or companies"
 					value={filters.keyword}
 					autoComplete="off"
-					size="large"
 					suffix={
 						<SearchOutlined
 							style={{ color: "var(--color-muted)", fontSize: 16 }}
@@ -137,8 +136,7 @@ export default function JobList({
 						onFilterChange({ ...filters, keyword: e.target.value })
 					}
 					style={{
-						width: 400,
-						borderRadius: "var(--radius-pill)",
+						width: 260,
 					}}
 				/>
 				<Select

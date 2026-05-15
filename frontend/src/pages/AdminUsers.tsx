@@ -344,6 +344,7 @@ export default function AdminUsersPage() {
 						aria-label="Search username or email"
 						placeholder="Search username or email"
 						autoComplete="off"
+						size="large"
 						suffix={
 							<SearchOutlined
 								style={{
@@ -356,8 +357,6 @@ export default function AdminUsersPage() {
 						style={{
 							width: 400,
 							borderRadius: "var(--radius-pill)",
-							padding: "6px 20px",
-							fontFamily: "var(--font-body)",
 						}}
 					/>
 					<Select

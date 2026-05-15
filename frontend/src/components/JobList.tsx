@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Button, Card, Input, Select, Space, Table, Tag } from "antd";
+import { Button, Input, Select, Space, Table, Tag } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { ReloadOutlined, SearchOutlined } from "@ant-design/icons";
 import type { Job } from "@/types";
@@ -121,14 +121,17 @@ export default function JobList({
 	);
 
 	return (
-		<Card style={{ marginTop: 16 }} title="Job List">
+		<div style={{ marginTop: 16 }}>
 			<Space style={{ marginBottom: 12 }} wrap>
 				<Input
 					placeholder="Search jobs or companies"
 					value={filters.keyword}
 					autoComplete="off"
+					size="large"
 					suffix={
-						<SearchOutlined style={{ color: "var(--color-muted)", fontSize: 16 }} />
+						<SearchOutlined
+							style={{ color: "var(--color-muted)", fontSize: 16 }}
+						/>
 					}
 					onChange={(e) =>
 						onFilterChange({ ...filters, keyword: e.target.value })
@@ -136,8 +139,6 @@ export default function JobList({
 					style={{
 						width: 400,
 						borderRadius: "var(--radius-pill)",
-						padding: "6px 20px",
-						fontFamily: "var(--font-body)",
 					}}
 				/>
 				<Select
@@ -184,6 +185,6 @@ export default function JobList({
 					},
 				}}
 			/>
-		</Card>
+		</div>
 	);
 }

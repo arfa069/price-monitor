@@ -527,6 +527,7 @@ export default function ProductsPage() {
 									<Input
 										placeholder="Search title or URL"
 										autoComplete="off"
+										size="large"
 										suffix={
 											<SearchOutlined
 												style={{
@@ -539,8 +540,6 @@ export default function ProductsPage() {
 										style={{
 											width: 400,
 											borderRadius: "var(--radius-pill)",
-											padding: "6px 20px",
-											fontFamily: "var(--font-body)",
 										}}
 									/>
 									<Select

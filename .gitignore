@@ -59,3 +59,4 @@ PLAN.md
 set_password.py
 .worktrees/
 /.claude
+.pi-lens/

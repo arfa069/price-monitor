@@ -26,6 +26,7 @@ export default function MatchResultList() {
 		success: number;
 	} | null>(null);
 	const pollRef = useRef<ReturnType<typeof setInterval>>();
+	const currentTaskId = useRef<string | null>(null);
 
 	const { data: resumes } = useResumes();
 	const {
@@ -59,6 +60,7 @@ export default function MatchResultList() {
 				return;
 			}
 
+			currentTaskId.current = task_id;
 			setTaskProgress({ total, success: 0 });
 			message.success("Match analysis started.");
 
@@ -67,10 +69,14 @@ export default function MatchResultList() {
 				try {
 					const statusRes = await jobMatchApi.getMatchTaskStatus(task_id);
 					const s = statusRes.data;
+					// 跳过旧任务的回调
+					if (currentTaskId.current !== task_id) return;
+
 					setTaskProgress({ total: s.total, success: s.success });
 					refetch();
 
 					if (s.status === "completed" || s.status === "failed") {
+						currentTaskId.current = null;
 						if (pollRef.current) clearInterval(pollRef.current);
 						pollRef.current = undefined;
 						if (s.status === "completed") {
@@ -173,7 +179,7 @@ export default function MatchResultList() {
 								color: "var(--color-muted)",
 							}}
 						>
-							{taskProgress.success}/{taskProgress.total}
+							Completed: {taskProgress.success}/{taskProgress.total}
 						</span>
 					)}
 				</Space>

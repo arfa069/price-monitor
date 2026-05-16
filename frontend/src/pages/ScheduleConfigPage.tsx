@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { DeleteOutlined, SaveOutlined } from '@ant-design/icons'
+import { DeleteOutlined, SaveOutlined, ThunderboltOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Divider, Input, InputNumber, Modal, Select, Space, Table, Tag } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { useConfig, useUpdateConfig } from '@/hooks/api'
 import { configApi } from '@/api/config'
 import { jobsApi } from '@/api/jobs'
 import { productsApi } from '@/api/products'
+import CronGenerator from '@/components/CronGenerator'
 import { useAuth } from '@/contexts/AuthContext'
 import type {
   JobConfigScheduleInfo,
@@ -53,6 +54,14 @@ export default function ScheduleConfigPage() {
   const [configLoading, setConfigLoading] = useState(false)
   const [cronInputs, setCronInputs] = useState<Record<number, string>>({})
   const [savingCron, setSavingCron] = useState<Record<number, boolean>>({})
+
+  // Cron generator state
+  const [generatorOpen, setGeneratorOpen] = useState(false)
+  const [generatorTarget, setGeneratorTarget] = useState<{
+    type: 'platform' | 'config' | 'add'
+    platform?: string
+    configId?: number
+  } | null>(null)
 
   const fetchSchedulerStatus = useCallback(async () => {
     try {
@@ -230,6 +239,34 @@ export default function ScheduleConfigPage() {
     }
   }
 
+  const handleOpenGenerator = useCallback(
+    (target: { type: 'platform'; platform: string } | { type: 'config'; configId: number } | { type: 'add' }) => {
+      setGeneratorTarget(target)
+      setGeneratorOpen(true)
+    },
+    [],
+  )
+
+  const handleApplyCron = useCallback(
+    (cronExpression: string) => {
+      if (!generatorTarget) return
+      switch (generatorTarget.type) {
+        case 'platform':
+          setPlatformCronInputs((prev) => ({ ...prev, [generatorTarget.platform!]: cronExpression }))
+          break
+        case 'config':
+          setCronInputs((prev) => ({ ...prev, [generatorTarget.configId!]: cronExpression }))
+          break
+        case 'add':
+          setAddCron(cronExpression)
+          break
+      }
+      setGeneratorOpen(false)
+      setGeneratorTarget(null)
+    },
+    [generatorTarget],
+  )
+
   const platformColumns: ColumnsType<ProductPlatformCron> = [
     {
       title: 'Platform',
@@ -250,8 +287,15 @@ export default function ScheduleConfigPage() {
               setPlatformCronInputs((prev) => ({ ...prev, [record.platform]: e.target.value }))
             }
             placeholder="0 9 * * *"
-            style={{ width: 220 }}
+            style={{ width: 190 }}
             disabled={isReadOnly}
+          />
+          <Button
+            icon={<ThunderboltOutlined />}
+            size="small"
+            onClick={() => handleOpenGenerator({ type: 'platform', platform: record.platform })}
+            disabled={isReadOnly}
+            className="fg-btn-secondary fg-btn-sm"
           />
           <Button
             onClick={() => void handleSavePlatformCron(record.platform)}
@@ -309,8 +353,15 @@ export default function ScheduleConfigPage() {
             value={cronInputs[record.id] ?? ''}
             onChange={(e) => setCronInputs((prev) => ({ ...prev, [record.id]: e.target.value }))}
             placeholder="0 9 * * *"
-            style={{ width: 220 }}
+            style={{ width: 190 }}
             disabled={isReadOnly}
+          />
+          <Button
+            icon={<ThunderboltOutlined />}
+            size="small"
+            onClick={() => handleOpenGenerator({ type: 'config', configId: record.id })}
+            disabled={isReadOnly}
+            className="fg-btn-secondary fg-btn-sm"
           />
           <Button
             onClick={() => void handleSaveConfigCron(record.id)}
@@ -515,15 +566,33 @@ export default function ScheduleConfigPage() {
             <div style={{ marginBottom: 4, fontFamily: 'var(--font-body)', fontSize: 14, fontWeight: 330, color: 'var(--color-muted)' }}>
               Cron Expression
             </div>
-            <Input
-              value={addCron}
-              onChange={(e) => setAddCron(e.target.value)}
-              placeholder="0 9 * * *"
-              style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}
-            />
+            <Space style={{ width: '100%' }}>
+              <Input
+                value={addCron}
+                onChange={(e) => setAddCron(e.target.value)}
+                placeholder="0 9 * * *"
+                style={{ flex: 1, fontFamily: "'JetBrains Mono', monospace", fontSize: 14 }}
+              />
+              <Button
+                icon={<ThunderboltOutlined />}
+                size="small"
+                onClick={() => handleOpenGenerator({ type: 'add' })}
+                disabled={isReadOnly}
+                className="fg-btn-secondary fg-btn-sm"
+              />
+            </Space>
           </div>
         </div>
       </Modal>
+
+      <CronGenerator
+        open={generatorOpen}
+        onClose={() => {
+          setGeneratorOpen(false)
+          setGeneratorTarget(null)
+        }}
+        onApply={handleApplyCron}
+      />
     </div>
   )
 }

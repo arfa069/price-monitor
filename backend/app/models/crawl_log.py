@@ -16,9 +16,9 @@ from app.models.base import Base
 
 class CrawlLog(Base):
     """Log of crawl attempts for debugging."""
-    __tablename__ = "crawl_logs"
+    __tablename__ = "products_crawl_logs"
     __table_args__ = (
-        Index("ix_crawl_logs_product_timestamp", "product_id", "timestamp"),
+        Index("ix_products_crawl_logs_product_timestamp", "product_id", "timestamp"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

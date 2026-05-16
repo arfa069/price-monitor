@@ -77,6 +77,12 @@ JD_COOKIE=...
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old price history and crawl logs |
 | GET | /scheduler/status | Scheduler status (both product and job crawl) |
+| GET/POST/DELETE | /jobs/resumes | List/Create/Delete resumes |
+| PATCH | /jobs/resumes/{id} | Update a resume |
+| GET | /jobs/match-results | List match results |
+| POST | /jobs/match-results/analyze | Analyze resume vs jobs (sync) |
+| POST | /jobs/match-results/analyze-async | Analyze resume vs jobs (async) |
+| GET | /jobs/tasks/{task_id} | Poll async task status |
 | GET/POST | /jobs/configs | List/Create job search configs |
 | GET/PATCH/DELETE | /jobs/configs/{id} | Manage a job search config |
 | GET | /jobs | List crawled jobs (paginated) |
@@ -179,6 +185,10 @@ curl -X GET http://localhost:8000/auth/me \
 | PATCH | /admin/users/{id} | 更新用户信息 | admin/super_admin |
 | DELETE | /admin/users/{id} | 软删除用户 | admin/super_admin |
 | GET | /admin/audit-logs | 查询审计日志 | admin/super_admin |
+| POST | /admin/resource-permissions | 授予资源级权限 | admin/super_admin |
+| GET | /admin/resource-permissions | 列出资源级权限 | admin/super_admin |
+| PATCH | /admin/resource-permissions/{id} | 更新资源级权限 | admin/super_admin |
+| DELETE | /admin/resource-permissions/{id} | 撤销资源级权限 | admin/super_admin |
 
 **角色边界**：admin 不能创建/修改/删除 super_admin；super_admin 不能删除自己或最后一个活跃的 super_admin。
 

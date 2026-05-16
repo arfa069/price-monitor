@@ -324,7 +324,7 @@ async def upsert_match_result(
     # 直接用 SQL 查询是否存在
     result = await db.execute(
         text(
-            "SELECT id FROM match_results WHERE resume_id = :resume_id AND job_id = :job_id"
+            "SELECT id FROM jobs_match_results WHERE resume_id = :resume_id AND job_id = :job_id"
         ),
         {"resume_id": resume_id, "job_id": job_id},
     )
@@ -334,7 +334,7 @@ async def upsert_match_result(
         # 更新
         await db.execute(
             text("""
-                UPDATE match_results
+                UPDATE jobs_match_results
                 SET match_score = :score, match_reason = :reason,
                     apply_recommendation = :rec, llm_model_used = :model,
                     updated_at = NOW()
@@ -353,7 +353,7 @@ async def upsert_match_result(
     # 插入
     result = await db.execute(
         text("""
-            INSERT INTO match_results
+            INSERT INTO jobs_match_results
             (user_id, resume_id, job_id, match_score, match_reason, apply_recommendation, llm_model_used, created_at, updated_at)
             VALUES (:user_id, :resume_id, :job_id, :score, :reason, :rec, :model, NOW(), NOW())
             RETURNING id

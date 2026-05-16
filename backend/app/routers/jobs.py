@@ -1,5 +1,6 @@
 """Job search API router."""
 import asyncio
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import JSONResponse
@@ -12,6 +13,7 @@ from app.core.permissions import require_permission
 from app.core.security import get_current_user
 from app.database import get_db
 from app.models.job import Job, JobSearchConfig
+from app.models.job_crawl_log import JobCrawlLog
 from app.models.job_match import MatchResult, UserResume
 from app.models.user import User
 from app.schemas.job import (
@@ -22,6 +24,7 @@ from app.schemas.job import (
     JobSearchConfigResponse,
     JobSearchConfigUpdate,
 )
+from app.schemas.job_crawl_log import JobCrawlLogResponse
 from app.schemas.job_match import (
     MatchAnalyzeRequest,
     MatchAnalyzeResponse,
@@ -673,6 +676,45 @@ async def get_job_crawl_result(task_id: str):
         "success": task.success,
         "errors": task.errors,
     })
+
+
+# ── Job Crawl Logs ──────────────────────────────────────────────
+
+
+@router.get("/crawl-logs", response_model=list[JobCrawlLogResponse])
+async def get_job_crawl_logs(
+    search_config_id: int | None = Query(None, description="Filter by search config ID"),
+    status: str | None = Query(None, regex="^(SUCCESS|ERROR)$"),
+    hours: int = Query(24, ge=1, le=168),
+    limit: int = Query(100, ge=1, le=1000),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get job crawl logs for current user's search configs."""
+    # Get all search config IDs belonging to the current user
+    config_ids_result = await db.execute(
+        select(JobSearchConfig.id).where(JobSearchConfig.user_id == current_user.id)
+    )
+    user_config_ids = [row[0] for row in config_ids_result.all()]
+
+    if not user_config_ids:
+        return []
+
+    # Build query
+    query = select(JobCrawlLog).where(JobCrawlLog.search_config_id.in_(user_config_ids))
+
+    if search_config_id is not None:
+        query = query.where(JobCrawlLog.search_config_id == search_config_id)
+    if status is not None:
+        query = query.where(JobCrawlLog.status == status)
+
+    cutoff = datetime.now(UTC) - timedelta(hours=hours)
+    query = query.where(JobCrawlLog.scraped_at >= cutoff)
+
+    query = query.order_by(JobCrawlLog.scraped_at.desc()).limit(limit)
+
+    result = await db.execute(query)
+    return result.scalars().all()
 
 
 # ── Per-Config Cron Management ──────────────────────────────

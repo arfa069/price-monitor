@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Card, Tabs } from 'antd'
+import { Card, Table, Tag, Tabs } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import {
   useCrawlAllJobs,
   useCrawlSingleJob,
   useCreateJobConfig,
   useDeleteJobConfig,
   useJobConfigs,
+  useJobCrawlLogs,
   useJobs,
   useMatchResults,
   useUpdateJobConfig,
@@ -18,7 +20,7 @@ import MatchResultList from '@/components/MatchResultList'
 import ResumeManager from '@/components/ResumeManager'
 import { useAuth } from '@/contexts/AuthContext'
 import { useStaggerAnimation } from '@/hooks/useStaggerAnimation'
-import type { Job, JobSearchConfigCreate } from '@/types'
+import type { Job, JobCrawlLog, JobSearchConfigCreate } from '@/types'
 
 export default function JobsPage() {
   const { user } = useAuth()
@@ -47,6 +49,7 @@ export default function JobsPage() {
 
   const crawlAll = useCrawlAllJobs()
   const crawlSingle = useCrawlSingleJob()
+  const { data: jobCrawlLogs, isLoading: logsLoading } = useJobCrawlLogs({ limit: 20 })
 
   const matchScores = useMemo(() => {
     const map: Record<number, number> = {}
@@ -55,6 +58,66 @@ export default function JobsPage() {
     })
     return map
   }, [allMatches])
+
+  const configNameMap = useMemo(() => {
+    const map: Record<number, string> = {}
+    configs?.forEach((c) => { map[c.id] = c.name })
+    return map
+  }, [configs])
+
+  const crawlLogColumns: ColumnsType<JobCrawlLog> = [
+    {
+      title: 'Time',
+      dataIndex: 'scraped_at',
+      width: 160,
+      render: (value: string) =>
+        new Intl.DateTimeFormat('en-US', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        }).format(new Date(value)),
+    },
+    {
+      title: 'Config',
+      dataIndex: 'search_config_id',
+      width: 120,
+      render: (id: number) => configNameMap[id] || `#${id}`,
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      width: 100,
+      render: (value: string) => {
+        const config: Record<string, { color: string; text: string }> = {
+          SUCCESS: { color: 'success', text: 'Success' },
+          ERROR: { color: 'error', text: 'Failed' },
+        }
+        const c = config[value]
+        return <Tag color={c?.color || 'default'}>{c?.text || value}</Tag>
+      },
+    },
+    {
+      title: 'New Jobs',
+      dataIndex: 'new_jobs_count',
+      width: 80,
+      render: (value: number | null) => (value !== null ? value : '-'),
+    },
+    {
+      title: 'Total',
+      dataIndex: 'total_jobs_count',
+      width: 80,
+      render: (value: number | null) => (value !== null ? value : '-'),
+    },
+    {
+      title: 'Error',
+      dataIndex: 'error_message',
+      render: (value: string | null) =>
+        value ? (
+          <span style={{ color: '#ff4d4f', cursor: 'pointer' }} title={value}>
+            {value.length > 40 ? `${value.slice(0, 40)}...` : value}
+          </span>
+        ) : null,
+    },
+  ]
 
   const handleCreateConfig = async (data: JobSearchConfigCreate) => {
     await createConfig.mutateAsync(data)
@@ -141,6 +204,22 @@ export default function JobsPage() {
       key: 'matches',
       label: 'Match Results',
       children: <MatchResultList />,
+    },
+    {
+      key: 'logs',
+      label: 'Crawl Logs',
+      children: (
+        <Card size="small" title="Recent Job Crawl Logs">
+          <Table<JobCrawlLog>
+            columns={crawlLogColumns}
+            dataSource={jobCrawlLogs}
+            rowKey="id"
+            loading={logsLoading}
+            size="small"
+            pagination={false}
+          />
+        </Card>
+      ),
     },
   ]
 

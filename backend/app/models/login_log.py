@@ -6,7 +6,7 @@ from app.models.base import Base, TimestampMixin
 
 class LoginLog(Base):
     """Login history for user account security."""
-    __tablename__ = "login_logs"
+    __tablename__ = "users_login_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)

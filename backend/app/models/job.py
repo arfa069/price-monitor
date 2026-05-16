@@ -20,7 +20,7 @@ from app.models.base import Base, TimestampMixin
 class JobSearchConfig(Base, TimestampMixin):
     """Job search configuration for scheduled crawling."""
 
-    __tablename__ = "job_search_configs"
+    __tablename__ = "jobs_search_configs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(
@@ -72,7 +72,7 @@ class Job(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     job_id = Column(String(500), nullable=False, unique=True)  # boss's encrypted job ID
     search_config_id = Column(
-        Integer, ForeignKey("job_search_configs.id", ondelete="CASCADE"), nullable=False
+        Integer, ForeignKey("jobs_search_configs.id", ondelete="CASCADE"), nullable=False
     )
     title = Column(String(300), nullable=True)
     company = Column(String(200), nullable=True)

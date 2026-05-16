@@ -6,16 +6,16 @@ from app.models.base import Base, TimestampMixin
 
 
 role_permissions = Table(
-    'role_permissions',
+    'users_roles_permissions',
     Base.metadata,
-    Column('role_id', Integer, ForeignKey('roles.id', ondelete='CASCADE'), primary_key=True),
-    Column('permission_id', Integer, ForeignKey('permissions.id', ondelete='CASCADE'), primary_key=True),
+    Column('role_id', Integer, ForeignKey('users_roles.id', ondelete='CASCADE'), primary_key=True),
+    Column('permission_id', Integer, ForeignKey('users_permissions.id', ondelete='CASCADE'), primary_key=True),
 )
 
 
 class Role(Base, TimestampMixin):
     """Role model for RBAC."""
-    __tablename__ = "roles"
+    __tablename__ = "users_roles"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(20), unique=True, nullable=False, index=True)

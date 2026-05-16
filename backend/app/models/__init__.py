@@ -3,6 +3,7 @@ from app.models.alert import Alert
 from app.models.audit_log import UserAuditLog
 from app.models.base import Base
 from app.models.crawl_log import CrawlLog
+from app.models.job_crawl_log import JobCrawlLog
 from app.models.job_match import MatchResult, UserResume
 from app.models.permission import Permission
 from app.models.price_history import PriceHistory
@@ -18,6 +19,7 @@ __all__ = [
     "PriceHistory",
     "Alert",
     "CrawlLog",
+    "JobCrawlLog",
     "UserResume",
     "MatchResult",
     "Role",

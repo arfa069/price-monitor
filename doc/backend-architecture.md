@@ -37,12 +37,13 @@ backend/
 │   │   ├── base.py             # SQLAlchemy Base
 │   │   ├── user.py             # User 模型
 │   │   ├── session.py          # 用户会话（token_hash 绑定）
-│   │   ├── audit_log.py        # 审计日志（user_audit_logs）
+│   │   ├── audit_log.py        # 审计日志（users_audit_logs）
 │   │   ├── login_log.py        # 登录历史
 │   │   ├── product.py          # Product / ProductPlatformCron 模型
 │   │   ├── price_history.py    # PriceHistory 模型
 │   │   ├── alert.py            # Alert 模型
-│   │   ├── crawl_log.py        # CrawlLog 模型
+│   │   ├── crawl_log.py        # CrawlLog 模型（商品爬取日志）
+│   │   ├── job_crawl_log.py    # JobCrawlLog 模型（BOSS 职位爬取日志）
 │   │   ├── job.py              # Job / JobSearchConfig 模型
 │   │   ├── job_match.py        # UserResume / MatchResult 模型
 │   │   ├── permission.py       # 权限定义表（保留，未接入）
@@ -159,14 +160,14 @@ User (1) ──────< Product (多)
 |------|------|----------|
 | `users` | 用户账户（含飞书 Webhook URL） | 无（全局） |
 | `products` | 监控的商品 | user_id 隔离 |
-| `price_history` | 价格历史记录 | 通过 product_id 间接隔离 |
-| `alerts` | 降价告警配置 | 通过 product_id 间接隔离 |
+| `products_price_history` | 价格历史记录 | 通过 product_id 间接隔离 |
+| `products_alerts` | 降价告警配置 | 通过 product_id 间接隔离 |
 | `crawl_logs` | 爬取日志 | product_id nullable（系统日志无归属） |
-| `product_platform_crons` | per-platform 商品爬取 cron | user_id 隔离 |
-| `job_search_configs` | BOSS 搜索配置 | user_id 隔离 |
+| `products_platform_crons` | per-platform 商品爬取 cron | user_id 隔离 |
+| `jobs_search_configs` | BOSS 搜索配置 | user_id 隔离 |
 | `jobs` | 爬取的职位 | 通过 search_config_id 间接隔离 |
-| `user_resumes` | 用户简历 | user_id 隔离 |
-| `match_results` | LLM 匹配结果 | user_id 隔离 |
+| `jobs_resumes` | 用户简历 | user_id 隔离 |
+| `jobs_match_results` | LLM 匹配结果 | user_id 隔离 |
 
 **数据隔离原则**：所有包含 `user_id` 的表均通过 `user_id = current_user.id` 过滤查询。
 
@@ -259,7 +260,7 @@ JWT payload 结构：
 1. 根据 platform 路由到对应 Adapter
 2. 调用 `adapter.crawl(url)` 执行 Playwright 自动化
 3. 提取价格和标题
-4. 写入 `price_history` 表
+4. 写入 `products_price_history` 表
 5. 调用 `check_price_alerts()` 检查是否触发通知
 
 ### 7.4 BOSS 职位爬取（services/job_crawl.py）
@@ -288,7 +289,7 @@ JWT payload 结构：
 1. `analyze_resume_vs_jobs(resume_id, job_ids)` — 批量分析
 2. `run_match_analysis_task(task, resume_id, job_ids)` — 异步任务执行
 3. 每个 Job 调用 `llm_provider.analyze(resume_text, job_description)`
-4. 将 `match_score`（0-100）、`match_reason`、`apply_recommendation` 存入 `match_results` 表
+4. 将 `match_score`（0-100）、`match_reason`、`apply_recommendation` 存入 `jobs_match_results` 表
 
 ### 7.6 通知服务（services/notification.py）
 

@@ -3,6 +3,7 @@ from app.schemas.admin import AdminUserUpdate, AdminUserListResponse, AdminUserR
 from app.schemas.alert import AlertCreate, AlertResponse, AlertUpdate
 from app.schemas.auth import MessageResponse, TokenResponse, UserLogin, UserRegister, UserResponse
 from app.schemas.crawl_log import CrawlLogResponse
+from app.schemas.job_crawl_log import JobCrawlLogResponse
 from app.schemas.job_match import (
     MatchAnalyzeRequest,
     MatchAnalyzeResponse,
@@ -29,6 +30,7 @@ __all__ = [
     "AlertUpdate",
     "AlertResponse",
     "CrawlLogResponse",
+    "JobCrawlLogResponse",
     "MatchAnalyzeRequest",
     "MatchAnalyzeResponse",
     "MatchResultResponse",

@@ -52,6 +52,10 @@
 | `PATCH /admin/users/{id}` | `user:manage` |
 | `DELETE /admin/users/{id}` | `user:delete` |
 | `GET /admin/audit-logs` | `user:read` |
+| `POST /admin/resource-permissions` | `user:manage` |
+| `GET /admin/resource-permissions` | `user:read` |
+| `PATCH /admin/resource-permissions/{id}` | `user:manage` |
+| `DELETE /admin/resource-permissions/{id}` | `user:manage` |
 
 ### 商品 (products.py)
 
@@ -115,7 +119,7 @@
 
 ## 审计日志
 
-`user_audit_logs` 表记录所有敏感操作。敏感字段（password / token / webhook_url）会被替换为 `***REDACTED***`。
+`users_audit_logs` 表记录所有敏感操作。敏感字段（password / token / webhook_url）会被替换为 `***REDACTED***`。
 
 记录的操作：
 - `user.register`, `user.create`, `user.update`, `user.delete`

@@ -6,7 +6,6 @@ import logging
 import random
 import re
 from datetime import UTC, datetime
-from decimal import Decimal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,8 +14,8 @@ if TYPE_CHECKING:
 from sqlalchemy import select
 
 from app.database import AsyncSessionLocal
-from app.models.crawl_log import CrawlLog
 from app.models.job import Job, JobSearchConfig
+from app.models.job_crawl_log import JobCrawlLog
 from app.models.job_match import UserResume
 from app.services.job_match import analyze_resume_vs_jobs
 from app.services.notification import send_new_job_notification
@@ -249,13 +248,12 @@ async def process_job_results(
                 logger.exception("Failed to send job notification for config %s", config_id)
 
         # Log crawl result — in same transaction as job inserts/updates
-        crawl_log = CrawlLog(
-            product_id=None,  # job crawl, not a product
-            platform="boss",
+        crawl_log = JobCrawlLog(
+            search_config_id=config.id,
             status="SUCCESS",
-            price=Decimal(new_count),
-            currency=None,
-            timestamp=datetime.now(UTC),
+            new_jobs_count=new_count,
+            total_jobs_count=total_scraped,
+            scraped_at=datetime.now(UTC),
             error_message=None,
         )
         db.add(crawl_log)
@@ -387,14 +385,11 @@ async def crawl_single_config(
     else:
         # Log error
         async with AsyncSessionLocal() as db:
-            log = CrawlLog(
-                product_id=None,  # job crawl, not a product
-                platform="boss",
+            log = JobCrawlLog(
+                search_config_id=config_id,
                 status="ERROR",
-                price=None,
-                currency=None,
-                timestamp=datetime.now(UTC),
                 error_message=result.get("error", "Unknown error"),
+                scraped_at=datetime.now(UTC),
             )
             db.add(log)
             await db.commit()

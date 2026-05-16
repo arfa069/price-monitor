@@ -8,7 +8,7 @@ from app.models.base import Base, TimestampMixin
 
 class UserAuditLog(Base, TimestampMixin):
     """Audit log for tracking user management and authentication actions."""
-    __tablename__ = "user_audit_logs"
+    __tablename__ = "users_audit_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     actor_user_id = Column(

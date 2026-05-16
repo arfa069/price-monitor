@@ -6,7 +6,7 @@ from app.models.base import Base, TimestampMixin
 
 class Session(Base, TimestampMixin):
     """Session model for tracking user login devices."""
-    __tablename__ = "sessions"
+    __tablename__ = "users_sessions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)

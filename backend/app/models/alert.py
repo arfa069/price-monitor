@@ -16,7 +16,7 @@ from app.models.base import Base, TimestampMixin
 
 class Alert(Base, TimestampMixin):
     """Price drop alert configuration."""
-    __tablename__ = "alerts"
+    __tablename__ = "products_alerts"
     __table_args__ = (
         Index("ix_alerts_product_active", "product_id", "active"),
         Index("ix_alerts_active", "active"),

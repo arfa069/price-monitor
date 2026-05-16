@@ -55,14 +55,14 @@ Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or exte
 APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown. Two scheduler managers handle per-entity cron jobs:
 
 **Product crawl (per-platform)** — `ProductCronScheduler`:
-- Each platform (taobao/jd/amazon) gets its own cron expression stored in `product_platform_crons` table
+- Each platform (taobao/jd/amazon) gets its own cron expression stored in `products_platform_crons` table
 - APScheduler job ID format: `product_cron_{platform}`
 - When triggered, calls `crawl_products_by_platform(platform)` — only crawls products of that platform
 - API: `GET/POST /products/cron-configs`, `PATCH/DELETE /products/cron-configs/{platform}`
 - Frontend: `/schedule` page shows a table with 3 platform rows, add/delete via modal
 
 **Job crawl (per-config)** — `JobConfigScheduler`:
-- Each `JobSearchConfig` gets its own cron expression stored in `cron_expression` / `cron_timezone` fields on `job_search_configs`
+- Each `JobSearchConfig` gets its own cron expression stored in `cron_expression` / `cron_timezone` fields on `jobs_search_configs`
 - APScheduler job ID format: `job_config_cron_{config_id}`
 - When triggered, calls `crawl_single_config(config_id)` — only crawls that specific config
 - API: `PATCH /jobs/configs/{id}/cron`, `GET /jobs/scheduler/job-configs`
@@ -72,7 +72,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 
 **Concurrency protection**: A global `asyncio.Semaphore(1)` (shared between cron jobs and manual crawls) prevents overlapping executions.
 
-**Status endpoint**: `GET /scheduler/status` returns all registered jobs in `product_platforms` and `job_configs` objects.
+**Status endpoint**: `GET /scheduler/status` returns all registered jobs in `products_platforms` and `job_configs` objects.
 
 ### Browser Modes
 
@@ -116,7 +116,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | title | TEXT | Product title |
 | active | BOOLEAN | Whether monitoring is active |
 
-### price_history
+### products_price_history
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
@@ -125,7 +125,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | currency | VARCHAR(3) | Currency code |
 | scraped_at | TIMESTAMPTZ | Scraping timestamp |
 
-### alerts
+### products_alerts
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
@@ -146,7 +146,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | timestamp | TIMESTAMPTZ | Crawl timestamp |
 | error_message | TEXT | Error details or summary if failed/skipped |
 
-### product_platform_crons
+### products_platform_crons
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
@@ -157,7 +157,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | created_at | TIMESTAMPTZ | Creation timestamp |
 | updated_at | TIMESTAMPTZ | Last update timestamp |
 
-### job_search_configs
+### jobs_search_configs
 | Column | Type | Description |
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
@@ -177,7 +177,7 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 |--------|------|-------------|
 | id | BIGSERIAL | Primary key |
 | job_id | VARCHAR | Boss securityId (API调用); encryptJobId 用于拼详情页 URL |
-| search_config_id | BIGINT | FK to job_search_configs |
+| search_config_id | BIGINT | FK to jobs_search_configs |
 | title | TEXT | Job title |
 | company | TEXT | Company name |
 | company_id | VARCHAR | Boss encryptBrandId |
@@ -222,6 +222,12 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | GET | /crawl/logs | Get recent crawl logs |
 | POST | /crawl/cleanup | Delete old data |
 | GET | /scheduler/status | Scheduler job state |
+| GET/POST/DELETE | /jobs/resumes | List/Create/Delete resumes |
+| PATCH | /jobs/resumes/{id} | Update a resume |
+| GET | /jobs/match-results | List LLM match results |
+| POST | /jobs/match-results/analyze | Sync resume-job analysis |
+| POST | /jobs/match-results/analyze-async | Async resume-job analysis |
+| GET | /jobs/tasks/{task_id} | Poll async analysis task |
 | GET | /jobs/configs | List job search configs |
 | POST | /jobs/configs | Create job search config |
 | GET | /jobs/configs/{id} | Get job search config |
@@ -233,6 +239,17 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | GET | /jobs/{id} | Get job details |
 | POST | /jobs/crawl-now | Crawl all active job configs |
 | POST | /jobs/crawl-now/{id} | Crawl single job config |
+| GET | /jobs/crawl-logs | Get job crawl logs (filterable by config/status) |
+| GET | /admin/users | List all users |
+| POST | /admin/users | Create user |
+| GET | /admin/users/{id} | Get user details |
+| PATCH | /admin/users/{id} | Update user |
+| DELETE | /admin/users/{id} | Soft delete user |
+| GET | /admin/audit-logs | Query audit logs |
+| POST | /admin/resource-permissions | Grant resource permission |
+| GET | /admin/resource-permissions | List resource permissions |
+| PATCH | /admin/resource-permissions/{id} | Update resource permission |
+| DELETE | /admin/resource-permissions/{id} | Revoke resource permission |
 
 ## Notification System
 

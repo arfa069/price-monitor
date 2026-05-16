@@ -25,7 +25,7 @@ class Product(Base, TimestampMixin):
 
 class ProductPlatformCron(Base, TimestampMixin):
     """Per-platform cron configuration for product crawling."""
-    __tablename__ = "product_platform_crons"
+    __tablename__ = "products_platform_crons"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

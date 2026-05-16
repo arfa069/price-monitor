@@ -173,6 +173,16 @@ export interface CrawlLog {
   error_message: string | null;
 }
 
+export interface JobCrawlLog {
+  id: number;
+  search_config_id: number;
+  status: string;
+  new_jobs_count: number | null;
+  total_jobs_count: number | null;
+  error_message: string | null;
+  scraped_at: string;
+}
+
 export interface JobSearchConfig {
   id: number;
   user_id: number;

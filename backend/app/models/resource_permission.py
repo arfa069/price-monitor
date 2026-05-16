@@ -11,7 +11,7 @@ class ResourcePermission(Base, TimestampMixin):
     The table is grant-only; deny/override semantics are intentionally absent.
     """
 
-    __tablename__ = "resource_permissions"
+    __tablename__ = "users_resources_permissions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     subject_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

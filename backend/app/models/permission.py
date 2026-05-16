@@ -8,7 +8,7 @@ from app.models.role import role_permissions
 
 class Permission(Base, TimestampMixin):
     """Permission model for RBAC."""
-    __tablename__ = "permissions"
+    __tablename__ = "users_permissions"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(50), unique=True, nullable=False, index=True)

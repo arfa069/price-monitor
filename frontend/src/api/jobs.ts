@@ -3,6 +3,7 @@ import type {
   Job,
   JobConfigCronUpdate,
   JobConfigScheduleInfo,
+  JobCrawlLog,
   JobListResponse,
   JobSearchConfig,
   JobSearchConfigCreate,
@@ -105,4 +106,11 @@ export const jobsApi = {
 
   getCrawlResult: (taskId: string) =>
     api.get<JobCrawlFinalResult>(`/jobs/crawl/result/${taskId}`),
+
+  getCrawlLogs: (params?: {
+    search_config_id?: number
+    status?: string
+    hours?: number
+    limit?: number
+  }) => api.get<JobCrawlLog[]>('/jobs/crawl-logs', { params }),
 }

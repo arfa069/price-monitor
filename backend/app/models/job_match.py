@@ -11,7 +11,7 @@ from app.models.base import Base, TimestampMixin
 class UserResume(Base, TimestampMixin):
     """User uploaded resume."""
 
-    __tablename__ = "user_resumes"
+    __tablename__ = "jobs_resumes"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
@@ -24,12 +24,12 @@ class UserResume(Base, TimestampMixin):
 class MatchResult(Base):
     """Stored resume-job match result."""
 
-    __tablename__ = "match_results"
+    __tablename__ = "jobs_match_results"
     __table_args__ = (UniqueConstraint("resume_id", "job_id", name="uq_resume_job"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    resume_id = Column(Integer, ForeignKey("user_resumes.id", ondelete="CASCADE"), nullable=False)
+    resume_id = Column(Integer, ForeignKey("jobs_resumes.id", ondelete="CASCADE"), nullable=False)
     job_id = Column(Integer, ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False)
     match_score = Column(Integer, nullable=False)
     match_reason = Column(Text, nullable=True)

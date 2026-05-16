@@ -9,6 +9,7 @@ import { productsApi } from "@/api/products";
 import type {
 	AlertUpdateRequest,
 	CrawlLog,
+	JobCrawlLog,
 	JobSearchConfigUpdate,
 	MatchAnalyzeRequest,
 	ResourcePermissionGrant,
@@ -213,6 +214,18 @@ export const useCrawlLogs = (params?: {
 	useQuery<CrawlLog[]>({
 		queryKey: ["crawl-logs", params],
 		queryFn: () => crawlApi.getLogs(params).then((res) => res.data),
+		refetchInterval: 60_000,
+	});
+
+export const useJobCrawlLogs = (params?: {
+	search_config_id?: number;
+	status?: string;
+	hours?: number;
+	limit?: number;
+}) =>
+	useQuery<JobCrawlLog[]>({
+		queryKey: ["job-crawl-logs", params],
+		queryFn: () => jobsApi.getCrawlLogs(params).then((res) => res.data),
 		refetchInterval: 60_000,
 	});
 

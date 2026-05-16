@@ -7,9 +7,9 @@ from app.models.base import Base
 
 class PriceHistory(Base):
     """Historical price records for a product."""
-    __tablename__ = "price_history"
+    __tablename__ = "products_price_history"
     __table_args__ = (
-        Index("ix_price_history_product_scraped", "product_id", "scraped_at"),
+        Index("ix_products_price_history_product_scraped", "product_id", "scraped_at"),
     )
 
     id = Column(Integer, primary_key=True, autoincrement=True)

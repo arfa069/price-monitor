@@ -101,7 +101,7 @@ async def _crawl_one(product_id: int) -> dict:
 async def get_crawl_logs(
     product_id: int | None = None,
     status: str | None = None,
-    hours: int = Query(default=24, ge=1, le=168),
+    hours: int = Query(default=168, ge=1, le=720),
     limit: int = Query(default=100, ge=1, le=1000),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

@@ -685,7 +685,7 @@ async def get_job_crawl_result(task_id: str):
 async def get_job_crawl_logs(
     search_config_id: int | None = Query(None, description="Filter by search config ID"),
     status: str | None = Query(None, regex="^(SUCCESS|ERROR)$"),
-    hours: int = Query(24, ge=1, le=168),
+    hours: int = Query(168, ge=1, le=720),
     limit: int = Query(100, ge=1, le=1000),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

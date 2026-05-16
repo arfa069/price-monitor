@@ -100,13 +100,13 @@ export default function CronGenerator({ open, onClose, onApply }: CronGeneratorP
         {/* Natural language input */}
         <div>
           <div style={{ marginBottom: 6, fontSize: 13, color: 'var(--color-muted)' }}>
-            Describe your schedule in plain English
+            Describe your schedule (English / 中文)
           </div>
           <Input
             value={nlInput}
             onChange={(e) => setNlInput(e.target.value)}
             onPressEnter={handleGenerate}
-            placeholder="e.g., every day at 9am, weekdays at 6pm, every 30 minutes"
+            placeholder="e.g., every day at 9am, weekdays at 6pm, 每天早上9点, 工作日18点"
             suffix={
               <Button
                 type="text"

@@ -15,7 +15,7 @@ from app.models.product import Product
 from app.models.user import User
 from app.schemas.crawl_log import CrawlLogResponse
 
-router = APIRouter(prefix="/crawl", tags=["crawl"])
+router = APIRouter(prefix="/products/crawl", tags=["products-crawl"])
 
 PLATFORM_ADAPTERS = {}
 
@@ -134,7 +134,7 @@ async def crawl_now(
 ):
     """Start crawling all active products immediately.
 
-    Returns immediately with a task_id. Poll /crawl/status/{task_id} for progress.
+    Returns immediately with a task_id. Poll /products/crawl/status/{task_id} for progress.
     """
     if not current_user:
         raise HTTPException(status_code=401, detail="请先登录")
@@ -150,7 +150,7 @@ async def crawl_now(
     return JSONResponse(content={
         "status": "pending",
         "task_id": result["task_id"],
-        "message": "爬取任务已启动，请通过 /crawl/status/{task_id} 查询进度",
+        "message": "爬取任务已启动，请通过 /products/crawl/status/{task_id} 查询进度",
     })
 
 

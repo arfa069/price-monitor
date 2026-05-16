@@ -157,13 +157,13 @@ class TestCrawlPermissionDeniedForAdmin:
 
     @pytest.mark.asyncio
     async def test_admin_cannot_trigger_crawl_now(self):
-        """Admin calling POST /crawl/crawl-now should get 403."""
+        """Admin calling POST /products/crawl/crawl-now should get 403."""
         admin_user = create_mock_user(1, "admin", "admin@example.com", "admin")
         setup_mock_current_user(admin_user)
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.post("/crawl/crawl-now")
+            response = await client.post("/products/crawl/crawl-now")
         assert response.status_code == 403
 
     @pytest.mark.asyncio

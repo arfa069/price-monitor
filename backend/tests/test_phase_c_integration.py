@@ -407,19 +407,19 @@ class TestSchedulerTriggerAndHotUpdate:
 # C-08: 手动抓取回归
 # =============================================================================
 class TestManualCrawlRegression:
-    """C-08: POST /crawl/crawl-now 仍可用"""
+    """C-08: POST /products/crawl/crawl-now 仍可用"""
 
     @pytest.mark.asyncio
     async def test_c08_crawl_now_endpoint_exists(self, mock_get_current_user):
-        """C-08: /crawl/crawl-now 端点存在"""
+        """C-08: /products/crawl/crawl-now 端点存在"""
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
-            response = await client.post("/crawl/crawl-now")
+            response = await client.post("/products/crawl/crawl-now")
         # 可能返回 200 (ok) 或 500 (scheduler not init)
         assert response.status_code in [200, 500], f"Unexpected status: {response.status_code}"
         data = response.json()
         assert "status" in data
-        print(f"[C-08] PASS: /crawl/crawl-now exists, status={data.get('status')}")
+        print(f"[C-08] PASS: /products/crawl/crawl-now exists, status={data.get('status')}")
 
 
 # =============================================================================
@@ -462,7 +462,7 @@ class TestHealthCheckRegression:
 # =============================================================================
 # C-R01 ~ C-R03: 回归清单
 # =============================================================================
-# C-R01: POST /crawl/crawl-now → 已覆盖 (C-08)
+# C-R01: POST /products/crawl/crawl-now → 已覆盖 (C-08)
 # C-R02: GET /health → 已覆盖 (C-09)
 # C-R03: pytest 全量通过 → 运行本文件即可验证
 

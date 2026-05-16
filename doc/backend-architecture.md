@@ -181,7 +181,7 @@ User (1) ──────< Product (多)
 | `/config` | routers/config.py | 用户配置（飞书 Webhook、数据保留期） |
 | `/products` | routers/products.py | 商品 CRUD + 批量操作 |
 | `/alerts` | routers/alerts.py | 告警管理 |
-| `/crawl` | routers/crawl.py | 爬取触发 + 日志查询 |
+| `/products/crawl` | routers/crawl.py | 商品爬取触发 + 日志查询 |
 | `/jobs` | routers/jobs.py | 职位搜索配置 + 爬取 + 匹配分析 |
 | `/admin` | api/admin.py | 用户管理 + 审计日志（admin/super_admin） |
 | `/scheduler/status` | main.py | APScheduler 状态（admin/super_admin） |
@@ -346,10 +346,10 @@ _shared_context: BrowserContext
 | AmazonAdapter | 价格区域定位 |
 | BossZhipinAdapter | curl_cffi 调用搜索 API（不使用 Playwright）|
 
-### 8.3 商品抓取流程（`POST /crawl/crawl-now`）
+### 8.3 商品抓取流程（`POST /products/crawl/crawl-now`）
 - `_crawl_one()` 在 FastAPI async 上下文中直接运行，无 Celery 依赖
 - `check_price_alerts()` 在每次抓取后对比最近两条价格记录，跌幅达标则发飞书通知
-- `POST /crawl/cleanup` 手动触发旧数据清理
+- `POST /products/crawl/cleanup` 手动触发旧数据清理
 
 ### 8.4 Boss 职位抓取流程（`POST /jobs/crawl-now`）
 - `BossZhipinAdapter.crawl()` 通过 curl_cffi 调 Boss 搜索 API，不依赖 Playwright 浏览器

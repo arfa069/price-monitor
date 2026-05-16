@@ -28,16 +28,16 @@ export interface CrawlResultResponse {
 }
 
 export const crawlApi = {
-  crawlNow: () => api.post<CrawlNowResponse>('/crawl/crawl-now'),
+  crawlNow: () => api.post<CrawlNowResponse>('/products/crawl/crawl-now'),
 
-  getStatus: (taskId: string) => api.get<CrawlStatusResponse>(`/crawl/status/${taskId}`),
+  getStatus: (taskId: string) => api.get<CrawlStatusResponse>(`/products/crawl/status/${taskId}`),
 
-  getResult: (taskId: string) => api.get<CrawlResultResponse>(`/crawl/result/${taskId}`),
+  getResult: (taskId: string) => api.get<CrawlResultResponse>(`/products/crawl/result/${taskId}`),
 
   getLogs: (params?: {
     product_id?: number
     status?: string
     hours?: number
     limit?: number
-  }) => api.get<CrawlLog[]>('/crawl/logs', { params }),
+  }) => api.get<CrawlLog[]>('/products/crawl/logs', { params }),
 }

@@ -22,7 +22,7 @@ All API endpoints (except `/auth/register` and `/auth/login`) require JWT authen
 ┌─────────────────────────────────────────────────────────────────┐
 │                      FastAPI Service Layer                         │
 │  POST /config │ POST/GET /products │ GET /history │ POST /alerts│
-│  POST /crawl/crawl-now │ GET /crawl/logs │ POST /crawl/cleanup   │
+│  POST /products/crawl/crawl-now │ GET /products/crawl/logs │ POST /products/crawl/cleanup   │
 └─────────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
@@ -48,7 +48,7 @@ All API endpoints (except `/auth/register` and `/auth/login`) require JWT authen
 
 ## Crawling Strategy
 
-Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or external worker. The `POST /crawl/crawl-now` endpoint processes each active product sequentially with a 7–12s random interval between crawls to avoid rate limiting.
+Crawl tasks run **asynchronously in FastAPI's event loop** — no Celery or external worker. The `POST /products/crawl/crawl-now` endpoint processes each active product sequentially with a 7–12s random interval between crawls to avoid rate limiting.
 
 ### Cron Scheduling
 
@@ -218,9 +218,9 @@ APScheduler (AsyncIOScheduler) is managed by FastAPI's lifespan startup/shutdown
 | GET | /products/cron-schedules | Next run times for product cron |
 | POST | /alerts | Create an alert |
 | GET | /alerts | List all alerts |
-| POST | /crawl/crawl-now | Crawl all active products |
-| GET | /crawl/logs | Get recent crawl logs |
-| POST | /crawl/cleanup | Delete old data |
+| POST | /products/crawl/crawl-now | Crawl all active products |
+| GET | /products/crawl/logs | Get recent crawl logs |
+| POST | /products/crawl/cleanup | Delete old data |
 | GET | /scheduler/status | Scheduler job state |
 | GET/POST/DELETE | /jobs/resumes | List/Create/Delete resumes |
 | PATCH | /jobs/resumes/{id} | Update a resume |
@@ -295,7 +295,7 @@ This avoids the Playwright CDP `about:blank` redirect that Boss's anti-bot scrip
 ## Data Retention
 
 - Price history and crawl logs retained based on `data_retention_days` (default: 365 days)
-- Cleanup triggered via `POST /crawl/cleanup` endpoint
+- Cleanup triggered via `POST /products/crawl/cleanup` endpoint
 - Accepts a `retention_days` query parameter (capped by config setting)
 
 ## Products Pagination
